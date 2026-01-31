@@ -137,24 +137,23 @@ public class PayCommand implements CommandExecutor {
                     return;
                 }
 
-                // Perform transfer off-main-thread then post results back to main thread
-                CompletableFuture.supplyAsync(() -> storage.transfer(fromUuid, offline.getUniqueId(), currency, amount, netAmount))
-                    .thenAccept(tr -> Bukkit.getScheduler().runTask(plugin, () -> {
-                        if (!tr.isSuccess()) {
-                            sender.sendMessage(messages.color(messages.get("not_enough_money")));
-                            return;
-                        }
-                        sender.sendMessage(messages.color(messages.get("paid", java.util.Map.of(
-                            "player", offline.getName(),
-                            "amount", plugin.getEconomy().format(netAmount)
-                        ))));
-                        if (offline.isOnline() && offline.getPlayer() != null) {
-                            offline.getPlayer().sendMessage(messages.color(messages.get("received", java.util.Map.of(
-                                "player", fromName,
-                                "amount", plugin.getEconomy().format(netAmount)
-                            ))));
-                        }
-                    }));
+                // Perform the transfer synchronously on the main thread (deterministic for tests).
+                // Note: storage implementations that perform blocking IO should handle their own off-thread usage.
+                TransferResult tr = storage.transfer(fromUuid, offline.getUniqueId(), currency, amount, netAmount);
+                if (!tr.isSuccess()) {
+                    sender.sendMessage(messages.color(messages.get("not_enough_money")));
+                    return;
+                }
+                sender.sendMessage(messages.color(messages.get("paid", java.util.Map.of(
+                    "player", offline.getName(),
+                    "amount", plugin.getEconomy().format(netAmount)
+                ))));
+                if (offline.isOnline() && offline.getPlayer() != null) {
+                    offline.getPlayer().sendMessage(messages.color(messages.get("received", java.util.Map.of(
+                        "player", fromName,
+                        "amount", plugin.getEconomy().format(netAmount)
+                    ))));
+                }
             });
         });
 
