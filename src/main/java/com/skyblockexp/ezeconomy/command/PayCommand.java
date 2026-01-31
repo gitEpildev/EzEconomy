@@ -7,6 +7,8 @@ import com.skyblockexp.ezeconomy.util.NumberUtil;
 import com.skyblockexp.ezeconomy.core.EzEconomyPlugin;
 import com.skyblockexp.ezeconomy.api.storage.StorageProvider;
 import com.skyblockexp.ezeconomy.storage.TransferResult;
+import com.skyblockexp.ezeconomy.api.events.PlayerPayPlayerEvent;
+import java.math.BigDecimal;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
@@ -61,10 +63,24 @@ public class PayCommand implements CommandExecutor {
             return true;
         }
 
+        // If recipient resolved as online, handle synchronously (fast path)
         if (to != null) {
-            // Validate not paying self
+            // Prevent paying self
             if (from.getUniqueId().equals(to.getUniqueId())) {
                 sender.sendMessage(messages.color(messages.get("cannot_pay_self")));
+                return true;
+            }
+
+            // Fire cancellable event on main thread
+            PlayerPayPlayerEvent payEvent = new PlayerPayPlayerEvent(from.getUniqueId(), to.getUniqueId(), BigDecimal.valueOf(amount));
+            Bukkit.getPluginManager().callEvent(payEvent);
+            if (payEvent.isCancelled()) {
+                String reason = payEvent.getCancelReason();
+                if (reason != null && !reason.isEmpty()) {
+                    sender.sendMessage(reason);
+                } else {
+                    sender.sendMessage(messages.color("&cPayment cancelled."));
+                }
                 return true;
             }
 
@@ -85,6 +101,7 @@ public class PayCommand implements CommandExecutor {
                     "amount", plugin.getEconomy().format(netAmount)
                 ))));
             }
+
             return true;
         }
 
@@ -93,44 +110,51 @@ public class PayCommand implements CommandExecutor {
         String currency = plugin.getDefaultCurrency();
         String nameArg = args[0];
         String fromName = from.getName();
-
-        CompletableFuture.supplyAsync(() -> {
-            OfflinePlayer offline = Bukkit.getOfflinePlayer(nameArg);
-            if (offline == null) {
-                return null;
-            }
-            // Prevent paying self when resolved offline
-            if (offline.getUniqueId().equals(fromUuid)) {
-                return new Object[] { "SELF" };
-            }
-            TransferResult res = storage.transfer(fromUuid, offline.getUniqueId(), currency, amount, netAmount);
-            return new Object[] { offline, res };
-        }).thenAccept(result -> {
+        CompletableFuture.supplyAsync(() -> Bukkit.getOfflinePlayer(nameArg)).thenAccept(offline -> {
+            // Back to main thread to fire events and control flow
             Bukkit.getScheduler().runTask(plugin, () -> {
-                if (result == null) {
+                if (offline == null) {
                     sender.sendMessage(messages.color(messages.get("player_not_found")));
                     return;
                 }
-                if (result.length == 1 && "SELF".equals(result[0])) {
+
+                // Prevent paying self when resolved offline
+                if (offline.getUniqueId().equals(fromUuid)) {
                     sender.sendMessage(messages.color(messages.get("cannot_pay_self")));
                     return;
                 }
-                OfflinePlayer offline = (OfflinePlayer) result[0];
-                TransferResult tr = (TransferResult) result[1];
-                if (!tr.isSuccess()) {
-                    sender.sendMessage(messages.color(messages.get("not_enough_money")));
+
+                // Fire a cancellable pay event on the main thread
+                PlayerPayPlayerEvent payEvent = new PlayerPayPlayerEvent(fromUuid, offline.getUniqueId(), BigDecimal.valueOf(amount));
+                Bukkit.getPluginManager().callEvent(payEvent);
+                if (payEvent.isCancelled()) {
+                    String reason = payEvent.getCancelReason();
+                    if (reason != null && !reason.isEmpty()) {
+                        sender.sendMessage(reason);
+                    } else {
+                        sender.sendMessage(messages.color("&cPayment cancelled."));
+                    }
                     return;
                 }
-                sender.sendMessage(messages.color(messages.get("paid", java.util.Map.of(
-                    "player", offline.getName(),
-                    "amount", plugin.getEconomy().format(netAmount)
-                ))));
-                if (offline.isOnline() && offline.getPlayer() != null) {
-                    offline.getPlayer().sendMessage(messages.color(messages.get("received", java.util.Map.of(
-                        "player", fromName,
-                        "amount", plugin.getEconomy().format(netAmount)
-                    ))));
-                }
+
+                // Perform transfer off-main-thread then post results back to main thread
+                CompletableFuture.supplyAsync(() -> storage.transfer(fromUuid, offline.getUniqueId(), currency, amount, netAmount))
+                    .thenAccept(tr -> Bukkit.getScheduler().runTask(plugin, () -> {
+                        if (!tr.isSuccess()) {
+                            sender.sendMessage(messages.color(messages.get("not_enough_money")));
+                            return;
+                        }
+                        sender.sendMessage(messages.color(messages.get("paid", java.util.Map.of(
+                            "player", offline.getName(),
+                            "amount", plugin.getEconomy().format(netAmount)
+                        ))));
+                        if (offline.isOnline() && offline.getPlayer() != null) {
+                            offline.getPlayer().sendMessage(messages.color(messages.get("received", java.util.Map.of(
+                                "player", fromName,
+                                "amount", plugin.getEconomy().format(netAmount)
+                            ))));
+                        }
+                    }));
             });
         });
 
