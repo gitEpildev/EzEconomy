@@ -121,6 +121,12 @@ public class PayCommand implements CommandExecutor {
             sender.sendMessage(messages.color(messages.get("cannot_pay_self")));
             return true;
         }
+        // If offline player hasn't played before, ensure storage contains a record for them
+        boolean exists = offline.hasPlayedBefore() || storage.getAllBalances(currency).containsKey(offline.getUniqueId());
+        if (!exists) {
+            sender.sendMessage(messages.color(messages.get("player_not_found")));
+            return true;
+        }
 
         PlayerPayPlayerEvent payEvent = new PlayerPayPlayerEvent(fromUuid, offline.getUniqueId(), BigDecimal.valueOf(amount));
         Bukkit.getPluginManager().callEvent(payEvent);

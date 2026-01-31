@@ -121,6 +121,24 @@ public class PayCommandTest {
         public java.util.Map<UUID, Double> getAllBalances(String currency) { return java.util.Collections.emptyMap(); }
 
         @Override
+        public java.util.Map<UUID, Double> getAllBalances(String currency) {
+            java.util.Map<UUID, Double> out = new java.util.HashMap<>();
+            for (java.util.Map.Entry<String, Double> e : balances.entrySet()) {
+                String k = e.getKey();
+                int idx = k.lastIndexOf(":");
+                if (idx <= 0) continue;
+                String uuidStr = k.substring(0, idx);
+                String cur = k.substring(idx + 1);
+                if (!currency.equals(cur)) continue;
+                try {
+                    UUID id = UUID.fromString(uuidStr);
+                    out.put(id, e.getValue());
+                } catch (IllegalArgumentException ignore) {}
+            }
+            return out;
+        }
+
+        @Override
         public void shutdown() {}
 
         // Bank methods not used in this test - provide trivial implementations
