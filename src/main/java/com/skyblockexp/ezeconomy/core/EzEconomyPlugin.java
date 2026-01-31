@@ -226,11 +226,18 @@ public class EzEconomyPlugin extends JavaPlugin {
             }
             getLogger().info("Using " + storage.getClass().getSimpleName() + " storage provider.");
 
-            getLogger().info("Initializing " + storage.getClass().getSimpleName() + " storage provider.");
-            storage.init();
+            // In test mode we avoid performing real network or filesystem initialization
+            // to keep unit/feature tests hermetic. Tests can set the system property
+            // `ezeconomy.test=true` to opt into this behavior.
+            if (Boolean.getBoolean("ezeconomy.test")) {
+                getLogger().info("Test mode detected: skipping storage init/load for " + storage.getClass().getSimpleName());
+            } else {
+                getLogger().info("Initializing " + storage.getClass().getSimpleName() + " storage provider.");
+                storage.init();
 
-            getLogger().info("Loading connection with " + storage.getClass().getSimpleName() + " storage provider.");
-            storage.load();
+                getLogger().info("Loading connection with " + storage.getClass().getSimpleName() + " storage provider.");
+                storage.load();
+            }
 
             return true;
         } catch (Exception ex) {
