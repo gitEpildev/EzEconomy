@@ -122,17 +122,17 @@ public class YMLStorageProvider implements StorageProvider {
 
     @Override
     public void setBalance(UUID uuid, String currency, double amount) {
-        CompletableFuture.runAsync(() -> {
-            synchronized (getPlayerLock(uuid)) {
-                try {
-                    YamlConfiguration pdata = loadPlayerData(uuid);
-                    pdata.set("balances." + currency, amount);
-                    savePlayerData(uuid, pdata);
-                } catch (Exception e) {
-                    System.err.println("[EzEconomy] Failed to save balance for " + uuid + " (" + currency + "): " + e.getMessage());
-                }
+        // write immediately to avoid races during tests and to keep behaviour
+        // consistent with other storage providers
+        synchronized (getPlayerLock(uuid)) {
+            try {
+                YamlConfiguration pdata = loadPlayerData(uuid);
+                pdata.set("balances." + currency, amount);
+                savePlayerData(uuid, pdata);
+            } catch (Exception e) {
+                System.err.println("[EzEconomy] Failed to save balance for " + uuid + " (" + currency + "): " + e.getMessage());
             }
-        });
+        }
     }
 
     @Override
@@ -228,10 +228,14 @@ public class YMLStorageProvider implements StorageProvider {
 
         com.skyblockexp.ezeconomy.api.events.PreTransactionEvent pre = new com.skyblockexp.ezeconomy.api.events.PreTransactionEvent(fromUuid, toUuid, java.math.BigDecimal.valueOf(debitAmount), com.skyblockexp.ezeconomy.api.events.TransactionType.TRANSFER);
         try {
-            plugin.getServer().getScheduler().callSyncMethod(plugin, () -> {
+            if (plugin.getServer().isPrimaryThread()) {
                 plugin.getServer().getPluginManager().callEvent(pre);
-                return null;
-            }).get();
+            } else {
+                plugin.getServer().getScheduler().callSyncMethod(plugin, () -> {
+                    plugin.getServer().getPluginManager().callEvent(pre);
+                    return null;
+                }).get();
+            }
         } catch (Exception e) {
             System.err.println("[EzEconomy] Failed to fire PreTransactionEvent: " + e.getMessage());
         }
@@ -247,10 +251,14 @@ public class YMLStorageProvider implements StorageProvider {
             java.math.BigDecimal.valueOf(toBefore), java.math.BigDecimal.valueOf(result.getToBalance())
         );
         try {
-            plugin.getServer().getScheduler().callSyncMethod(plugin, () -> {
+            if (plugin.getServer().isPrimaryThread()) {
                 plugin.getServer().getPluginManager().callEvent(post);
-                return null;
-            }).get();
+            } else {
+                plugin.getServer().getScheduler().callSyncMethod(plugin, () -> {
+                    plugin.getServer().getPluginManager().callEvent(post);
+                    return null;
+                }).get();
+            }
         } catch (Exception e) {
             System.err.println("[EzEconomy] Failed to fire PostTransactionEvent: " + e.getMessage());
         }

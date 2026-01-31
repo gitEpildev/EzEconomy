@@ -1,4 +1,4 @@
-package com.skyblockexp.ezeconomy;
+package com.skyblockexp.ezeconomy.unit;
 
 import com.skyblockexp.ezeconomy.api.storage.StorageProvider;
 import com.skyblockexp.ezeconomy.storage.TransferResult;

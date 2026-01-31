@@ -44,6 +44,51 @@ public class MongoDBStorageProvider implements StorageProvider {
         if (dbConfig == null) throw new IllegalArgumentException("MongoDB config is missing!");
     }
 
+    // --- Test / Injection helpers (package-private) ---
+    /**
+     * Package-private setter to inject a MongoClient during tests or integration runs.
+     * This will also set the `database`, `balances`, and `banks` collections
+     * using the configured names from `dbConfig` when available.
+     */
+    void setMongoClient(com.mongodb.client.MongoClient client) {
+        synchronized (lock) {
+            if (this.mongoClient != null) {
+                try { this.mongoClient.close(); } catch (Exception ignored) {}
+            }
+            this.mongoClient = client;
+            if (client != null) {
+                String dbName = dbConfig != null ? dbConfig.getString("mongodb.database", "ezeconomy") : "ezeconomy";
+                String coll = dbConfig != null ? dbConfig.getString("mongodb.collection", "balances") : "balances";
+                String banksColl = dbConfig != null ? dbConfig.getString("mongodb.banksCollection", "banks") : "banks";
+                this.database = client.getDatabase(dbName);
+                this.balances = this.database.getCollection(coll);
+                this.banks = this.database.getCollection(banksColl);
+            } else {
+                this.database = null;
+                this.balances = null;
+                this.banks = null;
+            }
+        }
+    }
+
+    /**
+     * Package-private setter to inject a MongoDatabase directly during tests.
+     */
+    void setDatabase(com.mongodb.client.MongoDatabase database) {
+        synchronized (lock) {
+            this.database = database;
+            if (database != null) {
+                String coll = dbConfig != null ? dbConfig.getString("mongodb.collection", "balances") : "balances";
+                String banksColl = dbConfig != null ? dbConfig.getString("mongodb.banksCollection", "banks") : "banks";
+                this.balances = database.getCollection(coll);
+                this.banks = database.getCollection(banksColl);
+            } else {
+                this.balances = null;
+                this.banks = null;
+            }
+        }
+    }
+
     // --- Lifecycle Methods ---
     /**
      * Initializes the MongoDB connection. Throws if not connected.

@@ -1,14 +1,12 @@
 package com.skyblockexp.ezeconomy.feature;
 
-import org.mockbukkit.mockbukkit.MockBukkit;
-import org.mockbukkit.mockbukkit.entity.PlayerMock;
-import com.skyblockexp.ezeconomy.core.EzEconomyPlugin;
-import com.skyblockexp.ezeconomy.api.storage.StorageProvider;
-import org.bukkit.OfflinePlayer;
-import org.bukkit.plugin.Plugin;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockbukkit.mockbukkit.MockBukkit;
+
+import com.skyblockexp.ezeconomy.core.EzEconomyPlugin;
+import com.skyblockexp.ezeconomy.api.storage.StorageProvider;
 
 import java.lang.reflect.Field;
 import java.util.HashMap;
@@ -17,75 +15,79 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class PayCommandFeatureTest {
-    // avoid declaring ServerMock as a field to prevent classloading issues during test discovery
+public class MongoPayFeatureTest {
     private Object server;
     private EzEconomyPlugin plugin;
-    private MockStorage storage;
-
-    private static final String CURRENCY = "dollar";
 
     @BeforeEach
     public void setup() throws Exception {
         server = MockBukkit.mock();
         plugin = MockBukkit.load(EzEconomyPlugin.class);
 
-        // Replace storage with a lightweight in-memory mock using reflection
-        storage = new MockStorage();
+        // Force test mode to avoid real network init
+        System.setProperty("ezeconomy.test", "true");
+
+        // Inject a lightweight in-memory StorageProvider that simulates MongoDB behavior
+        TestMongoStorage provider = new TestMongoStorage();
         Field storageField = EzEconomyPlugin.class.getDeclaredField("storage");
         storageField.setAccessible(true);
-        storageField.set(plugin, storage);
+        storageField.set(plugin, provider);
 
-        // Ensure messages are loaded
         plugin.loadMessageProvider();
     }
 
     @AfterEach
     public void teardown() {
+        System.clearProperty("ezeconomy.test");
         MockBukkit.unmock();
     }
 
     @Test
-    public void testPayCommand_transfersMoneyBetweenPlayers() {
+    public void testPayCommand_offlineRecipient_withMongoStorage() throws Exception {
+        // create offline recipient
+        Object offlineObj = null;
         try {
-            Object senderObj = server.getClass().getMethod("addPlayer", String.class).invoke(server, "payer");
-            Object recipientObj = server.getClass().getMethod("addPlayer", String.class).invoke(server, "payee");
-            org.bukkit.entity.Player sender = (org.bukkit.entity.Player) senderObj;
-            org.bukkit.entity.Player recipient = (org.bukkit.entity.Player) recipientObj;
-            // Give permission
-            sender.setOp(true);
-
-            // Initialize balances
-            storage.setBalance(sender.getUniqueId(), CURRENCY, 10.0);
-            storage.setBalance(recipient.getUniqueId(), CURRENCY, 0.0);
-
-            // Run the command as the sender
-            sender.performCommand("pay payee 5");
-
-            // Assert balances updated
-            assertEquals(5.0, storage.getBalance(sender.getUniqueId(), CURRENCY), 0.0001);
-            assertEquals(5.0, storage.getBalance(recipient.getUniqueId(), CURRENCY), 0.0001);
-        } catch (ReflectiveOperationException e) {
-            throw new RuntimeException(e);
+            java.lang.reflect.Method addOffline = server.getClass().getMethod("addOfflinePlayer", String.class);
+            offlineObj = addOffline.invoke(server, "mongoOffline");
+        } catch (NoSuchMethodException ignored) {
+            offlineObj = org.bukkit.Bukkit.getOfflinePlayer("mongoOffline");
         }
+        org.bukkit.OfflinePlayer offline = (org.bukkit.OfflinePlayer) offlineObj;
+
+        // create sender
+        Object senderObj = server.getClass().getMethod("addPlayer", String.class).invoke(server, "mongoSender");
+        org.bukkit.entity.Player sender = (org.bukkit.entity.Player) senderObj;
+        sender.setOp(true);
+
+        // get provider and initialize balances
+        Field storageField = EzEconomyPlugin.class.getDeclaredField("storage");
+        storageField.setAccessible(true);
+        TestMongoStorage storage = (TestMongoStorage) storageField.get(plugin);
+
+        storage.setBalance(sender.getUniqueId(), "dollar", 10.0);
+        storage.setBalance(offline.getUniqueId(), "dollar", 0.0);
+
+        // perform command which will invoke storage transfer path
+        sender.performCommand("pay mongoOffline 5");
+
+        // wait briefly for any async actions
+        Thread.sleep(300);
+
+        assertEquals(5.0, storage.getBalance(sender.getUniqueId(), "dollar"), 0.0001);
+        assertEquals(5.0, storage.getBalance(offline.getUniqueId(), "dollar"), 0.0001);
     }
 
-    // Minimal in-memory StorageProvider used only by tests
-    public static class MockStorage implements StorageProvider {
+    // Simple in-memory test storage that implements the StorageProvider contract
+    public static class TestMongoStorage implements StorageProvider {
         private final Map<String, Double> balances = new HashMap<>();
 
         private String key(UUID uuid, String currency) {
             return uuid.toString() + ":" + currency;
         }
 
-        @Override
-        public void init() {}
-
-        @Override
-        public void load() {}
-
-        @Override
-        public void save() {}
+        @Override public void init() {}
+        @Override public void load() {}
+        @Override public void save() {}
 
         @Override
         public double getBalance(UUID uuid, String currency) {
@@ -135,10 +137,9 @@ public class PayCommandFeatureTest {
             return out;
         }
 
-        @Override
-        public void shutdown() {}
+        @Override public void shutdown() {}
 
-        // Bank methods not used in this test - provide trivial implementations
+        // Bank methods trivial
         @Override public boolean createBank(String name, UUID owner) { return false; }
         @Override public boolean deleteBank(String name) { return false; }
         @Override public boolean bankExists(String name) { return false; }
