@@ -110,8 +110,17 @@ public class PayCommand implements CommandExecutor {
         String currency = plugin.getDefaultCurrency();
         String nameArg = args[0];
         String fromName = from.getName();
-        // Resolve offline player and perform transfer synchronously on the main thread
-        OfflinePlayer offline = Bukkit.getOfflinePlayer(nameArg);
+        // Resolve offline player: prefer matching an existing OfflinePlayer by name, fallback to Bukkit.getOfflinePlayer
+        OfflinePlayer offline = null;
+        for (OfflinePlayer p : Bukkit.getOfflinePlayers()) {
+            if (p.getName() != null && p.getName().equalsIgnoreCase(nameArg)) {
+                offline = p;
+                break;
+            }
+        }
+        if (offline == null) {
+            offline = Bukkit.getOfflinePlayer(nameArg);
+        }
         if (offline == null) {
             sender.sendMessage(messages.color(messages.get("player_not_found")));
             return true;
