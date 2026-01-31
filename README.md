@@ -2,7 +2,12 @@
 
 ![EzEconomy Icon](https://www.spigotmc.org/data/resource_icons/130/130975.jpg)
 
-**EzEconomy** – A professional-grade Vault economy provider for Minecraft servers. Choose from YML, MySQL, SQLite, MongoDB, or custom storage with multi-currency support, async caching, and thorough permission controls.
+[![Release](https://img.shields.io/github/v/release/ez-plugins/EzEconomy?label=release&style=flat-square)](https://github.com/ez-plugins/EzEconomy/releases)
+[![CI](https://github.com/ez-plugins/EzEconomy/actions/workflows/ci.yml/badge.svg)](https://github.com/ez-plugins/EzEconomy/actions)
+[![License](https://img.shields.io/github/license/ez-plugins/EzEconomy?style=flat-square)](https://github.com/ez-plugins/EzEconomy/blob/main/LICENSE.md)
+[![GitHub Stars](https://img.shields.io/github/stars/ez-plugins/EzEconomy?style=social)](https://github.com/ez-plugins/EzEconomy/stargazers)
+
+**EzEconomy** is a professional-grade Vault economy provider for Minecraft servers. Choose from YML, MySQL, SQLite, MongoDB, or custom storage with multi-currency support, async caching, and thorough permission controls.
 
 ---
 
