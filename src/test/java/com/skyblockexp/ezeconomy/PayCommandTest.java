@@ -117,8 +117,7 @@ public class PayCommandTest {
             setBalance(uuid, currency, bal + amount);
         }
 
-        @Override
-        public java.util.Map<UUID, Double> getAllBalances(String currency) { return java.util.Collections.emptyMap(); }
+        
 
         @Override
         public java.util.Map<UUID, Double> getAllBalances(String currency) {
