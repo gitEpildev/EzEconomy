@@ -1,4 +1,4 @@
-package com.skyblockexp.ezeconomy;
+package com.skyblockexp.ezeconomy.feature;
 
 import org.mockbukkit.mockbukkit.MockBukkit;
 import org.mockbukkit.mockbukkit.entity.PlayerMock;

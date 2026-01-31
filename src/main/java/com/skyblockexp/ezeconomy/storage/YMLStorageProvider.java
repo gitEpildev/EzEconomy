@@ -122,17 +122,17 @@ public class YMLStorageProvider implements StorageProvider {
 
     @Override
     public void setBalance(UUID uuid, String currency, double amount) {
-        CompletableFuture.runAsync(() -> {
-            synchronized (getPlayerLock(uuid)) {
-                try {
-                    YamlConfiguration pdata = loadPlayerData(uuid);
-                    pdata.set("balances." + currency, amount);
-                    savePlayerData(uuid, pdata);
-                } catch (Exception e) {
-                    System.err.println("[EzEconomy] Failed to save balance for " + uuid + " (" + currency + "): " + e.getMessage());
-                }
+        // write immediately to avoid races during tests and to keep behaviour
+        // consistent with other storage providers
+        synchronized (getPlayerLock(uuid)) {
+            try {
+                YamlConfiguration pdata = loadPlayerData(uuid);
+                pdata.set("balances." + currency, amount);
+                savePlayerData(uuid, pdata);
+            } catch (Exception e) {
+                System.err.println("[EzEconomy] Failed to save balance for " + uuid + " (" + currency + "): " + e.getMessage());
             }
-        });
+        }
     }
 
     @Override

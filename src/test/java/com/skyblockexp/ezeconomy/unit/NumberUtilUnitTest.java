@@ -1,4 +1,4 @@
-package com.skyblockexp.ezeconomy;
+package com.skyblockexp.ezeconomy.unit;
 
 import com.skyblockexp.ezeconomy.util.NumberUtil;
 import org.junit.jupiter.api.Test;
