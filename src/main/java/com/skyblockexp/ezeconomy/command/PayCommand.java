@@ -126,12 +126,16 @@ public class PayCommand implements CommandExecutor {
             return true;
         }
 
+        // DEBUG: log resolved offline player info for tests
+        plugin.getLogger().info("PayCommand: resolved offline name=" + nameArg + " -> " + offline.getName() + " (" + offline.getUniqueId() + ")");
+
         if (offline.getUniqueId().equals(fromUuid)) {
             sender.sendMessage(messages.color(messages.get("cannot_pay_self")));
             return true;
         }
         // If offline player hasn't played before, ensure storage contains a record for them
         boolean exists = offline.hasPlayedBefore() || storage.getAllBalances(currency).containsKey(offline.getUniqueId());
+        plugin.getLogger().info("PayCommand: offline.hasPlayedBefore=" + offline.hasPlayedBefore() + ", storageHasRecord=" + storage.getAllBalances(currency).containsKey(offline.getUniqueId()));
         if (!exists) {
             sender.sendMessage(messages.color(messages.get("player_not_found")));
             return true;
