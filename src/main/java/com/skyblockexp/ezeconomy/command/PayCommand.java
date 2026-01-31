@@ -134,8 +134,10 @@ public class PayCommand implements CommandExecutor {
             return true;
         }
         // If offline player hasn't played before, ensure storage contains a record for them
-        boolean exists = offline.hasPlayedBefore() || storage.getAllBalances(currency).containsKey(offline.getUniqueId());
-        plugin.getLogger().info("PayCommand: offline.hasPlayedBefore=" + offline.hasPlayedBefore() + ", storageHasRecord=" + storage.getAllBalances(currency).containsKey(offline.getUniqueId()));
+        java.util.Map<UUID, Double> all = storage.getAllBalances(currency);
+        plugin.getLogger().info("PayCommand: storage keys=" + all.keySet());
+        boolean exists = offline.hasPlayedBefore() || all.containsKey(offline.getUniqueId());
+        plugin.getLogger().info("PayCommand: offline.hasPlayedBefore=" + offline.hasPlayedBefore() + ", storageHasRecord=" + all.containsKey(offline.getUniqueId()));
         if (!exists) {
             sender.sendMessage(messages.color(messages.get("player_not_found")));
             return true;
