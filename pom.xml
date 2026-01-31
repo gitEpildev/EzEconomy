@@ -12,6 +12,13 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
+        <!-- Target Java 21 to match Paper API (class file version 65) -->
+        <!-- Allow CI to override the Paper API version with -Dpaper.version -->
+        <paper.version>1.21.11-R0.1-SNAPSHOT</paper.version>
+        <!-- MockBukkit coordinates are configurable so CI can select the right artifact per Paper matrix entry -->
+        <mockbukkit.groupId>org.mockbukkit.mockbukkit</mockbukkit.groupId>
+        <mockbukkit.artifactId>mockbukkit-v1.21</mockbukkit.artifactId>
+        <mockbukkit.version>4.101.0</mockbukkit.version>
     </properties>
     <build>
         <resources>
@@ -68,6 +75,23 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.8.1</version>
+                <configuration>
+                    <source>16</source>
+                    <target>16</target>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.0.0-M8</version>
+                <configuration>
+                    <useModulePath>false</useModulePath>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
     <dependencies>
@@ -105,7 +129,7 @@
         <dependency>
             <groupId>io.papermc.paper</groupId>
             <artifactId>paper-api</artifactId>
-            <version>1.17.1-R0.1-SNAPSHOT</version>
+            <version>${paper.version}</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -135,6 +159,24 @@
             <artifactId>mongodb-driver-sync</artifactId>
             <version>4.11.1</version>
         </dependency>
+        <dependency>
+            <groupId>${mockbukkit.groupId}</groupId>
+            <artifactId>${mockbukkit.artifactId}</artifactId>
+            <version>${mockbukkit.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <version>5.9.3</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <version>5.9.3</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
     <repositories>
         <repository>
@@ -146,6 +188,19 @@
             <snapshots>
                 <enabled>true</enabled>
             </snapshots>
+        </repository>
+        <repository>
+            <id>central</id>
+            <name>Maven Central</name>
+            <url>https://repo.maven.apache.org/maven2</url>
+        </repository>
+        <repository>
+            <id>spigot-repo</id>
+            <url>https://hub.spigotmc.org/nexus/content/repositories/snapshots/</url>
+        </repository>
+        <repository>
+            <id>maxhenkel-public</id>
+            <url>https://maven.maxhenkel.de/repository/public</url>
         </repository>
         <repository>
             <id>enginehub-repo</id>
@@ -182,4 +237,83 @@
             </snapshots>
         </repository>
     </repositories>
+    <profiles>
+        <!-- If the build runs on JDK 17, enable Java 17 compilation. -->
+        <profile>
+            <id>jdk17</id>
+            <activation>
+                <jdk>[17,20]</jdk>
+            </activation>
+            <properties>
+                <maven.compiler.source>17</maven.compiler.source>
+                <maven.compiler.target>17</maven.compiler.target>
+                <maven.compiler.release>17</maven.compiler.release>
+            </properties>
+        </profile>
+        <!-- If the build runs on JDK 21 or newer, enable Java 21 compilation. -->
+        <profile>
+            <id>jdk21</id>
+            <activation>
+                <jdk>[21,)</jdk>
+            </activation>
+            <properties>
+                <maven.compiler.source>21</maven.compiler.source>
+                <maven.compiler.target>21</maven.compiler.target>
+                <maven.compiler.release>21</maven.compiler.release>
+            </properties>
+        </profile>
+        <profile>
+            <id>integration</id>
+            <repositories>
+                    <repository>
+                        <id>central</id>
+                        <url>https://repo.maven.apache.org/maven2</url>
+                    </repository>
+                </repositories>
+                <dependencies>
+                    <!-- MockBukkit is provided as a test-scoped dependency at project level -->
+                    <!-- paper-api is provided by the server; main dependency is declared at project scope -->
+                </dependencies>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>build-helper-maven-plugin</artifactId>
+                        <version>3.2.0</version>
+                        <executions>
+                            <execution>
+                                <id>add-integration-test-source</id>
+                                <phase>generate-test-sources</phase>
+                                <goals>
+                                    <goal>add-test-source</goal>
+                                </goals>
+                                <configuration>
+                                    <sources>
+                                        <source>src/integration/java</source>
+                                    </sources>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>feature-tests</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <version>3.0.0-M7</version>
+                        <configuration>
+                            <includes>
+                                <include>**/*FeatureTest.java</include>
+                            </includes>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>

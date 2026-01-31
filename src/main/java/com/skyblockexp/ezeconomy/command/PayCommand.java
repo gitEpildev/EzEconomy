@@ -15,6 +15,8 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import java.util.concurrent.CompletableFuture;
+import java.util.UUID;
 
 public class PayCommand implements CommandExecutor {
     private final EzEconomyPlugin plugin;
@@ -39,7 +41,9 @@ public class PayCommand implements CommandExecutor {
             return true;
         }
         Player from = (Player) sender;
-        OfflinePlayer to = Bukkit.getOfflinePlayer(args[0]);
+        // Prefer online exact match to avoid blocking lookups.
+        Player online = Bukkit.getPlayerExact(args[0]);
+        OfflinePlayer to = (online != null) ? online : null;
         double amount = NumberUtil.parseAmount(args[1]);
 
         // Validate amount first
@@ -52,26 +56,81 @@ public class PayCommand implements CommandExecutor {
             return true;
         }
 
-        // Validate not paying self
-        if (from.getUniqueId().equals(to.getUniqueId())) {
-            sender.sendMessage(messages.color(messages.get("cannot_pay_self")));
-            return true;
-        }
-
-        // Validate recipient exists
-        if (to == null || (!to.isOnline() && !to.hasPlayedBefore())) {
-            sender.sendMessage(messages.color(messages.get("player_not_found")));
-            return true;
-        }
-
+        // If recipient is online we can perform the transfer synchronously (fast path)
         double netAmount = amount;
         StorageProvider storage = plugin.getStorageOrWarn();
         if (storage == null) {
             return true;
         }
 
-        // Fire a cancellable pay event so other plugins can intercept
-        PlayerPayPlayerEvent payEvent = new PlayerPayPlayerEvent(from.getUniqueId(), to.getUniqueId(), BigDecimal.valueOf(amount));
+        // If recipient resolved as online, handle synchronously (fast path)
+        if (to != null) {
+            // Prevent paying self
+            if (from.getUniqueId().equals(to.getUniqueId())) {
+                sender.sendMessage(messages.color(messages.get("cannot_pay_self")));
+                return true;
+            }
+
+            // Fire cancellable event on main thread
+            PlayerPayPlayerEvent payEvent = new PlayerPayPlayerEvent(from.getUniqueId(), to.getUniqueId(), BigDecimal.valueOf(amount));
+            Bukkit.getPluginManager().callEvent(payEvent);
+            if (payEvent.isCancelled()) {
+                String reason = payEvent.getCancelReason();
+                if (reason != null && !reason.isEmpty()) {
+                    sender.sendMessage(reason);
+                } else {
+                    sender.sendMessage(messages.color("&cPayment cancelled."));
+                }
+                return true;
+            }
+
+            TransferResult transfer = storage.transfer(from.getUniqueId(), to.getUniqueId(), plugin.getDefaultCurrency(), amount, netAmount);
+            if (!transfer.isSuccess()) {
+                sender.sendMessage(messages.color(messages.get("not_enough_money")));
+                return true;
+            }
+
+            // Success messages
+            sender.sendMessage(messages.color(messages.get("paid", java.util.Map.of(
+                "player", to.getName(),
+                "amount", plugin.getEconomy().format(netAmount)
+            ))));
+            if (to.isOnline() && to.getPlayer() != null) {
+                to.getPlayer().sendMessage(messages.color(messages.get("received", java.util.Map.of(
+                    "player", from.getName(),
+                    "amount", plugin.getEconomy().format(netAmount)
+                ))));
+            }
+
+            return true;
+        }
+
+        // Recipient not online — perform a safe async lookup and transfer to avoid blocking the main thread
+        UUID fromUuid = from.getUniqueId();
+        String currency = plugin.getDefaultCurrency();
+        String nameArg = args[0];
+        String fromName = from.getName();
+        // Resolve offline player directly to avoid iterating all offline players
+        OfflinePlayer offline = Bukkit.getOfflinePlayer(nameArg);
+        if (offline == null) {
+            sender.sendMessage(messages.color(messages.get("player_not_found")));
+            return true;
+        }
+
+
+        if (offline.getUniqueId().equals(fromUuid)) {
+            sender.sendMessage(messages.color(messages.get("cannot_pay_self")));
+            return true;
+        }
+        // If offline player hasn't played before, ensure storage contains a record for them
+        java.util.Map<UUID, Double> all = storage.getAllBalances(currency);
+        boolean exists = offline.hasPlayedBefore() || all.containsKey(offline.getUniqueId());
+        if (!exists) {
+            sender.sendMessage(messages.color(messages.get("player_not_found")));
+            return true;
+        }
+
+        PlayerPayPlayerEvent payEvent = new PlayerPayPlayerEvent(fromUuid, offline.getUniqueId(), BigDecimal.valueOf(amount));
         Bukkit.getPluginManager().callEvent(payEvent);
         if (payEvent.isCancelled()) {
             String reason = payEvent.getCancelReason();
@@ -83,23 +142,23 @@ public class PayCommand implements CommandExecutor {
             return true;
         }
 
-        TransferResult transfer = storage.transfer(from.getUniqueId(), to.getUniqueId(), plugin.getDefaultCurrency(), amount, netAmount);
-        if (!transfer.isSuccess()) {
+        TransferResult tr = storage.transfer(fromUuid, offline.getUniqueId(), currency, amount, netAmount);
+        if (!tr.isSuccess()) {
             sender.sendMessage(messages.color(messages.get("not_enough_money")));
             return true;
         }
 
-        // Only send success if both checks above pass and transfer is successful
         sender.sendMessage(messages.color(messages.get("paid", java.util.Map.of(
-            "player", to.getName(),
+            "player", offline.getName(),
             "amount", plugin.getEconomy().format(netAmount)
         ))));
-        if (to.isOnline() && to.getPlayer() != null) {
-            to.getPlayer().sendMessage(messages.color(messages.get("received", java.util.Map.of(
-                "player", from.getName(),
+        if (offline.isOnline() && offline.getPlayer() != null) {
+            offline.getPlayer().sendMessage(messages.color(messages.get("received", java.util.Map.of(
+                "player", fromName,
                 "amount", plugin.getEconomy().format(netAmount)
             ))));
         }
+
         return true;
     }
 }

@@ -252,7 +252,12 @@ public class EzEconomyPlugin extends JavaPlugin {
         long interval = getConfig().getLong("bank-interest-interval-ticks", DEFAULT_INTEREST_INTERVAL_TICKS);
         bankInterestManager.start(interval);
         this.dailyRewardManager = new DailyRewardManager(this);
-        this.metrics = new EzEconomyMetrics(this);
+        try {
+            this.metrics = new EzEconomyMetrics(this);
+        } catch (Exception ex) {
+            getLogger().warning("Failed to initialize metrics: " + ex.getMessage());
+            this.metrics = null;
+        }
     }
 
     private void registerEconomy() {
