@@ -11,7 +11,8 @@ import org.bukkit.ChatColor;
 import org.bukkit.configuration.file.FileConfiguration;
 
 public class MessageProvider {
-    private final FileConfiguration config;
+    private final FileConfiguration selectedConfig;
+    private final FileConfiguration fallbackConfig;
     private final String language;
     private final MiniMessage miniMessage = MiniMessage.miniMessage();
     private final LegacyComponentSerializer legacySerializer = LegacyComponentSerializer.builder()
@@ -19,11 +20,10 @@ public class MessageProvider {
             .useUnusualXRepeatedCharacterHexFormat()
             .build();
 
-    public MessageProvider(FileConfiguration config) {
-        this.config = Objects.requireNonNull(config, "config");
-        // Try to get language from config, default to 'en'
-        String lang = config.getString("language");
-        this.language = (lang != null && !lang.isEmpty()) ? lang : "en";
+    public MessageProvider(FileConfiguration selectedConfig, FileConfiguration fallbackConfig, String language) {
+        this.selectedConfig = Objects.requireNonNull(selectedConfig, "selectedConfig");
+        this.fallbackConfig = Objects.requireNonNull(fallbackConfig, "fallbackConfig");
+        this.language = (language != null && !language.isEmpty()) ? language : "en";
     }
 
     public String get(String key) {
@@ -41,11 +41,10 @@ public class MessageProvider {
     }
 
     private String resolveMessage(String key) {
-        // Try language section first, then fallback to English
-        String langKey = "messages." + language + "." + key;
-        String msg = config.getString(langKey);
+        // Try selected language file first, then fallback file, then a missing placeholder
+        String msg = selectedConfig.getString(key);
         if (msg == null) {
-            msg = config.getString("messages.en." + key, "§cMissing message: " + key);
+            msg = fallbackConfig.getString(key, "§cMissing message: " + key);
         }
         return msg;
     }
