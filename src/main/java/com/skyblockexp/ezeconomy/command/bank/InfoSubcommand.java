@@ -45,7 +45,7 @@ public class InfoSubcommand implements Subcommand {
             "balance", plugin.getEconomy().format(balance),
             "currency", currency,
             "members", String.valueOf(storage.getBankMembers(args[0]).size())
-        ))));
+        ));
         return true;
     }
     private boolean handleEconomyFailure(CommandSender sender, EconomyResponse response) {

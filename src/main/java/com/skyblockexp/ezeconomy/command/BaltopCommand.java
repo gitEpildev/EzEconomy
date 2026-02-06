@@ -55,17 +55,17 @@ public class BaltopCommand implements CommandExecutor {
             }
             if (page <= 0 || page > totalPages) {
                 MessageUtils.send(sender, plugin, "baltop_invalid_page", java.util.Map.of(
-                        "page", String.valueOf(page),
-                        "total_pages", String.valueOf(totalPages),
-                        "page_size", String.valueOf(PAGE_SIZE)
-                )));
-                return true;
-            }
-            MessageUtils.send(sender, plugin, "top_balances_page", java.util.Map.of(
                     "page", String.valueOf(page),
                     "total_pages", String.valueOf(totalPages),
                     "page_size", String.valueOf(PAGE_SIZE)
-            )));
+                ));
+                return true;
+            }
+                MessageUtils.send(sender, plugin, "top_balances_page", java.util.Map.of(
+                    "page", String.valueOf(page),
+                    "total_pages", String.valueOf(totalPages),
+                    "page_size", String.valueOf(PAGE_SIZE)
+                ));
             int startIndex = (page - 1) * PAGE_SIZE;
             int endIndex = Math.min(startIndex + PAGE_SIZE, totalEntries);
             sorted = sorted.subList(startIndex, endIndex);
