@@ -24,20 +24,19 @@ public class DailyResetSubcommand implements Subcommand {
 
     @Override
     public boolean execute(CommandSender sender, String[] args) {
-        MessageProvider messages = plugin.getMessageProvider();
         if (!sender.hasPermission("ezeconomy.admin.daily")) {
-            sender.sendMessage(messages.color(messages.get("no_permission")));
+            com.skyblockexp.ezeconomy.util.MessageUtils.send(sender, plugin, "no_permission");
             return true;
         }
         if (args.length < 1) {
-            sender.sendMessage(messages.color(messages.get("usage_daily_reset")));
+            com.skyblockexp.ezeconomy.util.MessageUtils.send(sender, plugin, "usage_daily_reset");
             return true;
         }
         OfflinePlayer target = Bukkit.getOfflinePlayer(args[0]);
         dailyRewardManager.resetReward(target.getUniqueId());
-        sender.sendMessage(messages.color(messages.get("daily_reset", Map.of(
+        com.skyblockexp.ezeconomy.util.MessageUtils.send(sender, plugin, "daily_reset", Map.of(
                 "player", target.getName() == null ? args[0] : target.getName()
-        ))));
+        ));
         return true;
     }
 }

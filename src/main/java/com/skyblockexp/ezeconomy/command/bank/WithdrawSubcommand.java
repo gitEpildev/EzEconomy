@@ -21,23 +21,22 @@ public class WithdrawSubcommand implements Subcommand {
 
     @Override
     public boolean execute(CommandSender sender, String[] args) {
-        MessageProvider messages = plugin.getMessageProvider();
         if (!sender.hasPermission("ezeconomy.bank.withdraw") && !sender.hasPermission("ezeconomy.bank.admin")) {
-            sender.sendMessage(messages.color(messages.get("no_permission")));
+            com.skyblockexp.ezeconomy.util.MessageUtils.send(sender, plugin, "no_permission");
             return true;
         }
         if (args.length < 2) {
-            sender.sendMessage(messages.color(messages.get("usage_bank_withdraw")));
+            com.skyblockexp.ezeconomy.util.MessageUtils.send(sender, plugin, "usage_bank_withdraw");
             return true;
         }
         String currency = args.length >= 3 ? args[2] : "dollar";
         Double amount = NumberUtil.parseDouble(args[1]);
         if (amount == null || amount <= 0) {
-            sender.sendMessage(messages.color(messages.get("invalid_amount")));
+            com.skyblockexp.ezeconomy.util.MessageUtils.send(sender, plugin, "invalid_amount");
             return true;
         }
         EconomyResponse withdrawResponse = plugin.getEconomy().bankWithdraw(args[0], currency, amount);
-        if (handleEconomyFailure(sender, withdrawResponse, messages)) {
+        if (handleEconomyFailure(sender, withdrawResponse)) {
             return true;
         }
         String formattedAmount = plugin.getEconomy().format(amount);
@@ -45,18 +44,17 @@ public class WithdrawSubcommand implements Subcommand {
         placeholders.put("name", String.valueOf(args[0]));
         placeholders.put("amount", String.valueOf(formattedAmount));
         placeholders.put("currency", String.valueOf(currency));
-        sender.sendMessage(messages.color(messages.get("withdrew", placeholders)));
+        com.skyblockexp.ezeconomy.util.MessageUtils.send(sender, plugin, "withdrew", placeholders);
         return true;
     }
-
-    private boolean handleEconomyFailure(CommandSender sender, EconomyResponse response, MessageProvider messages) {
+    private boolean handleEconomyFailure(CommandSender sender, EconomyResponse response) {
         if (response == null || response.type == EconomyResponse.ResponseType.FAILURE
             || response.type == EconomyResponse.ResponseType.NOT_IMPLEMENTED) {
             String message = response == null ? "Bank operation failed." : response.errorMessage;
             if (message == null || message.isBlank()) {
                 message = "Bank operation failed.";
             }
-            sender.sendMessage(messages.color(message));
+            sender.sendMessage(com.skyblockexp.ezeconomy.util.MessageUtils.color(plugin, message));
             return true;
         }
         return false;

@@ -22,23 +22,22 @@ public class RemoveMemberSubcommand implements Subcommand {
 
     @Override
     public boolean execute(CommandSender sender, String[] args) {
-        MessageProvider messages = plugin.getMessageProvider();
         if (!sender.hasPermission("ezeconomy.bank.removemember") && !sender.hasPermission("ezeconomy.bank.admin")) {
-            sender.sendMessage(messages.color(messages.get("no_permission")));
+            com.skyblockexp.ezeconomy.util.MessageUtils.send(sender, plugin, "no_permission");
             return true;
         }
         if (args.length < 2) {
-            sender.sendMessage(messages.color(messages.get("usage_bank")));
+            com.skyblockexp.ezeconomy.util.MessageUtils.send(sender, plugin, "usage_bank");
             return true;
         }
         StorageProvider storage = plugin.getStorageOrWarn();
         if (storage == null) {
-            sender.sendMessage(messages.color(messages.get("storage_unavailable")));
+            com.skyblockexp.ezeconomy.util.MessageUtils.send(sender, plugin, "storage_unavailable");
             return true;
         }
         OfflinePlayer player = Bukkit.getOfflinePlayer(args[1]);
         storage.removeBankMember(args[0], player.getUniqueId());
-        sender.sendMessage(messages.color(messages.get("removed_member", Map.of("player", player.getName(), "name", args[0]))));
+        com.skyblockexp.ezeconomy.util.MessageUtils.send(sender, plugin, "removed_member", Map.of("player", player.getName(), "name", args[0]));
         return true;
     }
 }

@@ -1,7 +1,7 @@
 
 package com.skyblockexp.ezeconomy.command;
 
-import com.skyblockexp.ezeconomy.core.MessageProvider;
+import com.skyblockexp.ezeconomy.util.MessageUtils;
 import com.skyblockexp.ezeconomy.util.NumberUtil;
 
 import com.skyblockexp.ezeconomy.core.EzEconomyPlugin;
@@ -27,17 +27,16 @@ public class PayCommand implements CommandExecutor {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        MessageProvider messages = plugin.getMessageProvider();
         if (!(sender instanceof Player)) {
-            sender.sendMessage(messages.color(messages.get("only_players")));
+            MessageUtils.send(sender, plugin, "only_players");
             return true;
         }
         if (!sender.hasPermission("ezeconomy.pay")) {
-            sender.sendMessage(messages.color(messages.get("no_permission")));
+            MessageUtils.send(sender, plugin, "no_permission");
             return true;
         }
         if (args.length < 2) {
-            sender.sendMessage(messages.color(messages.get("usage_pay")));
+            MessageUtils.send(sender, plugin, "usage_pay");
             return true;
         }
         Player from = (Player) sender;
@@ -48,11 +47,11 @@ public class PayCommand implements CommandExecutor {
 
         // Validate amount first
         if (Double.isNaN(amount)) {
-            sender.sendMessage(messages.color(messages.get("invalid_amount")));
+            MessageUtils.send(sender, plugin, "invalid_amount");
             return true;
         }
         if (amount <= 0) {
-            sender.sendMessage(messages.color(messages.get("must_be_positive")));
+            MessageUtils.send(sender, plugin, "must_be_positive");
             return true;
         }
 
@@ -67,7 +66,7 @@ public class PayCommand implements CommandExecutor {
         if (to != null) {
             // Prevent paying self
             if (from.getUniqueId().equals(to.getUniqueId())) {
-                sender.sendMessage(messages.color(messages.get("cannot_pay_self")));
+                MessageUtils.send(sender, plugin, "cannot_pay_self");
                 return true;
             }
 
@@ -79,27 +78,27 @@ public class PayCommand implements CommandExecutor {
                 if (reason != null && !reason.isEmpty()) {
                     sender.sendMessage(reason);
                 } else {
-                    sender.sendMessage(messages.color("&cPayment cancelled."));
+                    MessageUtils.send(sender, plugin, "payment_cancelled");
                 }
                 return true;
             }
 
             TransferResult transfer = storage.transfer(from.getUniqueId(), to.getUniqueId(), plugin.getDefaultCurrency(), amount, netAmount);
             if (!transfer.isSuccess()) {
-                sender.sendMessage(messages.color(messages.get("not_enough_money")));
+                MessageUtils.send(sender, plugin, "not_enough_money");
                 return true;
             }
 
             // Success messages
-            sender.sendMessage(messages.color(messages.get("paid", java.util.Map.of(
+            MessageUtils.send(sender, plugin, "paid", java.util.Map.of(
                 "player", to.getName(),
                 "amount", plugin.getEconomy().format(netAmount)
-            ))));
+            ));
             if (to.isOnline() && to.getPlayer() != null) {
-                to.getPlayer().sendMessage(messages.color(messages.get("received", java.util.Map.of(
+                MessageUtils.send(to.getPlayer(), plugin, "received", java.util.Map.of(
                     "player", from.getName(),
                     "amount", plugin.getEconomy().format(netAmount)
-                ))));
+                ));
             }
 
             return true;
@@ -113,20 +112,20 @@ public class PayCommand implements CommandExecutor {
         // Resolve offline player directly to avoid iterating all offline players
         OfflinePlayer offline = Bukkit.getOfflinePlayer(nameArg);
         if (offline == null) {
-            sender.sendMessage(messages.color(messages.get("player_not_found")));
+            MessageUtils.send(sender, plugin, "player_not_found");
             return true;
         }
 
 
         if (offline.getUniqueId().equals(fromUuid)) {
-            sender.sendMessage(messages.color(messages.get("cannot_pay_self")));
+            MessageUtils.send(sender, plugin, "cannot_pay_self");
             return true;
         }
         // If offline player hasn't played before, ensure storage contains a record for them
         java.util.Map<UUID, Double> all = storage.getAllBalances(currency);
         boolean exists = offline.hasPlayedBefore() || all.containsKey(offline.getUniqueId());
         if (!exists) {
-            sender.sendMessage(messages.color(messages.get("player_not_found")));
+            MessageUtils.send(sender, plugin, "player_not_found");
             return true;
         }
 
@@ -137,26 +136,26 @@ public class PayCommand implements CommandExecutor {
             if (reason != null && !reason.isEmpty()) {
                 sender.sendMessage(reason);
             } else {
-                sender.sendMessage(messages.color("&cPayment cancelled."));
+                MessageUtils.send(sender, plugin, "payment_cancelled");
             }
             return true;
         }
 
         TransferResult tr = storage.transfer(fromUuid, offline.getUniqueId(), currency, amount, netAmount);
         if (!tr.isSuccess()) {
-            sender.sendMessage(messages.color(messages.get("not_enough_money")));
+            MessageUtils.send(sender, plugin, "not_enough_money");
             return true;
         }
 
-        sender.sendMessage(messages.color(messages.get("paid", java.util.Map.of(
+        MessageUtils.send(sender, plugin, "paid", java.util.Map.of(
             "player", offline.getName(),
             "amount", plugin.getEconomy().format(netAmount)
-        ))));
+        ));
         if (offline.isOnline() && offline.getPlayer() != null) {
-            offline.getPlayer().sendMessage(messages.color(messages.get("received", java.util.Map.of(
+            MessageUtils.send(offline.getPlayer(), plugin, "received", java.util.Map.of(
                 "player", fromName,
                 "amount", plugin.getEconomy().format(netAmount)
-            ))));
+            ));
         }
 
         return true;

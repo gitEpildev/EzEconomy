@@ -2,7 +2,7 @@ package com.skyblockexp.ezeconomy.command;
 
 import com.skyblockexp.ezeconomy.command.bank.*;
 import com.skyblockexp.ezeconomy.core.EzEconomyPlugin;
-import com.skyblockexp.ezeconomy.core.MessageProvider;
+import com.skyblockexp.ezeconomy.util.MessageUtils;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -32,9 +32,8 @@ public class BankCommand implements CommandExecutor {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        MessageProvider messages = plugin.getMessageProvider();
         if (args.length == 0) {
-            sender.sendMessage(messages.color(messages.get("usage_bank")));
+            MessageUtils.send(sender, plugin, "usage_bank");
             return true;
         }
 
@@ -48,7 +47,7 @@ public class BankCommand implements CommandExecutor {
         }
 
         // Unknown subcommand
-        sender.sendMessage(messages.color(messages.get("unknown_subcommand")));
+        MessageUtils.send(sender, plugin, "unknown_subcommand");
         return true;
     }
 }

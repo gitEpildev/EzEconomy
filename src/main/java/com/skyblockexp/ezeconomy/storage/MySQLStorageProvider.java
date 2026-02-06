@@ -60,7 +60,7 @@ public class MySQLStorageProvider implements StorageProvider {
                 stmt.executeUpdate("CREATE TABLE IF NOT EXISTS banks (name VARCHAR(64), currency VARCHAR(32), balance DOUBLE, PRIMARY KEY (name, currency))");
                 stmt.executeUpdate("CREATE TABLE IF NOT EXISTS bank_members (bank VARCHAR(64), uuid VARCHAR(36), owner BOOLEAN, PRIMARY KEY (bank, uuid))");
             } catch (SQLException e) {
-                plugin.getLogger().severe("MySQL schema init failed: " + e.getMessage());
+                plugin.getLogger().warning("MySQL schema init failed: " + e.getMessage());
                 throw new StorageInitException("Failed to initialize MySQL schema", e);
             }
         }
@@ -82,7 +82,7 @@ public class MySQLStorageProvider implements StorageProvider {
                 "jdbc:mysql://" + host + ":" + port + "/" + database,
                 username, password);
         } catch (SQLException e) {
-            plugin.getLogger().severe("MySQL connection failed: " + e.getMessage());
+            plugin.getLogger().warning("MySQL connection failed: " + e.getMessage());
             throw new StorageLoadException("Failed to connect to MySQL", e);
         }
     }

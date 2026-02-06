@@ -7,7 +7,7 @@ import com.skyblockexp.ezeconomy.command.eco.SetSubcommand;
 import com.skyblockexp.ezeconomy.command.eco.TakeSubcommand;
 import com.skyblockexp.ezeconomy.command.Subcommand;
 import com.skyblockexp.ezeconomy.core.EzEconomyPlugin;
-import com.skyblockexp.ezeconomy.core.MessageProvider;
+import com.skyblockexp.ezeconomy.util.MessageUtils;
 
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -31,14 +31,13 @@ public class EcoCommand implements CommandExecutor {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        MessageProvider messages = plugin.getMessageProvider();
         if (!sender.hasPermission("ezeconomy.eco")) {
-            sender.sendMessage(messages.color(messages.get("no_permission")));
+            MessageUtils.send(sender, plugin, "no_permission");
             return true;
         }
 
         if (args.length == 0) {
-            sender.sendMessage(messages.color(messages.get("usage_eco")));
+            MessageUtils.send(sender, plugin, "usage_eco");
             return true;
         }
 
@@ -51,7 +50,7 @@ public class EcoCommand implements CommandExecutor {
         }
 
         // Unknown subcommand
-        sender.sendMessage(messages.color(messages.get("unknown_action")));
+        MessageUtils.send(sender, plugin, "unknown_action");
         return true;
     }
 }

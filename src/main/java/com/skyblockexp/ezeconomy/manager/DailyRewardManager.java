@@ -9,6 +9,7 @@ import java.util.Map;
 import org.bukkit.Sound;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
+import com.skyblockexp.ezeconomy.util.MessageUtils;
 
 public class DailyRewardManager {
     private final EzEconomyPlugin plugin;
@@ -131,7 +132,7 @@ public class DailyRewardManager {
         String messageKey = plugin.getConfig().getString("daily-reward.message-key", "daily_reward_success");
         String formattedAmount = plugin.getEconomy().format(amount);
         String displayCurrency = resolveCurrencyDisplay(currency);
-        player.sendMessage(plugin.getMessageProvider().get(messageKey, Map.of("amount", formattedAmount, "currency", displayCurrency)));
+        MessageUtils.send(player, plugin, messageKey, Map.of("amount", formattedAmount, "currency", displayCurrency));
     }
 
     private void playSound(Player player) {

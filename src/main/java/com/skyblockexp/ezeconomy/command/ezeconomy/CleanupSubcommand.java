@@ -25,13 +25,12 @@ public class CleanupSubcommand implements Subcommand {
 
     @Override
     public boolean execute(CommandSender sender, String[] args) {
-        MessageProvider messages = plugin.getMessageProvider();
         if (!sender.hasPermission("ezeconomy.admin.cleanup")) {
-            sender.sendMessage(messages.color(messages.get("no_permission")));
+            com.skyblockexp.ezeconomy.util.MessageUtils.send(sender, plugin, "no_permission");
             return true;
         }
         if (args.length < 1 || !args[0].equalsIgnoreCase("confirm")) {
-            sender.sendMessage(messages.color("&eThis will remove orphaned UUIDs (player files with no known player) from storage. Type /ezeconomy cleanup confirm to proceed."));
+            sender.sendMessage(com.skyblockexp.ezeconomy.util.MessageUtils.color(plugin, "&eThis will remove orphaned UUIDs (player files with no known player) from storage. Type /ezeconomy cleanup confirm to proceed."));
             return true;
         }
         Object storage = plugin.getStorageOrWarn();
@@ -47,10 +46,10 @@ public class CleanupSubcommand implements Subcommand {
             orphaned = ((MongoDBStorageProvider) storage).previewOrphanedPlayers();
         }
         if (orphaned.isEmpty()) {
-            sender.sendMessage(messages.color(messages.get("cleanup_preview_empty")));
+            com.skyblockexp.ezeconomy.util.MessageUtils.send(sender, plugin, "cleanup_preview_empty");
         } else {
-            sender.sendMessage(messages.color(messages.get("cleanup_preview", Map.of("entries", String.join(", ", orphaned)))));
-            sender.sendMessage(messages.color(messages.get("cleanup_confirm")));
+            com.skyblockexp.ezeconomy.util.MessageUtils.send(sender, plugin, "cleanup_preview", Map.of("entries", String.join(", ", orphaned)));
+            com.skyblockexp.ezeconomy.util.MessageUtils.send(sender, plugin, "cleanup_confirm");
         }
         // Actual cleanup
         Set<String> removed = new java.util.HashSet<>();
@@ -76,9 +75,9 @@ public class CleanupSubcommand implements Subcommand {
             removed = ((MongoDBStorageProvider) storage).cleanupOrphanedPlayers();
         }
         if (removed.isEmpty()) {
-            sender.sendMessage(messages.color(messages.get("cleanup_complete_empty")));
+            com.skyblockexp.ezeconomy.util.MessageUtils.send(sender, plugin, "cleanup_complete_empty");
         } else {
-            sender.sendMessage(messages.color(messages.get("cleanup_complete", Map.of("entries", String.join(", ", removed)))));
+            com.skyblockexp.ezeconomy.util.MessageUtils.send(sender, plugin, "cleanup_complete", Map.of("entries", String.join(", ", removed)));
         }
         return true;
     }

@@ -3,7 +3,7 @@ package com.skyblockexp.ezeconomy.command.ezeconomy;
 import com.skyblockexp.ezeconomy.api.storage.StorageProvider;
 import com.skyblockexp.ezeconomy.command.Subcommand;
 import com.skyblockexp.ezeconomy.core.EzEconomyPlugin;
-import com.skyblockexp.ezeconomy.core.MessageProvider;
+import com.skyblockexp.ezeconomy.util.MessageUtils;
 import org.bukkit.command.CommandSender;
 
 import java.util.Map;
@@ -21,30 +21,27 @@ public class DatabaseTestSubcommand implements Subcommand {
 
     @Override
     public boolean execute(CommandSender sender, String[] args) {
-        MessageProvider messages = plugin.getMessageProvider();
         if (!sender.hasPermission("ezeconomy.database.test")) {
-            sender.sendMessage(messages.color(messages.get("no_permission")));
+            com.skyblockexp.ezeconomy.util.MessageUtils.send(sender, plugin, "no_permission");
             return true;
         }
-
         if (args.length < 1 || !args[0].equalsIgnoreCase("confirm")) {
-            sender.sendMessage(messages.color("&cThis command will test all database functions and reset the database afterwards."));
-            sender.sendMessage(messages.color("&cAll data will be lost! Use &f/ezeconomy database test confirm &cto proceed."));
+            sender.sendMessage(com.skyblockexp.ezeconomy.util.MessageUtils.color(plugin, "&cThis command will test all database functions and reset the database afterwards."));
+            sender.sendMessage(com.skyblockexp.ezeconomy.util.MessageUtils.color(plugin, "&cAll data will be lost! Use &f/ezeconomy database test confirm &cto proceed."));
             return true;
         }
 
         StorageProvider storage = plugin.getStorageOrWarn();
         if (storage == null) {
-            sender.sendMessage(messages.color(messages.get("storage_unavailable")));
+            com.skyblockexp.ezeconomy.util.MessageUtils.send(sender, plugin, "storage_unavailable");
             return true;
         }
-
-        sender.sendMessage(messages.color("&6Starting database test..."));
+        sender.sendMessage(com.skyblockexp.ezeconomy.util.MessageUtils.color(plugin, "&6Starting database test..."));
 
         try {
             // Test player balance operations
             UUID testUUID = UUID.randomUUID();
-            sender.sendMessage(messages.color("&eTesting player balance operations..."));
+            sender.sendMessage(com.skyblockexp.ezeconomy.util.MessageUtils.color(plugin, "&eTesting player balance operations..."));
             storage.setBalance(testUUID, "dollar", 100.0);
             double balance = storage.getBalance(testUUID, "dollar");
             if (balance != 100.0) {
@@ -60,10 +57,10 @@ public class DatabaseTestSubcommand implements Subcommand {
                 throw new Exception("Balance after withdraw failed: expected 50.0, got " + balance);
             }
 
-            sender.sendMessage(messages.color("&aPlayer balance operations: &2PASS"));
+            sender.sendMessage(com.skyblockexp.ezeconomy.util.MessageUtils.color(plugin, "&aPlayer balance operations: &2PASS"));
 
             // Test bank operations
-            sender.sendMessage(messages.color("&eTesting bank operations..."));
+            sender.sendMessage(com.skyblockexp.ezeconomy.util.MessageUtils.color(plugin, "&eTesting bank operations..."));
             boolean bankCreated = storage.createBank("testbank", testUUID);
             if (!bankCreated) {
                 throw new Exception("Bank creation failed");
@@ -82,16 +79,16 @@ public class DatabaseTestSubcommand implements Subcommand {
                 throw new Exception("Bank member operations failed");
             }
 
-            sender.sendMessage(messages.color("&aBank operations: &2PASS"));
+            sender.sendMessage(com.skyblockexp.ezeconomy.util.MessageUtils.color(plugin, "&aBank operations: &2PASS"));
 
-            sender.sendMessage(messages.color("&aAll tests passed! Resetting database..."));
+            sender.sendMessage(com.skyblockexp.ezeconomy.util.MessageUtils.color(plugin, "&aAll tests passed! Resetting database..."));
 
             // Reset database
             resetDatabase(storage);
-            sender.sendMessage(messages.color("&aDatabase reset complete."));
+            sender.sendMessage(com.skyblockexp.ezeconomy.util.MessageUtils.color(plugin, "&aDatabase reset complete."));
 
         } catch (Exception e) {
-            sender.sendMessage(messages.color("&cDatabase test failed: " + e.getMessage()));
+            sender.sendMessage(com.skyblockexp.ezeconomy.util.MessageUtils.color(plugin, "&cDatabase test failed: " + e.getMessage()));
             return true;
         }
 

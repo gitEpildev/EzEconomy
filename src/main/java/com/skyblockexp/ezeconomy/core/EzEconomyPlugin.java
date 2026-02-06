@@ -40,13 +40,17 @@ import net.milkbowl.vault.economy.Economy;
 public class EzEconomyPlugin extends JavaPlugin {
     private static final int SPIGOT_RESOURCE_ID = 130975;
     private static final long DEFAULT_INTEREST_INTERVAL_TICKS = 72_000L;
-    private static final List<String> DEFAULT_CONFIGS = List.of(
+        private static final List<String> DEFAULT_CONFIGS = List.of(
             "config-yml.yml",
             "config-mysql.yml",
             "config-sqlite.yml",
             "config-mongodb.yml",
-            "messages.yml"
-    );
+            "languages/en.yml",
+            "languages/nl.yml",
+            "languages/es.yml",
+            "languages/fr.yml",
+            "languages/zh.yml"
+        );
 
     private StorageProvider storage;
     private boolean storageWarningLogged;
@@ -103,9 +107,34 @@ public class EzEconomyPlugin extends JavaPlugin {
     }
 
     public void loadMessageProvider() {
-        File messagesFile = new File(getDataFolder(), "messages.yml");
-        this.messagesConfig = YamlConfiguration.loadConfiguration(messagesFile);
-        this.messageProvider = new MessageProvider(messagesConfig);
+        // Reload currently configured language files with graceful fallback
+        String language = getConfig().getString("language", "en");
+        String resourcePath = "languages/" + language + ".yml";
+        File langFile = new File(getDataFolder(), "languages" + File.separator + language + ".yml");
+
+        FileConfiguration selected;
+        if (getResource(resourcePath) != null) {
+            if (!langFile.exists()) {
+                saveResource(resourcePath, false);
+            }
+            selected = YamlConfiguration.loadConfiguration(langFile);
+        } else {
+            getLogger().warning("Language resource '" + resourcePath + "' not found in plugin jar; falling back to English.");
+            File fallbackFile = new File(getDataFolder(), "languages" + File.separator + "en.yml");
+            if (!fallbackFile.exists() && getResource("languages/en.yml") != null) {
+                saveResource("languages/en.yml", false);
+            }
+            selected = YamlConfiguration.loadConfiguration(fallbackFile);
+            language = "en";
+        }
+
+        File fallbackFile = new File(getDataFolder(), "languages" + File.separator + "en.yml");
+        if (!fallbackFile.exists() && getResource("languages/en.yml") != null) {
+            saveResource("languages/en.yml", false);
+        }
+        FileConfiguration fallback = YamlConfiguration.loadConfiguration(fallbackFile);
+        this.messagesConfig = selected;
+        this.messageProvider = new MessageProvider(selected, fallback, language);
     }
 
     public VaultEconomyImpl getVaultEconomy() {
@@ -194,12 +223,34 @@ public class EzEconomyPlugin extends JavaPlugin {
     }
 
     private void loadMessages() {
-        File messagesFile = new File(getDataFolder(), "messages.yml");
-        if (!messagesFile.exists()) {
-            saveResource("messages.yml", false);
+        // Load language files on plugin enable; fall back to English if missing
+        String language = getConfig().getString("language", "en");
+        String resourcePath = "languages/" + language + ".yml";
+        File langFile = new File(getDataFolder(), "languages" + File.separator + language + ".yml");
+
+        FileConfiguration selected;
+        if (getResource(resourcePath) != null) {
+            if (!langFile.exists()) {
+                saveResource(resourcePath, false);
+            }
+            selected = YamlConfiguration.loadConfiguration(langFile);
+        } else {
+            getLogger().warning("Language resource '" + resourcePath + "' not found in plugin jar; falling back to English.");
+            File fallbackFile = new File(getDataFolder(), "languages" + File.separator + "en.yml");
+            if (!fallbackFile.exists() && getResource("languages/en.yml") != null) {
+                saveResource("languages/en.yml", false);
+            }
+            selected = YamlConfiguration.loadConfiguration(fallbackFile);
+            language = "en";
         }
-        this.messagesConfig = YamlConfiguration.loadConfiguration(messagesFile);
-        this.messageProvider = new MessageProvider(messagesConfig);
+
+        File fallbackFile = new File(getDataFolder(), "languages" + File.separator + "en.yml");
+        if (!fallbackFile.exists() && getResource("languages/en.yml") != null) {
+            saveResource("languages/en.yml", false);
+        }
+        FileConfiguration fallback = YamlConfiguration.loadConfiguration(fallbackFile);
+        this.messagesConfig = selected;
+        this.messageProvider = new MessageProvider(selected, fallback, language);
     }
 
     private boolean initializeStorage() {

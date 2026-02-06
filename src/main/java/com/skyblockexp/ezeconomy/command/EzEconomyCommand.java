@@ -9,7 +9,7 @@ import com.skyblockexp.ezeconomy.command.ezeconomy.ReloadMessagesSubcommand;
 import com.skyblockexp.ezeconomy.command.ezeconomy.ReloadSubcommand;
 import com.skyblockexp.ezeconomy.command.Subcommand;
 import com.skyblockexp.ezeconomy.core.EzEconomyPlugin;
-import com.skyblockexp.ezeconomy.core.MessageProvider;
+import com.skyblockexp.ezeconomy.util.MessageUtils;
 import com.skyblockexp.ezeconomy.manager.DailyRewardManager;
 
 import org.bukkit.command.Command;
@@ -44,9 +44,8 @@ public class EzEconomyCommand implements CommandExecutor {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        MessageProvider messages = plugin.getMessageProvider();
         if (args.length == 0) {
-            sender.sendMessage(messages.color(messages.get("usage_ezeconomy")));
+            MessageUtils.send(sender, plugin, "usage_ezeconomy");
             return true;
         }
 
@@ -76,7 +75,7 @@ public class EzEconomyCommand implements CommandExecutor {
         }
 
         // Unknown subcommand
-        sender.sendMessage(messages.color(messages.get("unknown_subcommand")));
+        MessageUtils.send(sender, plugin, "unknown_subcommand");
         return true;
     }
 }

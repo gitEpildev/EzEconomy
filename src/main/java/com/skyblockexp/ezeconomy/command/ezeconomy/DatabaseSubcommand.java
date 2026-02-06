@@ -20,21 +20,20 @@ public class DatabaseSubcommand implements Subcommand {
 
     @Override
     public boolean execute(CommandSender sender, String[] args) {
-        MessageProvider messages = plugin.getMessageProvider();
         if (!sender.hasPermission("ezeconomy.database")) {
-            sender.sendMessage(messages.color(messages.get("no_permission")));
+            com.skyblockexp.ezeconomy.util.MessageUtils.send(sender, plugin, "no_permission");
             return true;
         }
 
         StorageProvider storage = plugin.getStorageOrWarn();
         if (storage == null) {
-            sender.sendMessage(messages.color(messages.get("storage_unavailable")));
+            com.skyblockexp.ezeconomy.util.MessageUtils.send(sender, plugin, "storage_unavailable");
             return true;
         }
 
         String storageType = plugin.getConfig().getString("storage.type", "yml").toUpperCase();
-        sender.sendMessage(messages.color("&6=== Database Information ==="));
-        sender.sendMessage(messages.color("&eStorage Type: &f" + storageType));
+        sender.sendMessage(com.skyblockexp.ezeconomy.util.MessageUtils.color(plugin, "&6=== Database Information ==="));
+        sender.sendMessage(com.skyblockexp.ezeconomy.util.MessageUtils.color(plugin, "&eStorage Type: &f" + storageType));
         boolean connected = false;
         String statusColor = "&cDisconnected";
         try {
@@ -43,10 +42,10 @@ public class DatabaseSubcommand implements Subcommand {
         } catch (Exception ex) {
             statusColor = "&cError";
         }
-        sender.sendMessage(messages.color("&eConnection Status: " + statusColor));
-        sender.sendMessage(messages.color("&eAvailable Subcommands:"));
-        sender.sendMessage(messages.color("&f  /ezeconomy database test &7- Test database functions"));
-        sender.sendMessage(messages.color("&f  /ezeconomy database reset &7- Reset database tables"));
+        sender.sendMessage(com.skyblockexp.ezeconomy.util.MessageUtils.color(plugin, "&eConnection Status: " + statusColor));
+        sender.sendMessage(com.skyblockexp.ezeconomy.util.MessageUtils.color(plugin, "&eAvailable Subcommands:"));
+        sender.sendMessage(com.skyblockexp.ezeconomy.util.MessageUtils.color(plugin, "&f  /ezeconomy database test &7- Test database functions"));
+        sender.sendMessage(com.skyblockexp.ezeconomy.util.MessageUtils.color(plugin, "&f  /ezeconomy database reset &7- Reset database tables"));
 
         return true;
     }

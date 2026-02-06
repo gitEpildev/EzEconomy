@@ -2,7 +2,8 @@
 # storage: 'yml', 'mysql', 'sqlite', or 'mongodb'
 storage: yml
 
-# Language selection for messages.yml
+# Language selection for the language file in `languages/` (e.g. en, nl, es)
+# The plugin loads `languages/<language>.yml` and falls back to `languages/en.yml`.
 language: en
 
 # Database settings have been moved to separate config files:

@@ -1,7 +1,7 @@
 package com.skyblockexp.ezeconomy.command;
 
 import com.skyblockexp.ezeconomy.core.EzEconomyPlugin;
-import com.skyblockexp.ezeconomy.core.MessageProvider;
+import com.skyblockexp.ezeconomy.util.MessageUtils;
 import com.skyblockexp.ezeconomy.manager.CurrencyPreferenceManager;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -19,16 +19,16 @@ public class CurrencyCommand implements CommandExecutor {
 
 	@Override
 	public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-		MessageProvider messages = plugin.getMessageProvider();
+		// MessageProvider replaced by MessageUtils
 		FileConfiguration config = plugin.getConfig();
 		boolean multiEnabled = config.getBoolean("multi-currency.enabled", false);
 		if (!multiEnabled) {
-			sender.sendMessage(messages.color(messages.get("multi_currency_disabled")));
+			MessageUtils.send(sender, plugin, "multi_currency_disabled");
 			return true;
 		}
 
 		if (!(sender instanceof Player)) {
-			sender.sendMessage(messages.color(messages.get("only_players")));
+			MessageUtils.send(sender, plugin, "only_players");
 			return true;
 		}
 		Player player = (Player) sender;
@@ -38,24 +38,24 @@ public class CurrencyCommand implements CommandExecutor {
 		String preferred = preferenceManager.getPreferredCurrency(player.getUniqueId());
 
 		if (args.length == 0) {
-			sender.sendMessage(messages.get("preferred_currency", Map.of("currency", preferred)));
-			sender.sendMessage(messages.get("available_currencies"));
+			MessageUtils.send(sender, plugin, "preferred_currency", Map.of("currency", preferred));
+			MessageUtils.send(sender, plugin, "available_currencies");
 			for (String currency : currencies.keySet()) {
 				sender.sendMessage(" - " + currency);
 			}
-			sender.sendMessage(messages.get("use_currency"));
+			MessageUtils.send(sender, plugin, "use_currency");
 			return true;
 		}
 
 		String newCurrency = args[0].toLowerCase();
 		if (!currencies.containsKey(newCurrency)) {
-			sender.sendMessage(messages.get("unknown_currency", Map.of("currency", newCurrency)));
+			MessageUtils.send(sender, plugin, "unknown_currency", Map.of("currency", newCurrency));
 			return true;
 		}
 
 		// Set preferred currency (demo: metadata)
 		preferenceManager.setPreferredCurrency(player.getUniqueId(), newCurrency);
-		sender.sendMessage(messages.get("set_currency", Map.of("currency", newCurrency)));
+		MessageUtils.send(sender, plugin, "set_currency", Map.of("currency", newCurrency));
 		return true;
 	}
 }

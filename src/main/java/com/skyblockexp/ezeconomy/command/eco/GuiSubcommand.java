@@ -1,35 +1,45 @@
 package com.skyblockexp.ezeconomy.command.eco;
 
+import com.skyblockexp.ezeconomy.api.storage.StorageProvider;
 import com.skyblockexp.ezeconomy.command.Subcommand;
+import com.skyblockexp.ezeconomy.core.EzEconomyPlugin;
+import com.skyblockexp.ezeconomy.gui.BalanceGui;
+import com.skyblockexp.ezeconomy.util.MessageUtils;
+import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.entity.Player;
+import org.bukkit.command.CommandSender;
+
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Subcommand for /eco gui
  */
 public class GuiSubcommand implements Subcommand {
-    private final com.skyblockexp.ezeconomy.core.EzEconomyPlugin plugin;
+    private final EzEconomyPlugin plugin;
 
-    public GuiSubcommand(com.skyblockexp.ezeconomy.core.EzEconomyPlugin plugin) {
+    public GuiSubcommand(EzEconomyPlugin plugin) {
         this.plugin = plugin;
     }
 
     @Override
-    public boolean execute(org.bukkit.command.CommandSender sender, String[] args) {
-        com.skyblockexp.ezeconomy.core.MessageProvider messages = plugin.getMessageProvider();
-        if (!(sender instanceof org.bukkit.entity.Player)) {
-            sender.sendMessage(messages.color(messages.get("only_players")));
+    public boolean execute(CommandSender sender, String[] args) {
+        if (!(sender instanceof Player)) {
+            MessageUtils.send(sender, plugin, "only_players");
             return true;
         }
-        org.bukkit.entity.Player player = (org.bukkit.entity.Player) sender;
-        com.skyblockexp.ezeconomy.api.storage.StorageProvider storage = plugin.getStorageOrWarn();
+        Player player = (Player) sender;
+        StorageProvider storage = plugin.getStorageOrWarn();
         if (storage == null) {
-            player.sendMessage(messages.color(messages.get("storage_unavailable")));
+            MessageUtils.send(player, plugin, "storage_unavailable");
             return true;
         }
-        org.bukkit.configuration.file.FileConfiguration config = plugin.getConfig();
-        java.util.Map<String, Double> currencies = new java.util.HashMap<>();
-        java.util.Map<String, Object> currencySection = config.getConfigurationSection("multi-currency.currencies") != null
+        FileConfiguration config = plugin.getConfig();
+        Map<String, Double> currencies = new HashMap<>();
+        Map<String, Object> currencySection = config.getConfigurationSection("multi-currency.currencies") != null
             ? config.getConfigurationSection("multi-currency.currencies").getValues(false)
-            : java.util.Collections.emptyMap();
+            : Collections.emptyMap();
         if (config.getBoolean("multi-currency.enabled", false) && !currencySection.isEmpty()) {
             for (String currency : currencySection.keySet()) {
                 double balance = storage.getBalance(player.getUniqueId(), currency);
@@ -41,7 +51,7 @@ public class GuiSubcommand implements Subcommand {
             currencies.put(currency, balance);
         }
         // Banks (show for all currencies)
-        java.util.Map<String, Double> banks = new java.util.HashMap<>();
+        Map<String, Double> banks = new HashMap<>();
         for (String bank : storage.getBanks()) {
             if (storage.isBankMember(bank, player.getUniqueId())) {
                 if (config.getBoolean("multi-currency.enabled", false) && !currencySection.isEmpty()) {
@@ -56,7 +66,7 @@ public class GuiSubcommand implements Subcommand {
                 }
             }
         }
-        com.skyblockexp.ezeconomy.gui.BalanceGui.open(player, currencies, banks);
+        BalanceGui.open(player, currencies, banks);
         return true;
     }
 }

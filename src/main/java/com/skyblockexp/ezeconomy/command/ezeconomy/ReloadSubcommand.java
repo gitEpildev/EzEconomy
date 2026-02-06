@@ -2,7 +2,7 @@ package com.skyblockexp.ezeconomy.command.ezeconomy;
 
 import com.skyblockexp.ezeconomy.command.Subcommand;
 import com.skyblockexp.ezeconomy.core.EzEconomyPlugin;
-import com.skyblockexp.ezeconomy.core.MessageProvider;
+import com.skyblockexp.ezeconomy.util.MessageUtils;
 import org.bukkit.command.CommandSender;
 
 /**
@@ -17,9 +17,8 @@ public class ReloadSubcommand implements Subcommand {
 
     @Override
     public boolean execute(CommandSender sender, String[] args) {
-        MessageProvider messages = plugin.getMessageProvider();
         if (!sender.hasPermission("ezeconomy.admin.reload")) {
-            sender.sendMessage(messages.color(messages.get("no_permission")));
+            MessageUtils.send(sender, plugin, "no_permission");
             return true;
         }
         // Reload main config
@@ -27,7 +26,7 @@ public class ReloadSubcommand implements Subcommand {
         // Reload messages
         plugin.loadMessageProvider();
         // TODO: Reload storage config if needed
-        sender.sendMessage(messages.color(messages.get("reload_success")));
+        MessageUtils.send(sender, plugin, "reload_success");
         return true;
     }
 }
