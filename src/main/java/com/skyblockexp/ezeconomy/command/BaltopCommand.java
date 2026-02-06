@@ -1,8 +1,8 @@
 
 package com.skyblockexp.ezeconomy.command;
-import com.skyblockexp.ezeconomy.core.MessageProvider;
 
 import com.skyblockexp.ezeconomy.core.EzEconomyPlugin;
+import com.skyblockexp.ezeconomy.util.MessageUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
@@ -22,7 +22,7 @@ public class BaltopCommand implements CommandExecutor {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        MessageProvider messages = plugin.getMessageProvider();
+        // Use MessageUtils for localized messages
         int top = DEFAULT_TOP;
         boolean usePaging = false;
         int page = 1;
@@ -40,7 +40,7 @@ public class BaltopCommand implements CommandExecutor {
         }
         com.skyblockexp.ezeconomy.api.storage.StorageProvider storage = plugin.getStorageOrWarn();
         if (storage == null) {
-            sender.sendMessage(messages.color(messages.get("storage_unavailable")));
+            MessageUtils.send(sender, plugin, "storage_unavailable");
             return true;
         }
         Map<UUID, Double> balances = storage.getAllBalances(plugin.getDefaultCurrency());
@@ -54,14 +54,14 @@ public class BaltopCommand implements CommandExecutor {
                 totalPages = 1;
             }
             if (page <= 0 || page > totalPages) {
-                sender.sendMessage(messages.get("baltop_invalid_page", java.util.Map.of(
+                MessageUtils.send(sender, plugin, "baltop_invalid_page", java.util.Map.of(
                         "page", String.valueOf(page),
                         "total_pages", String.valueOf(totalPages),
                         "page_size", String.valueOf(PAGE_SIZE)
                 )));
                 return true;
             }
-            sender.sendMessage(messages.get("top_balances_page", java.util.Map.of(
+            MessageUtils.send(sender, plugin, "top_balances_page", java.util.Map.of(
                     "page", String.valueOf(page),
                     "total_pages", String.valueOf(totalPages),
                     "page_size", String.valueOf(PAGE_SIZE)
@@ -72,11 +72,11 @@ public class BaltopCommand implements CommandExecutor {
             int rank = startIndex + 1;
             for (Map.Entry<UUID, Double> entry : sorted) {
                 OfflinePlayer player = Bukkit.getOfflinePlayer(entry.getKey());
-                sender.sendMessage(messages.get("rank_balance", java.util.Map.of(
+                MessageUtils.send(sender, plugin, "rank_balance", java.util.Map.of(
                     "rank", String.valueOf(rank),
                     "player", player.getName(),
                     "balance", plugin.getEconomy().format(entry.getValue())
-                )));
+                ));
                 rank++;
             }
             return true;
@@ -84,20 +84,20 @@ public class BaltopCommand implements CommandExecutor {
         if (top > 0 && sorted.size() > top) {
             sorted = sorted.subList(0, top);
         }
-        sender.sendMessage(messages.get("top_balances", java.util.Map.of("top", String.valueOf(top))));
+        MessageUtils.send(sender, plugin, "top_balances", java.util.Map.of("top", String.valueOf(top)));
         int rank = 1;
         for (Map.Entry<UUID, Double> entry : sorted) {
             OfflinePlayer player = Bukkit.getOfflinePlayer(entry.getKey());
             String playerName = player.getName();
             if (playerName == null) {
-                playerName = messages.get("unknown_player");
+                playerName = MessageUtils.format(plugin, "unknown_player");
                 plugin.getLogger().warning("[Baltop] Could not resolve player name for UUID: " + entry.getKey());
             }
-            sender.sendMessage(messages.get("rank_balance", java.util.Map.of(
+            MessageUtils.send(sender, plugin, "rank_balance", java.util.Map.of(
                 "rank", String.valueOf(rank),
                 "player", playerName,
                 "balance", plugin.getEconomy().format(entry.getValue())
-            )));
+            ));
             rank++;
         }
         return true;

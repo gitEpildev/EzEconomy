@@ -17,14 +17,13 @@ public class ReloadMessagesSubcommand implements Subcommand {
 
     @Override
     public boolean execute(CommandSender sender, String[] args) {
-        MessageProvider messages = plugin.getMessageProvider();
         if (!sender.hasPermission("ezeconomy.admin.reload")) {
-            sender.sendMessage(messages.color(messages.get("no_permission")));
+            com.skyblockexp.ezeconomy.util.MessageUtils.send(sender, plugin, "no_permission");
             return true;
         }
         plugin.reloadConfig();
         plugin.loadMessageProvider(); // Assuming there's a method to reload MessageProvider
-        sender.sendMessage(messages.color(messages.get("reload_messages_success")));
+        com.skyblockexp.ezeconomy.util.MessageUtils.send(sender, plugin, "reload_messages_success");
         return true;
     }
 }

@@ -22,23 +22,22 @@ public class AddMemberSubcommand implements Subcommand {
 
     @Override
     public boolean execute(CommandSender sender, String[] args) {
-        MessageProvider messages = plugin.getMessageProvider();
         if (!sender.hasPermission("ezeconomy.bank.addmember") && !sender.hasPermission("ezeconomy.bank.admin")) {
-            sender.sendMessage(messages.color(messages.get("no_permission")));
+            com.skyblockexp.ezeconomy.util.MessageUtils.send(sender, plugin, "no_permission");
             return true;
         }
         if (args.length < 2) {
-            sender.sendMessage(messages.color(messages.get("usage_bank")));
+            com.skyblockexp.ezeconomy.util.MessageUtils.send(sender, plugin, "usage_bank");
             return true;
         }
         StorageProvider storage = plugin.getStorageOrWarn();
         if (storage == null) {
-            sender.sendMessage(messages.color(messages.get("storage_unavailable")));
+            com.skyblockexp.ezeconomy.util.MessageUtils.send(sender, plugin, "storage_unavailable");
             return true;
         }
         OfflinePlayer player = Bukkit.getOfflinePlayer(args[1]);
         storage.addBankMember(args[0], player.getUniqueId());
-        sender.sendMessage(messages.color(messages.get("added_member", Map.of("player", player.getName(), "name", args[0]))));
+        com.skyblockexp.ezeconomy.util.MessageUtils.send(sender, plugin, "added_member", Map.of("player", player.getName(), "name", args[0]));
         return true;
     }
 }

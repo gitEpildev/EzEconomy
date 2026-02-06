@@ -5,6 +5,7 @@ import com.skyblockexp.ezeconomy.api.events.PreTransactionEvent;
 import com.skyblockexp.ezeconomy.api.events.PostTransactionEvent;
 import com.skyblockexp.ezeconomy.api.events.TransactionType;
 import com.skyblockexp.ezeconomy.core.EzEconomyPlugin;
+import com.skyblockexp.ezeconomy.util.MessageUtils;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 
@@ -29,7 +30,7 @@ public class PaymentEventListener implements Listener {
         BigDecimal amt = e.getAmount();
         if (amt.compareTo(limit) > 0) {
             e.setCancelled(true);
-            e.setCancelReason(plugin.getMessageProvider().color(plugin.getMessageProvider().get("not_enough_money")));
+            e.setCancelReason(MessageUtils.format(plugin, "not_enough_money"));
             plugin.getLogger().info("Blocked large payment from " + e.getSource() + " to " + e.getTarget() + " amount=" + amt);
         }
     }
