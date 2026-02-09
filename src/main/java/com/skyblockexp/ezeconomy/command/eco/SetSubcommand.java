@@ -5,6 +5,7 @@ import com.skyblockexp.ezeconomy.command.Subcommand;
 import com.skyblockexp.ezeconomy.core.EzEconomyPlugin;
 import com.skyblockexp.ezeconomy.util.MessageUtils;
 import com.skyblockexp.ezeconomy.util.NumberUtil;
+import com.skyblockexp.ezeconomy.core.Money;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.CommandSender;
@@ -23,23 +24,38 @@ public class SetSubcommand implements Subcommand {
 
     @Override
     public boolean execute(CommandSender sender, String[] args) {
-        if (args.length < 2) {
+        if (args.length < 2 || args.length > 3) {
             MessageUtils.send(sender, plugin, "usage_eco");
             return true;
         }
         OfflinePlayer target = Bukkit.getOfflinePlayer(args[0]);
-        double amount = NumberUtil.parseAmount(args[1]);
-        if (Double.isNaN(amount)) {
-            MessageUtils.send(sender, plugin, "invalid_amount");
+        Money money = NumberUtil.parseMoney(args[1], null);
+        if (money == null || money.getAmount().compareTo(java.math.BigDecimal.ZERO) < 0) {
+            MessageUtils.send(sender, plugin, "invalid_amount", java.util.Map.of("input", args[1]));
             return true;
         }
+        double amount = money.getAmount().doubleValue();
         StorageProvider storage = plugin.getStorageOrWarn();
         if (storage == null) {
             MessageUtils.send(sender, plugin, "storage_unavailable");
             return true;
         }
-        storage.setBalance(target.getUniqueId(), plugin.getDefaultCurrency(), amount);
-        MessageUtils.send(sender, plugin, "set", Map.of("player", target.getName(), "balance", plugin.getEconomy().format(amount)));
+
+        String currency = plugin.getDefaultCurrency();
+        if (args.length == 3) {
+            currency = args[2].toLowerCase();
+            java.util.Map<String, Object> currencies = plugin.getConfig().getConfigurationSection("multi-currency.currencies") != null
+                ? plugin.getConfig().getConfigurationSection("multi-currency.currencies").getValues(false)
+                : java.util.Collections.emptyMap();
+            if (!currencies.containsKey(currency)) {
+                MessageUtils.send(sender, plugin, "unknown_currency", java.util.Map.of("currency", currency));
+                return true;
+            }
+        }
+
+        storage.setBalance(target.getUniqueId(), currency, amount);
+        String amountWithSymbol = plugin.format(amount, currency);
+        MessageUtils.send(sender, plugin, "set", Map.of("player", target.getName(), "balance", amountWithSymbol));
         return true;
     }
 }

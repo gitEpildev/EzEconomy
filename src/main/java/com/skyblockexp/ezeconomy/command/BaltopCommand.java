@@ -26,6 +26,11 @@ public class BaltopCommand implements CommandExecutor {
         int top = DEFAULT_TOP;
         boolean usePaging = false;
         int page = 1;
+        // Determine optional currency argument (last arg if it matches a currency id)
+        String currency = plugin.getDefaultCurrency();
+        java.util.Map<String, Object> currencies = plugin.getConfig().getConfigurationSection("multi-currency.currencies") != null
+            ? plugin.getConfig().getConfigurationSection("multi-currency.currencies").getValues(false)
+            : java.util.Collections.emptyMap();
         if (args.length == 2 && args[0].equalsIgnoreCase("page")) {
             usePaging = true;
             try {
@@ -33,9 +38,25 @@ public class BaltopCommand implements CommandExecutor {
             } catch (NumberFormatException ignored) {
             }
         } else if (args.length == 1) {
+            // single argument could be top or currency
             try {
                 top = Integer.parseInt(args[0]);
             } catch (NumberFormatException ignored) {
+                String maybeCurrency = args[0].toLowerCase();
+                if (currencies.containsKey(maybeCurrency)) {
+                    currency = maybeCurrency;
+                }
+            }
+        } else if (args.length == 2) {
+            // could be top + currency
+            try {
+                top = Integer.parseInt(args[0]);
+                String maybeCurrency = args[1].toLowerCase();
+                if (currencies.containsKey(maybeCurrency)) {
+                    currency = maybeCurrency;
+                }
+            } catch (NumberFormatException ignored) {
+                // ignore
             }
         }
         com.skyblockexp.ezeconomy.api.storage.StorageProvider storage = plugin.getStorageOrWarn();
@@ -43,7 +64,7 @@ public class BaltopCommand implements CommandExecutor {
             MessageUtils.send(sender, plugin, "storage_unavailable");
             return true;
         }
-        Map<UUID, Double> balances = storage.getAllBalances(plugin.getDefaultCurrency());
+        Map<UUID, Double> balances = storage.getAllBalances(currency);
         List<Map.Entry<UUID, Double>> sorted = balances.entrySet().stream()
                 .sorted(Map.Entry.<UUID, Double>comparingByValue().reversed())
                 .collect(Collectors.toList());
@@ -75,7 +96,7 @@ public class BaltopCommand implements CommandExecutor {
                 MessageUtils.send(sender, plugin, "rank_balance", java.util.Map.of(
                     "rank", String.valueOf(rank),
                     "player", player.getName(),
-                    "balance", plugin.getEconomy().format(entry.getValue())
+                    "balance", plugin.format(entry.getValue(), currency)
                 ));
                 rank++;
             }
@@ -96,7 +117,7 @@ public class BaltopCommand implements CommandExecutor {
             MessageUtils.send(sender, plugin, "rank_balance", java.util.Map.of(
                 "rank", String.valueOf(rank),
                 "player", playerName,
-                "balance", plugin.getEconomy().format(entry.getValue())
+                "balance", plugin.format(entry.getValue(), currency)
             ));
             rank++;
         }

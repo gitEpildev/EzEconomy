@@ -7,6 +7,7 @@ import org.mockbukkit.mockbukkit.MockBukkit;
 
 import com.skyblockexp.ezeconomy.core.EzEconomyPlugin;
 import com.skyblockexp.ezeconomy.storage.YMLStorageProvider;
+import com.skyblockexp.ezeconomy.feature.support.TestSupport;
 
 import org.bukkit.configuration.file.YamlConfiguration;
 
@@ -30,24 +31,18 @@ public class YMLPayFeatureTest {
         cfg.set("yml.per-player-file-naming", "uuid");
         YMLStorageProvider yml = new YMLStorageProvider(plugin, cfg);
 
+        // Ensure test-data folder exists under plugin data
+        TestSupport.createTestDataFolder(plugin, "test-data");
+
         // Inject into plugin
-        Field storageField = EzEconomyPlugin.class.getDeclaredField("storage");
-        storageField.setAccessible(true);
-        storageField.set(plugin, yml);
+        TestSupport.injectField(plugin, "storage", yml);
 
         plugin.loadMessageProvider();
     }
 
     @AfterEach
     public void teardown() {
-        // delete test-data folder if present
-        File df = new File(plugin.getDataFolder(), "test-data");
-        if (df.exists()) {
-            for (File f : df.listFiles()) {
-                f.delete();
-            }
-            df.delete();
-        }
+        TestSupport.cleanupTestDataFolder(plugin, "test-data");
         MockBukkit.unmock();
     }
 

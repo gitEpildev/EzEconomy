@@ -8,6 +8,9 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.configuration.file.FileConfiguration;
+import com.skyblockexp.ezeconomy.util.NumberUtil;
+import com.skyblockexp.ezeconomy.core.Money;
+import com.skyblockexp.ezeconomy.util.CurrencyUtil;
 import java.util.Map;
 
 public class CurrencyCommand implements CommandExecutor {
@@ -44,6 +47,38 @@ public class CurrencyCommand implements CommandExecutor {
 				sender.sendMessage(" - " + currency);
 			}
 			MessageUtils.send(sender, plugin, "use_currency");
+			return true;
+		}
+		// Support: /currency convert <from> <to> <amount>
+		if (args[0].equalsIgnoreCase("convert")) {
+			if (args.length != 4) {
+				MessageUtils.send(sender, plugin, "usage_currency");
+				return true;
+			}
+			String from = args[1].toLowerCase();
+			String to = args[2].toLowerCase();
+			if (!currencies.containsKey(from)) {
+				MessageUtils.send(sender, plugin, "unknown_currency", Map.of("currency", from));
+				return true;
+			}
+			if (!currencies.containsKey(to)) {
+				MessageUtils.send(sender, plugin, "unknown_currency", Map.of("currency", to));
+				return true;
+			}
+			Money m = NumberUtil.parseMoney(args[3], from);
+			if (m == null || m.getAmount().compareTo(java.math.BigDecimal.ZERO) <= 0) {
+				MessageUtils.send(sender, plugin, "invalid_amount", java.util.Map.of("input", args[3]));
+				return true;
+			}
+			double amt = m.getAmount().doubleValue();
+			double converted = CurrencyUtil.convert(plugin, amt, from, to);
+			if (Double.isNaN(converted)) {
+				MessageUtils.send(sender, plugin, "unknown_conversion");
+				return true;
+			}
+			String fromDisplay = plugin.format(amt, from);
+			String toDisplay = plugin.format(converted, to);
+			sender.sendMessage(plugin.getMessageProvider().color("&eConversion: " + fromDisplay + " → " + toDisplay));
 			return true;
 		}
 
