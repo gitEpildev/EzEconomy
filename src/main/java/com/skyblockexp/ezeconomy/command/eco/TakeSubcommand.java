@@ -4,6 +4,7 @@ import com.skyblockexp.ezeconomy.command.Subcommand;
 import com.skyblockexp.ezeconomy.core.EzEconomyPlugin;
 import com.skyblockexp.ezeconomy.util.MessageUtils;
 import com.skyblockexp.ezeconomy.util.NumberUtil;
+import com.skyblockexp.ezeconomy.core.Money;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.CommandSender;
@@ -22,18 +23,47 @@ public class TakeSubcommand implements Subcommand {
 
     @Override
     public boolean execute(CommandSender sender, String[] args) {
-        if (args.length < 2) {
+        if (args.length < 2 || args.length > 3) {
             MessageUtils.send(sender, plugin, "usage_eco");
             return true;
         }
         OfflinePlayer target = Bukkit.getOfflinePlayer(args[0]);
-        double amount = NumberUtil.parseAmount(args[1]);
-        if (Double.isNaN(amount)) {
-            MessageUtils.send(sender, plugin, "invalid_amount");
+        Money money = NumberUtil.parseMoney(args[1], null);
+        if (money == null || money.getAmount().compareTo(java.math.BigDecimal.ZERO) <= 0) {
+            MessageUtils.send(sender, plugin, "invalid_amount", java.util.Map.of("input", args[1]));
             return true;
         }
-        plugin.getEconomy().withdrawPlayer(target, amount);
-        MessageUtils.send(sender, plugin, "withdrew", Map.of("name", target.getName(), "amount", plugin.getEconomy().format(amount)));
+        double amount = money.getAmount().doubleValue();
+
+        if (args.length == 2) {
+            plugin.getEconomy().withdrawPlayer(target, amount);
+            MessageUtils.send(sender, plugin, "withdrew", Map.of("name", target.getName(), "amount", plugin.format(amount, plugin.getDefaultCurrency())));
+            return true;
+        }
+
+        // args.length == 3 -> currency specified
+        String currency = args[2].toLowerCase();
+        java.util.Map<String, Object> currencies = plugin.getConfig().getConfigurationSection("multi-currency.currencies") != null
+            ? plugin.getConfig().getConfigurationSection("multi-currency.currencies").getValues(false)
+            : java.util.Collections.emptyMap();
+        if (!currencies.containsKey(currency)) {
+            MessageUtils.send(sender, plugin, "unknown_currency", java.util.Map.of("currency", currency));
+            return true;
+        }
+
+        com.skyblockexp.ezeconomy.api.storage.StorageProvider storage = plugin.getStorageOrWarn();
+        if (storage == null) {
+            MessageUtils.send(sender, plugin, "storage_unavailable");
+            return true;
+        }
+
+        boolean ok = storage.tryWithdraw(target.getUniqueId(), currency, amount);
+        if (!ok) {
+            MessageUtils.send(sender, plugin, "not_enough_money");
+            return true;
+        }
+        String amountWithSymbol = plugin.format(amount, currency);
+        MessageUtils.send(sender, plugin, "withdrew", Map.of("name", target.getName(), "amount", amountWithSymbol));
         return true;
     }
 }

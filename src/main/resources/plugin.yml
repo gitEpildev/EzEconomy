@@ -10,11 +10,11 @@ softdepend: [PlaceholderAPI]
 commands:
   balance:
     description: Check your balance or another player's balance
-    usage: /balance [player]
+    usage: /balance [player] [currency]
     aliases: [bal]
   eco:
     description: Admin economy control (give, take, set)
-    usage: /eco <give|take|set> <player> <amount>
+    usage: /eco <give|take|set> <player> <amount> [currency]
   baltop:
     description: Show top player balances
     usage: /baltop [amount]
@@ -23,7 +23,7 @@ commands:
     usage: /bank <create|delete|balance|deposit|withdraw|addmember|removemember|info> ...
   pay:
     description: Pay money to another player
-    usage: /pay <player> <amount>
+    usage: /pay <player> <amount> [currency]
   currency:
     description: View or set your preferred currency
     usage: /currency [currency]

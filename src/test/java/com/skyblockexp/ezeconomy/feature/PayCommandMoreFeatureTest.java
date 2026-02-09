@@ -9,6 +9,7 @@ import org.mockbukkit.mockbukkit.entity.PlayerMock;
 import com.skyblockexp.ezeconomy.core.EzEconomyPlugin;
 
 import java.lang.reflect.Field;
+import com.skyblockexp.ezeconomy.feature.support.TestSupport;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -17,7 +18,7 @@ public class PayCommandMoreFeatureTest {
     // avoid declaring ServerMock as a field to prevent classloading issues during test discovery
     private Object server;
     private EzEconomyPlugin plugin;
-    private PayCommandFeatureTest.MockStorage storage;
+    private TestSupport.MockStorage storage;
     private static final String CURRENCY = "dollar";
 
     @BeforeEach
@@ -25,10 +26,8 @@ public class PayCommandMoreFeatureTest {
         server = MockBukkit.mock();
         plugin = MockBukkit.load(EzEconomyPlugin.class);
 
-        storage = new PayCommandFeatureTest.MockStorage();
-        Field storageField = EzEconomyPlugin.class.getDeclaredField("storage");
-        storageField.setAccessible(true);
-        storageField.set(plugin, storage);
+        storage = new TestSupport.MockStorage();
+        TestSupport.injectField(plugin, "storage", storage);
 
         plugin.loadMessageProvider();
     }

@@ -39,7 +39,7 @@ public class WithdrawSubcommand implements Subcommand {
         if (handleEconomyFailure(sender, withdrawResponse)) {
             return true;
         }
-        String formattedAmount = plugin.getEconomy().format(amount);
+        String formattedAmount = plugin.format(amount, currency);
         java.util.HashMap<String, String> placeholders = new java.util.HashMap<>();
         placeholders.put("name", String.valueOf(args[0]));
         placeholders.put("amount", String.valueOf(formattedAmount));

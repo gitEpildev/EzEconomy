@@ -9,8 +9,14 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
+import com.skyblockexp.ezeconomy.core.EzEconomyPlugin;
 
 public class BankTabCompleter implements TabCompleter {
+    private final EzEconomyPlugin plugin;
+
+    public BankTabCompleter(EzEconomyPlugin plugin) {
+        this.plugin = plugin;
+    }
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (!sender.hasPermission("ezeconomy.bank")) return Collections.emptyList();
@@ -33,9 +39,12 @@ public class BankTabCompleter implements TabCompleter {
             return Collections.emptyList();
         }
         if (args.length == 4) {
-            // Suggest currencies (stub: could fetch from config)
-            List<String> currencies = List.of("dollar", "coin", "gem");
-            return currencies.stream().filter(c -> c.startsWith(args[3].toLowerCase())).collect(Collectors.toList());
+            var cfg = plugin.getConfig();
+            if (cfg.isConfigurationSection("multi-currency.currencies")) {
+                return cfg.getConfigurationSection("multi-currency.currencies").getKeys(false).stream()
+                        .filter(k -> k.toLowerCase().startsWith(args[3].toLowerCase()))
+                        .collect(Collectors.toList());
+            }
         }
         return new ArrayList<>();
     }

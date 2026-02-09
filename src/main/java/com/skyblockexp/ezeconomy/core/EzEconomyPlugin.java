@@ -64,7 +64,54 @@ public class EzEconomyPlugin extends JavaPlugin {
     private FileConfiguration messagesConfig;
 
     public String format(double amount) {
-        return String.format("$%.2f", amount);
+        return format(amount, getDefaultCurrency());
+    }
+
+    /**
+     * Format an amount for a specific currency using configured decimals and symbol.
+     */
+    public String format(double amount, String currency) {
+        if (currency == null) {
+            java.text.NumberFormat nf = java.text.NumberFormat.getNumberInstance(java.util.Locale.getDefault());
+            nf.setGroupingUsed(true);
+            nf.setMinimumFractionDigits(2);
+            nf.setMaximumFractionDigits(2);
+            return nf.format(amount);
+        }
+        var cfg = getConfig();
+        if (cfg.getConfigurationSection("multi-currency.currencies") == null) {
+            java.text.NumberFormat nf = java.text.NumberFormat.getNumberInstance(java.util.Locale.getDefault());
+            nf.setGroupingUsed(true);
+            nf.setMinimumFractionDigits(2);
+            nf.setMaximumFractionDigits(2);
+            return nf.format(amount);
+        }
+        String key = currency.toLowerCase();
+        String symbol = cfg.getString("multi-currency.currencies." + key + ".symbol", "");
+        int decimals = cfg.getInt("multi-currency.currencies." + key + ".decimals", 2);
+
+        // Locale configuration: server-wide override optional
+        String localeCfg = cfg.getString("currency.format.locale", "");
+        java.util.Locale locale = java.util.Locale.getDefault();
+        if (localeCfg != null && !localeCfg.isBlank()) {
+            String[] parts = localeCfg.split("[_-]");
+            if (parts.length == 1) locale = new java.util.Locale(parts[0]);
+            else locale = new java.util.Locale(parts[0], parts[1]);
+        }
+
+        java.text.NumberFormat nf = java.text.NumberFormat.getNumberInstance(locale);
+        nf.setGroupingUsed(true);
+        nf.setMinimumFractionDigits(decimals);
+        nf.setMaximumFractionDigits(decimals);
+        String formatted = nf.format(java.math.BigDecimal.valueOf(amount).setScale(decimals, java.math.RoundingMode.HALF_UP));
+
+        // Symbol placement: optional per-currency setting (prefix/suffix)
+        String placement = cfg.getString("multi-currency.currencies." + key + ".symbol_placement", "suffix").toLowerCase();
+        boolean prefix = placement.equals("prefix") || placement.equals("before");
+        if (symbol == null || symbol.isEmpty()) {
+            return formatted;
+        }
+        return prefix ? (symbol + " " + formatted) : (formatted + " " + symbol);
     }
 
     public VaultEconomyImpl getEconomy() {
@@ -325,15 +372,17 @@ public class EzEconomyPlugin extends JavaPlugin {
 
     private void registerCommands() {
         getCommand("balance").setExecutor(new BalanceCommand(this));
+        getCommand("balance").setTabCompleter(new com.skyblockexp.ezeconomy.tabcomplete.BalanceTabCompleter(this));
         getCommand("eco").setExecutor(new EcoCommand(this));
-        getCommand("eco").setTabCompleter(new EcoTabCompleter());
+        getCommand("eco").setTabCompleter(new com.skyblockexp.ezeconomy.tabcomplete.EcoTabCompleter(this));
         getCommand("baltop").setExecutor(new BaltopCommand(this));
+        getCommand("baltop").setTabCompleter(new com.skyblockexp.ezeconomy.tabcomplete.BaltopTabCompleter(this));
         getCommand("bank").setExecutor(new BankCommand(this));
-        getCommand("bank").setTabCompleter(new BankTabCompleter());
+        getCommand("bank").setTabCompleter(new com.skyblockexp.ezeconomy.tabcomplete.BankTabCompleter(this));
         getCommand("pay").setExecutor(new PayCommand(this));
-        getCommand("pay").setTabCompleter(new PayTabCompleter());
+        getCommand("pay").setTabCompleter(new com.skyblockexp.ezeconomy.tabcomplete.PayTabCompleter(this));
         getCommand("currency").setExecutor(new CurrencyCommand(this));
-        getCommand("currency").setTabCompleter(new CurrencyTabCompleter());
+        getCommand("currency").setTabCompleter(new com.skyblockexp.ezeconomy.tabcomplete.CurrencyTabCompleter(this));
         getCommand("ezeconomy").setExecutor(new EzEconomyCommand(this, dailyRewardManager));
         getCommand("ezeconomy").setTabCompleter(new EzEconomyCommandTabCompleter(this));
     }
