@@ -9,6 +9,7 @@ import com.skyblockexp.ezeconomy.command.EcoCommand;
 import com.skyblockexp.ezeconomy.command.EzEconomyCommand;
 import com.skyblockexp.ezeconomy.command.PayCommand;
 import com.skyblockexp.ezeconomy.listener.DailyRewardListener;
+import com.skyblockexp.ezeconomy.gui.GuiListener;
 import com.skyblockexp.ezeconomy.manager.BankInterestManager;
 import com.skyblockexp.ezeconomy.manager.CurrencyManager;
 import com.skyblockexp.ezeconomy.manager.CurrencyPreferenceManager;
@@ -49,7 +50,8 @@ public class EzEconomyPlugin extends JavaPlugin {
             "languages/nl.yml",
             "languages/es.yml",
             "languages/fr.yml",
-            "languages/zh.yml"
+            "languages/zh.yml",
+            "user-gui.yml"
         );
 
     private StorageProvider storage;
@@ -62,6 +64,8 @@ public class EzEconomyPlugin extends JavaPlugin {
     private MessageProvider messageProvider;
     private VaultEconomyImpl vaultEconomy;
     private FileConfiguration messagesConfig;
+    private FileConfiguration userGuiConfig;
+    private com.skyblockexp.ezeconomy.gui.PayFlowManager payFlowManager;
 
     public String format(double amount) {
         return format(amount, getDefaultCurrency());
@@ -134,6 +138,9 @@ public class EzEconomyPlugin extends JavaPlugin {
         registerCommands();
         registerListeners();
         registerPlaceholderExpansion();
+
+        // Load optional user GUI configuration
+        loadUserGuiConfig();
 
         new SpigotUpdateChecker(this, SPIGOT_RESOURCE_ID).checkForUpdates();
         getLogger().info("EzEconomy enabled and registered as Vault provider.");
@@ -363,6 +370,12 @@ public class EzEconomyPlugin extends JavaPlugin {
             getLogger().warning("Failed to initialize metrics: " + ex.getMessage());
             this.metrics = null;
         }
+        // Pay flow manager handles custom amount entry state
+        this.payFlowManager = new com.skyblockexp.ezeconomy.gui.PayFlowManager();
+    }
+
+    public com.skyblockexp.ezeconomy.gui.PayFlowManager getPayFlowManager() {
+        return this.payFlowManager;
     }
 
     private void registerEconomy() {
@@ -389,6 +402,21 @@ public class EzEconomyPlugin extends JavaPlugin {
 
     private void registerListeners() {
         Bukkit.getPluginManager().registerEvents(new DailyRewardListener(dailyRewardManager), this);
+        Bukkit.getPluginManager().registerEvents(new GuiListener(this), this);
+    }
+
+    private void loadUserGuiConfig() {
+        File file = new File(getDataFolder(), "user-gui.yml");
+        if (!file.exists()) {
+            if (getResource("user-gui.yml") != null) {
+                saveResource("user-gui.yml", false);
+            }
+        }
+        this.userGuiConfig = YamlConfiguration.loadConfiguration(file);
+    }
+
+    public FileConfiguration getUserGuiConfig() {
+        return this.userGuiConfig == null ? YamlConfiguration.loadConfiguration(new File(getDataFolder(), "user-gui.yml")) : this.userGuiConfig;
     }
 
     private void registerPlaceholderExpansion() {

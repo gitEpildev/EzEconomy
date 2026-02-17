@@ -12,6 +12,7 @@ import com.skyblockexp.ezeconomy.util.MessageUtils;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -37,6 +38,14 @@ public class EcoCommand implements CommandExecutor {
         }
 
         if (args.length == 0) {
+            // Optionally open the user GUI when /eco is used with no args
+            if (sender instanceof Player) {
+                Player player = (Player) sender;
+                if (plugin.getUserGuiConfig().getBoolean("open-on-eco", false)) {
+                    com.skyblockexp.ezeconomy.gui.MainGui.open(plugin, player);
+                    return true;
+                }
+            }
             MessageUtils.send(sender, plugin, "usage_eco");
             return true;
         }
