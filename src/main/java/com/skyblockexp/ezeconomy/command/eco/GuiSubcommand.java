@@ -66,7 +66,7 @@ public class GuiSubcommand implements Subcommand {
                 }
             }
         }
-        BalanceGui.open(player, currencies, banks);
+        BalanceGui.open(plugin, player, currencies, banks);
         return true;
     }
 }
