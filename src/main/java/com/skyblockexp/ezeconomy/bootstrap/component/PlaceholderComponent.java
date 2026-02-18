@@ -2,6 +2,8 @@ package com.skyblockexp.ezeconomy.bootstrap.component;
 
 import com.skyblockexp.ezeconomy.bootstrap.BootstrapComponent;
 import com.skyblockexp.ezeconomy.core.EzEconomyPlugin;
+import org.bukkit.Bukkit;
+import com.skyblockexp.ezeconomy.placeholder.EzEconomyPlaceholderExpansion;
 
 public class PlaceholderComponent implements BootstrapComponent {
     private final EzEconomyPlugin plugin;
@@ -12,7 +14,11 @@ public class PlaceholderComponent implements BootstrapComponent {
 
     @Override
     public void start() {
-        plugin.registerPlaceholderExpansion();
+        if (!Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) {
+            return;
+        }
+        new EzEconomyPlaceholderExpansion(plugin).register();
+        plugin.getLogger().info("Registered EzEconomy placeholders with PlaceholderAPI.");
     }
 
     @Override
@@ -22,6 +28,6 @@ public class PlaceholderComponent implements BootstrapComponent {
 
     @Override
     public void reload() {
-        plugin.registerPlaceholderExpansion();
+        start();
     }
 }

@@ -14,7 +14,9 @@ public class EconomyComponent implements BootstrapComponent {
 
     @Override
     public void start() {
-        plugin.registerEconomy();
+        com.skyblockexp.ezeconomy.core.VaultEconomyImpl impl = new com.skyblockexp.ezeconomy.core.VaultEconomyImpl(plugin);
+        org.bukkit.Bukkit.getServicesManager().register(net.milkbowl.vault.economy.Economy.class, impl, plugin, org.bukkit.plugin.ServicePriority.Highest);
+        plugin.setVaultEconomy(impl);
     }
 
     @Override

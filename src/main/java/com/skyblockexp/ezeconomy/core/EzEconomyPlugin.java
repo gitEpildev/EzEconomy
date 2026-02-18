@@ -153,36 +153,9 @@ public class EzEconomyPlugin extends JavaPlugin {
     public MessageProvider getMessageProvider() {
         return messageProvider;
     }
-
     public void loadMessageProvider() {
-        // Reload currently configured language files with graceful fallback
-        String language = getConfig().getString("language", "en");
-        String resourcePath = "languages/" + language + ".yml";
-        File langFile = new File(getDataFolder(), "languages" + File.separator + language + ".yml");
-
-        FileConfiguration selected;
-        if (getResource(resourcePath) != null) {
-            if (!langFile.exists()) {
-                saveResource(resourcePath, false);
-            }
-            selected = YamlConfiguration.loadConfiguration(langFile);
-        } else {
-            getLogger().warning("Language resource '" + resourcePath + "' not found in plugin jar; falling back to English.");
-            File fallbackFile = new File(getDataFolder(), "languages" + File.separator + "en.yml");
-            if (!fallbackFile.exists() && getResource("languages/en.yml") != null) {
-                saveResource("languages/en.yml", false);
-            }
-            selected = YamlConfiguration.loadConfiguration(fallbackFile);
-            language = "en";
-        }
-
-        File fallbackFile = new File(getDataFolder(), "languages" + File.separator + "en.yml");
-        if (!fallbackFile.exists() && getResource("languages/en.yml") != null) {
-            saveResource("languages/en.yml", false);
-        }
-        FileConfiguration fallback = YamlConfiguration.loadConfiguration(fallbackFile);
-        this.messagesConfig = selected;
-        this.messageProvider = new MessageProvider(selected, fallback, language);
+        // Delegate runtime reload of messages to the ConfigComponent implementation.
+        new com.skyblockexp.ezeconomy.bootstrap.component.ConfigComponent(this).start();
     }
 
     public VaultEconomyImpl getVaultEconomy() {
@@ -252,120 +225,69 @@ public class EzEconomyPlugin extends JavaPlugin {
     }
 
     public void ensureDefaultConfigs() {
-        for (String fileName : DEFAULT_CONFIGS) {
-            File outFile = new File(getDataFolder(), fileName);
-            if (outFile.exists()) {
-                continue;
-            }
-            try (InputStream in = getResource(fileName)) {
-                if (in == null) {
-                    continue;
-                }
-                Files.createDirectories(outFile.getParentFile().toPath());
-                Files.copy(in, outFile.toPath());
-                getLogger().info("Created default config: " + fileName);
-            } catch (IOException ex) {
-                getLogger().warning("Could not create default config " + fileName + ": " + ex.getMessage());
-            }
-        }
+        // Default config/resource creation moved to ConfigComponent during bootstrap.
+        // Retained for compatibility; no-op here.
     }
 
     public void loadMessages() {
-        // Load language files on plugin enable; fall back to English if missing
-        String language = getConfig().getString("language", "en");
-        String resourcePath = "languages/" + language + ".yml";
-        File langFile = new File(getDataFolder(), "languages" + File.separator + language + ".yml");
+        // Message provider initialization moved to ConfigComponent during bootstrap.
+        // This method remains for runtime reloads and is intentionally a no-op here.
+    }
 
-        FileConfiguration selected;
-        if (getResource(resourcePath) != null) {
-            if (!langFile.exists()) {
-                saveResource(resourcePath, false);
-            }
-            selected = YamlConfiguration.loadConfiguration(langFile);
-        } else {
-            getLogger().warning("Language resource '" + resourcePath + "' not found in plugin jar; falling back to English.");
-            File fallbackFile = new File(getDataFolder(), "languages" + File.separator + "en.yml");
-            if (!fallbackFile.exists() && getResource("languages/en.yml") != null) {
-                saveResource("languages/en.yml", false);
-            }
-            selected = YamlConfiguration.loadConfiguration(fallbackFile);
-            language = "en";
-        }
+    public void setMessagesConfig(FileConfiguration messagesConfig) {
+        this.messagesConfig = messagesConfig;
+    }
 
-        File fallbackFile = new File(getDataFolder(), "languages" + File.separator + "en.yml");
-        if (!fallbackFile.exists() && getResource("languages/en.yml") != null) {
-            saveResource("languages/en.yml", false);
-        }
-        FileConfiguration fallback = YamlConfiguration.loadConfiguration(fallbackFile);
-        this.messagesConfig = selected;
-        this.messageProvider = new MessageProvider(selected, fallback, language);
+    public void setMessageProvider(MessageProvider provider) {
+        this.messageProvider = provider;
     }
 
     public boolean initializeStorage() {
-        String storageType = getConfig().getString("storage", "yml").toLowerCase();
-        try {
-            switch (storageType) {
-                case "yml":
-                case "yaml":
-                    storage = new YMLStorageProvider(this, loadStorageConfig("config-yml.yml"));
-                    break;
-                case "mysql":
-                    storage = new MySQLStorageProvider(this, loadStorageConfig("config-mysql.yml"));
-                    break;
-                case "sqlite":
-                    storage = new SQLiteStorageProvider(this, loadStorageConfig("config-sqlite.yml"));
-                    break;
-                case "mongodb":
-                    storage = new MongoDBStorageProvider(this, loadStorageConfig("config-mongodb.yml"));
-                    break;
-                default:
-                    getLogger().warning("Unknown storage type '" + storageType + "', defaulting to YML.");
-                    storage = new YMLStorageProvider(this, loadStorageConfig("config-yml.yml"));
-                    break;
-            }
-            getLogger().info("Using " + storage.getClass().getSimpleName() + " storage provider.");
-
-            // In test mode we avoid performing real network or filesystem initialization
-            // to keep unit/feature tests hermetic. Tests can set the system property
-            // `ezeconomy.test=true` to opt into this behavior.
-            if (Boolean.getBoolean("ezeconomy.test")) {
-                getLogger().info("Test mode detected: skipping storage init/load for " + storage.getClass().getSimpleName());
-            } else {
-                getLogger().info("Initializing " + storage.getClass().getSimpleName() + " storage provider.");
-                storage.init();
-
-                getLogger().info("Loading connection with " + storage.getClass().getSimpleName() + " storage provider.");
-                storage.load();
-            }
-
-            return true;
-        } catch (Exception ex) {
-            getLogger().severe("Failed to initialize storage provider: " + ex.getMessage());
-            storage = null;
-            return false;
-        }
+        // Storage initialization moved to StorageComponent during bootstrap.
+        // Keep method for compatibility; actual initialization is no-op here.
+        return storage != null;
     }
 
-    private YamlConfiguration loadStorageConfig(String fileName) {
+    public YamlConfiguration loadStorageConfig(String fileName) {
         File file = new File(getDataFolder(), fileName);
         return YamlConfiguration.loadConfiguration(file);
     }
 
+    public void setStorage(StorageProvider provider) {
+        this.storage = provider;
+    }
+
     public void initializeManagers() {
-        this.currencyPreferenceManager = new CurrencyPreferenceManager(this);
-        this.currencyManager = new CurrencyManager(this);
-        this.bankInterestManager = new BankInterestManager(this);
-        long interval = getConfig().getLong("bank-interest-interval-ticks", DEFAULT_INTEREST_INTERVAL_TICKS);
-        bankInterestManager.start(interval);
-        this.dailyRewardManager = new DailyRewardManager(this);
-        // Metrics are initialized in a dedicated bootstrap component
-        this.metrics = null;
-        // Pay flow manager handles custom amount entry state
-        this.payFlowManager = new com.skyblockexp.ezeconomy.gui.PayFlowManager();
+        // Manager initialization moved to ManagersComponent during bootstrap.
+        new com.skyblockexp.ezeconomy.bootstrap.component.ManagersComponent(this).start();
+    }
+
+    public void setCurrencyPreferenceManager(CurrencyPreferenceManager m) {
+        this.currencyPreferenceManager = m;
+    }
+
+    public void setCurrencyManager(CurrencyManager m) {
+        this.currencyManager = m;
+    }
+
+    public void setBankInterestManager(BankInterestManager m) {
+        this.bankInterestManager = m;
+    }
+
+    public void setDailyRewardManager(DailyRewardManager m) {
+        this.dailyRewardManager = m;
+    }
+
+    public void setPayFlowManager(com.skyblockexp.ezeconomy.gui.PayFlowManager m) {
+        this.payFlowManager = m;
     }
 
     public com.skyblockexp.ezeconomy.gui.PayFlowManager getPayFlowManager() {
         return this.payFlowManager;
+    }
+
+    public DailyRewardManager getDailyRewardManager() {
+        return this.dailyRewardManager;
     }
 
     public void setMetrics(EzEconomyMetrics metrics) {
@@ -373,51 +295,40 @@ public class EzEconomyPlugin extends JavaPlugin {
     }
 
     public void registerEconomy() {
-        this.vaultEconomy = new VaultEconomyImpl(this);
-        Bukkit.getServicesManager().register(Economy.class, vaultEconomy, this, ServicePriority.Highest);
+        // Economy registration moved to EconomyComponent during bootstrap.
+        new com.skyblockexp.ezeconomy.bootstrap.component.EconomyComponent(this).start();
+    }
+
+    public void setVaultEconomy(VaultEconomyImpl impl) {
+        this.vaultEconomy = impl;
     }
 
     public void registerCommands() {
-        getCommand("balance").setExecutor(new BalanceCommand(this));
-        getCommand("balance").setTabCompleter(new com.skyblockexp.ezeconomy.tabcomplete.BalanceTabCompleter(this));
-        getCommand("eco").setExecutor(new EcoCommand(this));
-        getCommand("eco").setTabCompleter(new com.skyblockexp.ezeconomy.tabcomplete.EcoTabCompleter(this));
-        getCommand("baltop").setExecutor(new BaltopCommand(this));
-        getCommand("baltop").setTabCompleter(new com.skyblockexp.ezeconomy.tabcomplete.BaltopTabCompleter(this));
-        getCommand("bank").setExecutor(new BankCommand(this));
-        getCommand("bank").setTabCompleter(new com.skyblockexp.ezeconomy.tabcomplete.BankTabCompleter(this));
-        getCommand("pay").setExecutor(new PayCommand(this));
-        getCommand("pay").setTabCompleter(new com.skyblockexp.ezeconomy.tabcomplete.PayTabCompleter(this));
-        getCommand("currency").setExecutor(new CurrencyCommand(this));
-        getCommand("currency").setTabCompleter(new com.skyblockexp.ezeconomy.tabcomplete.CurrencyTabCompleter(this));
-        getCommand("ezeconomy").setExecutor(new EzEconomyCommand(this, dailyRewardManager));
-        getCommand("ezeconomy").setTabCompleter(new EzEconomyCommandTabCompleter(this));
+        // Command registration moved to CommandsComponent during bootstrap.
+        new com.skyblockexp.ezeconomy.bootstrap.component.CommandsComponent(this).start();
     }
 
     public void registerListeners() {
-        Bukkit.getPluginManager().registerEvents(new DailyRewardListener(dailyRewardManager), this);
-        Bukkit.getPluginManager().registerEvents(new GuiListener(this), this);
+        // Listener registration moved to ListenersComponent during bootstrap.
+        new com.skyblockexp.ezeconomy.bootstrap.component.ListenersComponent(this).start();
     }
 
     public void loadUserGuiConfig() {
-        File file = new File(getDataFolder(), "user-gui.yml");
-        if (!file.exists()) {
-            if (getResource("user-gui.yml") != null) {
-                saveResource("user-gui.yml", false);
-            }
-        }
-        this.userGuiConfig = YamlConfiguration.loadConfiguration(file);
+        // Gui loading moved to GuiComponent during bootstrap.
+        // Delegate runtime reload to GuiComponent implementation.
+        new com.skyblockexp.ezeconomy.bootstrap.component.GuiComponent(this).start();
     }
 
     public FileConfiguration getUserGuiConfig() {
         return this.userGuiConfig == null ? YamlConfiguration.loadConfiguration(new File(getDataFolder(), "user-gui.yml")) : this.userGuiConfig;
     }
 
+    public void setUserGuiConfig(FileConfiguration cfg) {
+        this.userGuiConfig = cfg;
+    }
+
     public void registerPlaceholderExpansion() {
-        if (!Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) {
-            return;
-        }
-        new EzEconomyPlaceholderExpansion(this).register();
-        getLogger().info("Registered EzEconomy placeholders with PlaceholderAPI.");
+        // Placeholder registration moved to PlaceholderComponent during bootstrap.
+        new com.skyblockexp.ezeconomy.bootstrap.component.PlaceholderComponent(this).start();
     }
 }
