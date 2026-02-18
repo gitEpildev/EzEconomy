@@ -114,12 +114,47 @@ public class PayCommand implements CommandExecutor {
         // Delegate the actual transfer logic to PaymentExecutor (handles online/offline flows)
         // If the recipient is currently online, run synchronously so callers see immediate result in tests.
         // If recipient is offline, run asynchronously to avoid blocking I/O.
+        // Determine whether the recipient is known to the server (main-thread check)
+        boolean knownOffline = false;
+        if (online != null) {
+            knownOffline = true;
+        } else {
+            OfflinePlayer sample = Bukkit.getOfflinePlayer(args[0]);
+            if (sample != null) {
+                // Consider known if has played before or if storage already contains a balance entry for this UUID
+                if (sample.hasPlayedBefore()) {
+                    knownOffline = true;
+                } else {
+                    try {
+                        var storage = plugin.getStorageOrWarn();
+                        if (storage != null) {
+                            java.util.Map<java.util.UUID, Double> all = storage.getAllBalances(currency);
+                            if (all.containsKey(sample.getUniqueId())) {
+                                knownOffline = true;
+                            }
+                        }
+                    } catch (Exception ignored) {
+                        // If storage lookup fails, fall back to scanning Bukkit.getOfflinePlayers()
+                    }
+                }
+            }
+            if (!knownOffline) {
+                for (OfflinePlayer op : Bukkit.getOfflinePlayers()) {
+                    if (op.getName() != null && op.getName().equalsIgnoreCase(args[0])) {
+                        knownOffline = true;
+                        break;
+                    }
+                }
+            }
+        }
+
         if (online != null) {
             // Execute immediately on current thread for online recipient (tests expect immediate result)
-            com.skyblockexp.ezeconomy.service.PaymentExecutor.execute(plugin, from, args[0], amountDecimal, currency);
+            com.skyblockexp.ezeconomy.service.PaymentExecutor.execute(plugin, from, args[0], amountDecimal, currency, knownOffline);
         } else {
+            boolean ko = knownOffline;
             plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
-                com.skyblockexp.ezeconomy.service.PaymentExecutor.execute(plugin, from, args[0], amountDecimal, currency);
+                com.skyblockexp.ezeconomy.service.PaymentExecutor.execute(plugin, from, args[0], amountDecimal, currency, ko);
             });
         }
         return true;
