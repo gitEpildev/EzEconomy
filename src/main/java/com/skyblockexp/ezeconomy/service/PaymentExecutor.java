@@ -31,7 +31,8 @@ public class PaymentExecutor {
 
         UUID fromUuid = from.getUniqueId();
 
-        if (toOffline == null) {
+        // If recipient is not online and has never played before, treat as not found
+        if (online == null && (toOffline == null || !toOffline.hasPlayedBefore())) {
             MessageUtils.send(from, plugin, "player_not_found");
             return true;
         }
