@@ -1,0 +1,29 @@
+package com.skyblockexp.ezeconomy.bootstrap.component;
+
+import com.skyblockexp.ezeconomy.bootstrap.BootstrapComponent;
+import com.skyblockexp.ezeconomy.core.EzEconomyPlugin;
+
+public class ConfigComponent implements BootstrapComponent {
+    private final EzEconomyPlugin plugin;
+
+    public ConfigComponent(EzEconomyPlugin plugin) {
+        this.plugin = plugin;
+    }
+
+    @Override
+    public void start() {
+        plugin.saveDefaultConfig();
+        plugin.ensureDefaultConfigs();
+        plugin.loadMessages();
+    }
+
+    @Override
+    public void stop() {
+        // no-op
+    }
+
+    @Override
+    public void reload() {
+        plugin.loadMessages();
+    }
+}

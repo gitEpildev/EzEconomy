@@ -66,6 +66,7 @@ public class EzEconomyPlugin extends JavaPlugin {
     private FileConfiguration messagesConfig;
     private FileConfiguration userGuiConfig;
     private com.skyblockexp.ezeconomy.gui.PayFlowManager payFlowManager;
+    private com.skyblockexp.ezeconomy.bootstrap.Bootstrap bootstrap;
 
     public String format(double amount) {
         return format(amount, getDefaultCurrency());
@@ -124,26 +125,15 @@ public class EzEconomyPlugin extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        saveDefaultConfig();
-        ensureDefaultConfigs();
-        loadMessages();
-
-        if (!initializeStorage()) {
+        this.bootstrap = new com.skyblockexp.ezeconomy.bootstrap.Bootstrap(this);
+        try {
+            this.bootstrap.start();
+            new SpigotUpdateChecker(this, SPIGOT_RESOURCE_ID).checkForUpdates();
+            getLogger().info("EzEconomy enabled and registered as Vault provider.");
+        } catch (RuntimeException ex) {
+            getLogger().severe("Bootstrap failed: " + ex.getMessage());
             getServer().getPluginManager().disablePlugin(this);
-            return;
         }
-
-        initializeManagers();
-        registerEconomy();
-        registerCommands();
-        registerListeners();
-        registerPlaceholderExpansion();
-
-        // Load optional user GUI configuration
-        loadUserGuiConfig();
-
-        new SpigotUpdateChecker(this, SPIGOT_RESOURCE_ID).checkForUpdates();
-        getLogger().info("EzEconomy enabled and registered as Vault provider.");
     }
 
     public EzEconomyMetrics getMetrics() {
@@ -152,7 +142,11 @@ public class EzEconomyPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        Bukkit.getServicesManager().unregister(Economy.class, vaultEconomy);
+        if (this.bootstrap != null) {
+            this.bootstrap.stop();
+        } else {
+            Bukkit.getServicesManager().unregister(Economy.class, vaultEconomy);
+        }
         getLogger().info("EzEconomy disabled.");
     }
 
@@ -257,7 +251,7 @@ public class EzEconomyPlugin extends JavaPlugin {
         return java.util.Collections.emptyList();
     }
 
-    private void ensureDefaultConfigs() {
+    public void ensureDefaultConfigs() {
         for (String fileName : DEFAULT_CONFIGS) {
             File outFile = new File(getDataFolder(), fileName);
             if (outFile.exists()) {
@@ -276,7 +270,7 @@ public class EzEconomyPlugin extends JavaPlugin {
         }
     }
 
-    private void loadMessages() {
+    public void loadMessages() {
         // Load language files on plugin enable; fall back to English if missing
         String language = getConfig().getString("language", "en");
         String resourcePath = "languages/" + language + ".yml";
@@ -307,7 +301,7 @@ public class EzEconomyPlugin extends JavaPlugin {
         this.messageProvider = new MessageProvider(selected, fallback, language);
     }
 
-    private boolean initializeStorage() {
+    public boolean initializeStorage() {
         String storageType = getConfig().getString("storage", "yml").toLowerCase();
         try {
             switch (storageType) {
@@ -357,19 +351,15 @@ public class EzEconomyPlugin extends JavaPlugin {
         return YamlConfiguration.loadConfiguration(file);
     }
 
-    private void initializeManagers() {
+    public void initializeManagers() {
         this.currencyPreferenceManager = new CurrencyPreferenceManager(this);
         this.currencyManager = new CurrencyManager(this);
         this.bankInterestManager = new BankInterestManager(this);
         long interval = getConfig().getLong("bank-interest-interval-ticks", DEFAULT_INTEREST_INTERVAL_TICKS);
         bankInterestManager.start(interval);
         this.dailyRewardManager = new DailyRewardManager(this);
-        try {
-            this.metrics = new EzEconomyMetrics(this);
-        } catch (Exception ex) {
-            getLogger().warning("Failed to initialize metrics: " + ex.getMessage());
-            this.metrics = null;
-        }
+        // Metrics are initialized in a dedicated bootstrap component
+        this.metrics = null;
         // Pay flow manager handles custom amount entry state
         this.payFlowManager = new com.skyblockexp.ezeconomy.gui.PayFlowManager();
     }
@@ -378,12 +368,16 @@ public class EzEconomyPlugin extends JavaPlugin {
         return this.payFlowManager;
     }
 
-    private void registerEconomy() {
+    public void setMetrics(EzEconomyMetrics metrics) {
+        this.metrics = metrics;
+    }
+
+    public void registerEconomy() {
         this.vaultEconomy = new VaultEconomyImpl(this);
         Bukkit.getServicesManager().register(Economy.class, vaultEconomy, this, ServicePriority.Highest);
     }
 
-    private void registerCommands() {
+    public void registerCommands() {
         getCommand("balance").setExecutor(new BalanceCommand(this));
         getCommand("balance").setTabCompleter(new com.skyblockexp.ezeconomy.tabcomplete.BalanceTabCompleter(this));
         getCommand("eco").setExecutor(new EcoCommand(this));
@@ -400,12 +394,12 @@ public class EzEconomyPlugin extends JavaPlugin {
         getCommand("ezeconomy").setTabCompleter(new EzEconomyCommandTabCompleter(this));
     }
 
-    private void registerListeners() {
+    public void registerListeners() {
         Bukkit.getPluginManager().registerEvents(new DailyRewardListener(dailyRewardManager), this);
         Bukkit.getPluginManager().registerEvents(new GuiListener(this), this);
     }
 
-    private void loadUserGuiConfig() {
+    public void loadUserGuiConfig() {
         File file = new File(getDataFolder(), "user-gui.yml");
         if (!file.exists()) {
             if (getResource("user-gui.yml") != null) {
@@ -419,7 +413,7 @@ public class EzEconomyPlugin extends JavaPlugin {
         return this.userGuiConfig == null ? YamlConfiguration.loadConfiguration(new File(getDataFolder(), "user-gui.yml")) : this.userGuiConfig;
     }
 
-    private void registerPlaceholderExpansion() {
+    public void registerPlaceholderExpansion() {
         if (!Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) {
             return;
         }

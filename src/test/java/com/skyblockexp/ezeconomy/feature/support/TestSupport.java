@@ -22,7 +22,11 @@ public final class TestSupport {
     }
 
     public static EzEconomyPlugin loadPlugin(Object server) {
-        return (EzEconomyPlugin) MockBukkit.load(EzEconomyPlugin.class);
+        EzEconomyPlugin plugin = (EzEconomyPlugin) MockBukkit.load(EzEconomyPlugin.class);
+        try {
+            plugin.registerEconomy();
+        } catch (Exception ignored) {}
+        return plugin;
     }
 
     public static void tearDown() {
