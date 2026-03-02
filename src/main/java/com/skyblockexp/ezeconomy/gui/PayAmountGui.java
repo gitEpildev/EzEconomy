@@ -52,7 +52,7 @@ public class PayAmountGui {
             var storage = plugin.getStorageOrWarn();
             if (storage != null) {
                 double bal = storage.getBalance(player.getUniqueId(), plugin.getDefaultCurrency());
-                headerLore.add(plugin.format(bal, plugin.getDefaultCurrency()));
+                headerLore.add(plugin.formatPriceForMessage(bal, plugin.getDefaultCurrency()));
             }
         } catch (Exception ignore) {}
         String headerHint = cfg.getString("pay.header.lore", "Click a preset or choose Custom to enter an amount");
@@ -118,7 +118,7 @@ public class PayAmountGui {
             String shortAmount = com.skyblockexp.ezeconomy.util.NumberUtil.formatShort(parsed);
             String display = presetFormat.replace("{amount}", shortAmount);
             m.setDisplayName(GuiUtils.formatMiniMessage(display));
-            String fullAmount = plugin.format(parsed.doubleValue(), plugin.getDefaultCurrency());
+            String fullAmount = plugin.formatPriceForMessage(parsed.doubleValue(), plugin.getDefaultCurrency());
             String lore = presetLore.replace("{amount}", fullAmount).replace("{target}", displayTarget);
             m.setLore(java.util.List.of(GuiUtils.formatMiniMessage(lore)));
             GuiUtils.setGuiAction(m, plugin, "amount:" + parsed.toPlainString());

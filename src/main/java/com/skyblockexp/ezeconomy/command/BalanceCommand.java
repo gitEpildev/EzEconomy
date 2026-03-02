@@ -37,7 +37,7 @@ public class BalanceCommand implements CommandExecutor {
             Player player = (Player) sender;
             String currency = preferenceManager.getPreferredCurrency(player.getUniqueId());
             double balance = storage != null ? storage.getBalance(player.getUniqueId(), currency) : plugin.getEconomy().getBalance(player);
-            MessageUtils.send(sender, plugin, "your_balance", java.util.Map.of("balance", plugin.format(balance, currency), "currency", currency));
+            MessageUtils.send(sender, plugin, "your_balance", java.util.Map.of("balance", plugin.formatPriceForMessage(balance, currency), "currency", currency));
             return true;
         } else if (args.length == 1) {
             // /balance <currency> OR /balance <player>
@@ -50,7 +50,7 @@ public class BalanceCommand implements CommandExecutor {
                 }
                 String currency = preferenceManager.getPreferredCurrency(target.getUniqueId());
                 double balance = storage != null ? storage.getBalance(target.getUniqueId(), currency) : plugin.getEconomy().getBalance(target);
-                MessageUtils.send(sender, plugin, "others_balance", java.util.Map.of("player", target.getName(), "balance", plugin.format(balance, currency), "currency", currency));
+                MessageUtils.send(sender, plugin, "others_balance", java.util.Map.of("player", target.getName(), "balance", plugin.formatPriceForMessage(balance, currency), "currency", currency));
                 return true;
             } else {
                 // /balance <currency>
@@ -65,7 +65,7 @@ public class BalanceCommand implements CommandExecutor {
                     return true;
                 }
                 double balance = storage != null ? storage.getBalance(player.getUniqueId(), currency) : plugin.getEconomy().getBalance(player);
-                MessageUtils.send(sender, plugin, "your_balance", java.util.Map.of("balance", plugin.format(balance, currency), "currency", currency));
+                MessageUtils.send(sender, plugin, "your_balance", java.util.Map.of("balance", plugin.formatPriceForMessage(balance, currency), "currency", currency));
                 return true;
             }
         } else if (args.length == 2) {
@@ -81,7 +81,7 @@ public class BalanceCommand implements CommandExecutor {
                 return true;
             }
             double balance = storage != null ? storage.getBalance(target.getUniqueId(), currency) : plugin.getEconomy().getBalance(target);
-            MessageUtils.send(sender, plugin, "others_balance", java.util.Map.of("player", target.getName(), "balance", plugin.format(balance, currency), "currency", currency));
+            MessageUtils.send(sender, plugin, "others_balance", java.util.Map.of("player", target.getName(), "balance", plugin.formatPriceForMessage(balance, currency), "currency", currency));
             return true;
         }
         MessageUtils.send(sender, plugin, "usage_balance");

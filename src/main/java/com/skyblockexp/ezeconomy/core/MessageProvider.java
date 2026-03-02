@@ -123,4 +123,20 @@ public class MessageProvider {
         }
         return false;
     }
+
+    /**
+     * Compose a price string using the language-level `price_message_format` template.
+     * Template supports placeholders `{amount}` and `{symbol}`. Falls back to
+     * "{amount} {symbol}" when the key is missing.
+     */
+    public String formatPrice(EzEconomyPlugin plugin, double amount, String currency) {
+        String template = selectedConfig.getString("price_message_format", null);
+        if (template == null) {
+            template = fallbackConfig.getString("price_message_format", "{amount} {symbol}");
+        }
+        String amountStr = plugin.formatAmountOnly(amount, currency);
+        String symbol = plugin.getCurrencySymbol(currency);
+        java.util.Map<String, String> placeholders = java.util.Map.of("amount", amountStr, "symbol", symbol == null ? "" : symbol);
+        return format(template, placeholders);
+    }
 }

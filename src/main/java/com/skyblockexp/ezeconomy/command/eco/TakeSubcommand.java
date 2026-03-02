@@ -37,7 +37,7 @@ public class TakeSubcommand implements Subcommand {
 
         if (args.length == 2) {
             plugin.getEconomy().withdrawPlayer(target, amount);
-            MessageUtils.send(sender, plugin, "withdrew", Map.of("name", target.getName(), "amount", plugin.format(amount, plugin.getDefaultCurrency())));
+            MessageUtils.send(sender, plugin, "withdrew", Map.of("name", target.getName(), "amount", plugin.formatPriceForMessage(amount, plugin.getDefaultCurrency())));
             return true;
         }
 
@@ -62,7 +62,7 @@ public class TakeSubcommand implements Subcommand {
             MessageUtils.send(sender, plugin, "not_enough_money");
             return true;
         }
-        String amountWithSymbol = plugin.format(amount, currency);
+        String amountWithSymbol = plugin.formatPriceForMessage(amount, currency);
         MessageUtils.send(sender, plugin, "withdrew", Map.of("name", target.getName(), "amount", amountWithSymbol));
         return true;
     }

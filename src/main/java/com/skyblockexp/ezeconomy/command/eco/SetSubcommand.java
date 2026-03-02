@@ -54,7 +54,7 @@ public class SetSubcommand implements Subcommand {
         }
 
         storage.setBalance(target.getUniqueId(), currency, amount);
-        String amountWithSymbol = plugin.format(amount, currency);
+        String amountWithSymbol = plugin.formatPriceForMessage(amount, currency);
         MessageUtils.send(sender, plugin, "set", Map.of("player", target.getName(), "balance", amountWithSymbol));
         return true;
     }
