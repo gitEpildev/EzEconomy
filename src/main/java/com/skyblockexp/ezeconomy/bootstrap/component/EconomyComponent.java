@@ -2,6 +2,7 @@ package com.skyblockexp.ezeconomy.bootstrap.component;
 
 import com.skyblockexp.ezeconomy.bootstrap.BootstrapComponent;
 import com.skyblockexp.ezeconomy.core.EzEconomyPlugin;
+import com.skyblockexp.ezeconomy.core.Registry;
 import org.bukkit.Bukkit;
 import net.milkbowl.vault.economy.Economy;
 
@@ -16,13 +17,13 @@ public class EconomyComponent implements BootstrapComponent {
     public void start() {
         com.skyblockexp.ezeconomy.core.VaultEconomyImpl impl = new com.skyblockexp.ezeconomy.core.VaultEconomyImpl(plugin);
         org.bukkit.Bukkit.getServicesManager().register(net.milkbowl.vault.economy.Economy.class, impl, plugin, org.bukkit.plugin.ServicePriority.Highest);
-        plugin.setVaultEconomy(impl);
+        Registry.register(com.skyblockexp.ezeconomy.core.VaultEconomyImpl.class, impl);
     }
 
     @Override
     public void stop() {
         try {
-            Economy e = plugin.getVaultEconomy();
+            com.skyblockexp.ezeconomy.core.VaultEconomyImpl e = Registry.get(com.skyblockexp.ezeconomy.core.VaultEconomyImpl.class);
             if (e != null) {
                 Bukkit.getServicesManager().unregister(Economy.class, e);
             }

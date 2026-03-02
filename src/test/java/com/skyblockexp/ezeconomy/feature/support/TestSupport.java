@@ -248,4 +248,12 @@ public final class TestSupport {
             throw new RuntimeException(e);
         }
     }
+
+    public static <T> void injectRegistry(Class<T> key, T instance) {
+        com.skyblockexp.ezeconomy.core.Registry.register(key, instance);
+    }
+
+    public static <T> T getFromRegistry(Class<T> key) {
+        return com.skyblockexp.ezeconomy.core.Registry.get(key);
+    }
 }

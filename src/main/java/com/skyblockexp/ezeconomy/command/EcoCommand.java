@@ -7,6 +7,8 @@ import com.skyblockexp.ezeconomy.command.eco.SetSubcommand;
 import com.skyblockexp.ezeconomy.command.eco.TakeSubcommand;
 import com.skyblockexp.ezeconomy.command.Subcommand;
 import com.skyblockexp.ezeconomy.core.EzEconomyPlugin;
+import com.skyblockexp.ezeconomy.core.Registry;
+import org.bukkit.configuration.file.FileConfiguration;
 import com.skyblockexp.ezeconomy.util.MessageUtils;
 
 import org.bukkit.command.Command;
@@ -18,11 +20,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class EcoCommand implements CommandExecutor {
-    private final EzEconomyPlugin plugin;
     private final Map<String, Subcommand> subcommands;
 
     public EcoCommand(EzEconomyPlugin plugin) {
-        this.plugin = plugin;
         this.subcommands = new HashMap<>();
         this.subcommands.put("gui", new GuiSubcommand(plugin));
         this.subcommands.put("give", new GiveSubcommand(plugin));
@@ -33,7 +33,7 @@ public class EcoCommand implements CommandExecutor {
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!sender.hasPermission("ezeconomy.eco")) {
-            MessageUtils.send(sender, plugin, "no_permission");
+            MessageUtils.send(sender, Registry.getPlugin(), "no_permission");
             return true;
         }
 
@@ -41,12 +41,13 @@ public class EcoCommand implements CommandExecutor {
             // Optionally open the user GUI when /eco is used with no args
             if (sender instanceof Player) {
                 Player player = (Player) sender;
-                if (plugin.getUserGuiConfig().getBoolean("open-on-eco", false)) {
-                    com.skyblockexp.ezeconomy.gui.MainGui.open(plugin, player);
+                FileConfiguration guiCfg = Registry.get(FileConfiguration.class);
+                if (guiCfg.getBoolean("open-on-eco", false)) {
+                    com.skyblockexp.ezeconomy.gui.MainGui.open(Registry.getPlugin(), player);
                     return true;
                 }
             }
-            MessageUtils.send(sender, plugin, "usage_eco");
+            MessageUtils.send(sender, Registry.getPlugin(), "usage_eco");
             return true;
         }
 
@@ -59,7 +60,7 @@ public class EcoCommand implements CommandExecutor {
         }
 
         // Unknown subcommand
-        MessageUtils.send(sender, plugin, "unknown_action");
+        MessageUtils.send(sender, Registry.getPlugin(), "unknown_action");
         return true;
     }
 }

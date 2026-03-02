@@ -6,6 +6,7 @@ import com.skyblockexp.ezeconomy.util.NumberUtil;
 import com.skyblockexp.ezeconomy.core.Money;
 
 import com.skyblockexp.ezeconomy.core.EzEconomyPlugin;
+import com.skyblockexp.ezeconomy.core.Registry;
 import java.math.BigDecimal;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
@@ -40,7 +41,7 @@ public class PayCommand implements CommandExecutor {
                 return true;
             }
             Player p = (Player) sender;
-            var pt = plugin.getPayFlowManager().pollPendingTransfer(p.getUniqueId());
+            var pt = com.skyblockexp.ezeconomy.core.Registry.get(com.skyblockexp.ezeconomy.gui.PayFlowManager.class).pollPendingTransfer(p.getUniqueId());
             if (pt == null || System.currentTimeMillis() > pt.getExpiresAtMillis()) {
                 MessageUtils.send(sender, plugin, "no_pending_payment");
                 return true;
@@ -69,8 +70,9 @@ public class PayCommand implements CommandExecutor {
         final String currency;
         if (args.length == 3) {
             String tmpCurrency = args[2].toLowerCase();
-            java.util.Map<String, Object> currencies = plugin.getConfig().getConfigurationSection("multi-currency.currencies") != null
-                ? plugin.getConfig().getConfigurationSection("multi-currency.currencies").getValues(false)
+            var mainCfg = com.skyblockexp.ezeconomy.core.Registry.getPlugin().getConfig();
+            java.util.Map<String, Object> currencies = mainCfg.getConfigurationSection("multi-currency.currencies") != null
+                ? mainCfg.getConfigurationSection("multi-currency.currencies").getValues(false)
                 : java.util.Collections.emptyMap();
             if (!currencies.containsKey(tmpCurrency)) {
                 MessageUtils.send(sender, plugin, "unknown_currency", java.util.Map.of("currency", tmpCurrency));
@@ -78,7 +80,7 @@ public class PayCommand implements CommandExecutor {
             }
             currency = tmpCurrency;
         } else {
-            currency = plugin.getDefaultCurrency();
+            currency = com.skyblockexp.ezeconomy.core.Registry.get(com.skyblockexp.ezeconomy.manager.CurrencyManager.class).getDefaultCurrency();
         }
 
         Money money = NumberUtil.parseMoney(args[1], currency);
@@ -98,16 +100,17 @@ public class PayCommand implements CommandExecutor {
 
 
         // Confirmation threshold check: if configured and amount >= threshold, create pending transfer
-        double threshold = plugin.getConfig().getDouble("pay.confirmation.threshold", -1.0);
-        int timeoutSeconds = plugin.getConfig().getInt("pay.confirmation.timeout_seconds", 30);
+        var mainCfg2 = com.skyblockexp.ezeconomy.core.Registry.getPlugin().getConfig();
+        double threshold = mainCfg2.getDouble("pay.confirmation.threshold", -1.0);
+        int timeoutSeconds = mainCfg2.getInt("pay.confirmation.timeout_seconds", 30);
         boolean requireConfirm = threshold >= 0 && amountDecimal.compareTo(java.math.BigDecimal.valueOf(threshold)) >= 0;
         if (requireConfirm && !args[1].equalsIgnoreCase("confirm")) {
             // Store pending transfer via PayFlowManager and instruct user to confirm
             long expiresAt = System.currentTimeMillis() + (timeoutSeconds * 1000L);
-            plugin.getPayFlowManager().createPendingTransfer(from.getUniqueId(), to == null ? null : to.getUniqueId(), args[0], money, currency, expiresAt);
-            MessageUtils.send(sender, plugin, "payment_confirm_required", java.util.Map.of("amount", plugin.format(amountDecimal.doubleValue(), currency), "timeout", String.valueOf(timeoutSeconds)));
+            com.skyblockexp.ezeconomy.core.Registry.get(com.skyblockexp.ezeconomy.gui.PayFlowManager.class).createPendingTransfer(from.getUniqueId(), to == null ? null : to.getUniqueId(), args[0], money, currency, expiresAt);
+            MessageUtils.send(sender, com.skyblockexp.ezeconomy.core.Registry.getPlugin(), "payment_confirm_required", java.util.Map.of("amount", com.skyblockexp.ezeconomy.core.Registry.get(com.skyblockexp.ezeconomy.manager.CurrencyManager.class).format(amountDecimal.doubleValue(), currency), "timeout", String.valueOf(timeoutSeconds)));
             // Schedule cleanup
-            Bukkit.getScheduler().runTaskLater(plugin, () -> plugin.getPayFlowManager().removeIfExpired(from.getUniqueId()), timeoutSeconds * 20L);
+            Bukkit.getScheduler().runTaskLater(com.skyblockexp.ezeconomy.core.Registry.getPlugin(), () -> com.skyblockexp.ezeconomy.core.Registry.get(com.skyblockexp.ezeconomy.gui.PayFlowManager.class).removeIfExpired(from.getUniqueId()), timeoutSeconds * 20L);
             return true;
         }
 
@@ -126,7 +129,7 @@ public class PayCommand implements CommandExecutor {
                     knownOffline = true;
                 } else {
                     try {
-                        var storage = plugin.getStorageOrWarn();
+                        var storage = com.skyblockexp.ezeconomy.core.Registry.get(com.skyblockexp.ezeconomy.api.storage.StorageProvider.class);
                         if (storage != null) {
                             java.util.Map<java.util.UUID, Double> all = storage.getAllBalances(currency);
                             if (all.containsKey(sample.getUniqueId())) {
@@ -153,7 +156,7 @@ public class PayCommand implements CommandExecutor {
             com.skyblockexp.ezeconomy.service.PaymentExecutor.execute(plugin, from, args[0], amountDecimal, currency, knownOffline);
         } else {
             boolean ko = knownOffline;
-            plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
+            com.skyblockexp.ezeconomy.core.Registry.getPlugin().getServer().getScheduler().runTaskAsynchronously(com.skyblockexp.ezeconomy.core.Registry.getPlugin(), () -> {
                 com.skyblockexp.ezeconomy.service.PaymentExecutor.execute(plugin, from, args[0], amountDecimal, currency, ko);
             });
         }

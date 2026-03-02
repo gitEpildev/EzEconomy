@@ -16,7 +16,7 @@ public final class CurrencyUtil {
         if (from.equalsIgnoreCase(to)) return amount;
         String f = from.toLowerCase();
         String t = to.toLowerCase();
-        var cfg = plugin.getConfig();
+        var cfg = com.skyblockexp.ezeconomy.core.Registry.getPlugin().getConfig();
         if (!cfg.isConfigurationSection("multi-currency.conversion")) return Double.NaN;
 
         // Build graph of rates (prefer explicit rates; add reciprocal if reverse missing)
@@ -78,7 +78,7 @@ public final class CurrencyUtil {
     }
 
     private static double roundToCurrency(EzEconomyPlugin plugin, double value, String currency) {
-        var cfg = plugin.getConfig();
+        var cfg = com.skyblockexp.ezeconomy.core.Registry.getPlugin().getConfig();
         int decimals = cfg.getInt("multi-currency.currencies." + currency + ".decimals", 2);
         BigDecimal bd = BigDecimal.valueOf(value).setScale(decimals, RoundingMode.HALF_UP);
         return bd.doubleValue();

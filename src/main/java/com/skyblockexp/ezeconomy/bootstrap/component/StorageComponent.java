@@ -2,6 +2,7 @@ package com.skyblockexp.ezeconomy.bootstrap.component;
 
 import com.skyblockexp.ezeconomy.bootstrap.BootstrapComponent;
 import com.skyblockexp.ezeconomy.core.EzEconomyPlugin;
+import com.skyblockexp.ezeconomy.core.Registry;
 import com.skyblockexp.ezeconomy.api.storage.StorageProvider;
 import com.skyblockexp.ezeconomy.storage.YMLStorageProvider;
 import com.skyblockexp.ezeconomy.storage.MySQLStorageProvider;
@@ -47,10 +48,10 @@ public class StorageComponent implements BootstrapComponent {
                 throw new RuntimeException("No storage provider selected");
             }
 
-            // initialize and load provider
+            // initialize, load and register provider
             provider.init();
             provider.load();
-            plugin.setStorage(provider);
+            Registry.register(StorageProvider.class, provider);
             plugin.getLogger().info("Initialized storage provider: " + provider.getClass().getSimpleName());
         } catch (Exception ex) {
             plugin.getLogger().severe("Failed to initialize storage provider: " + ex.getMessage());
@@ -60,7 +61,7 @@ public class StorageComponent implements BootstrapComponent {
 
     @Override
     public void stop() {
-        StorageProvider s = plugin.getStorage();
+        StorageProvider s = Registry.get(StorageProvider.class);
         if (s != null) {
             try {
                 s.save();

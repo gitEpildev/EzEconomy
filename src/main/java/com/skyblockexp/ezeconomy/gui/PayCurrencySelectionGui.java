@@ -14,7 +14,7 @@ public final class PayCurrencySelectionGui {
     private PayCurrencySelectionGui() {}
 
     public static void open(EzEconomyPlugin plugin, Player player, String targetName) {
-        var cfg = plugin.getUserGuiConfig();
+        var cfg = com.skyblockexp.ezeconomy.core.Registry.get(org.bukkit.configuration.file.FileConfiguration.class);
         String titlePrefix = cfg.getString("pay.pay_currency_prefix", cfg.getString("pay_currency_prefix", "<yellow>EzEconomy</yellow> - <white>Select currency for "));
 
         // build a cleaned display name to show to users. input `targetName` may be a UUID
@@ -66,7 +66,7 @@ public final class PayCurrencySelectionGui {
         filler.setItemMeta(fm);
 
         // --- currency items placed in middle row(s), center left empty for symmetry ---
-        var mainCfg = plugin.getConfig();
+        var mainCfg = com.skyblockexp.ezeconomy.core.Registry.getPlugin().getConfig();
         var section = mainCfg.getConfigurationSection("multi-currency.currencies");
         java.util.List<String> keys = section == null ? java.util.List.of() : new java.util.ArrayList<>(section.getKeys(false));
 
@@ -86,7 +86,7 @@ public final class PayCurrencySelectionGui {
         String currencyDisplay = cfg.getString("pay.currency.display", "Currency: {key}");
         String currencyLore = cfg.getString("pay.currency.lore", "Click to select currency");
 
-        String selected = plugin.getPayFlowManager().getCurrency(player.getUniqueId());
+        String selected = com.skyblockexp.ezeconomy.core.Registry.get(com.skyblockexp.ezeconomy.gui.PayFlowManager.class).getCurrency(player.getUniqueId());
 
         // compute candidate slots in the middle row excluding center
         java.util.List<Integer> slots = new java.util.ArrayList<>();
@@ -115,7 +115,7 @@ public final class PayCurrencySelectionGui {
         }
 
         // place the active currency item near the bottom-left area (same slot as PayAmountGui)
-        String displayKey = selected == null ? plugin.getDefaultCurrency() : selected;
+        String displayKey = selected == null ? com.skyblockexp.ezeconomy.core.Registry.get(com.skyblockexp.ezeconomy.manager.CurrencyManager.class).getDefaultCurrency() : selected;
         String currSelectedIconCfg = cfg.getString("pay.currency.selected.icon", "EMERALD");
         Material activeMat = Material.EMERALD;
         try { activeMat = Material.valueOf(currSelectedIconCfg.toUpperCase()); } catch (Exception ex) {}

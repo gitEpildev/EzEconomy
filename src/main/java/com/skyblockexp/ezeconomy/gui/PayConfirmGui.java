@@ -8,10 +8,12 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
 import com.skyblockexp.ezeconomy.core.EzEconomyPlugin;
+import com.skyblockexp.ezeconomy.core.Registry;
+import org.bukkit.configuration.file.FileConfiguration;
 
 public class PayConfirmGui {
     public static void open(EzEconomyPlugin plugin, Player player, String targetName, String amount) {
-        var cfg = plugin.getUserGuiConfig();
+        FileConfiguration cfg = Registry.get(FileConfiguration.class);
         String title = cfg.getString("title.confirm_pay", "EzEconomy - Confirm Pay");
         Inventory inv = Bukkit.createInventory(new GuiInventoryHolder("confirm_pay"), 9, GuiUtils.formatMiniMessage(title));
         ItemStack info = new ItemStack(Material.PAPER);

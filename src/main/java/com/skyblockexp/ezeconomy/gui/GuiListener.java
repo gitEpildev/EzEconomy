@@ -17,10 +17,8 @@ import org.bukkit.entity.Player;
 import com.skyblockexp.ezeconomy.core.EzEconomyPlugin;
 
 public class GuiListener implements Listener {
-    private final EzEconomyPlugin plugin;
-
     public GuiListener(EzEconomyPlugin plugin) {
-        this.plugin = plugin;
+        // constructor kept for compatibility; use Registry at runtime
     }
 
     @EventHandler
@@ -28,7 +26,7 @@ public class GuiListener implements Listener {
         if (e.getClickedInventory() == null) return;
         String title = e.getView().getTitle();
         if (title == null) return;
-        var cfg = plugin.getUserGuiConfig();
+        var cfg = com.skyblockexp.ezeconomy.core.Registry.get(org.bukkit.configuration.file.FileConfiguration.class);
         String menuTitle = GuiUtils.formatMiniMessage(cfg.getString("title.menu", "EzEconomy - Menu"));
         String payTitle = GuiUtils.formatMiniMessage(cfg.getString("title.pay", "EzEconomy - Pay"));
         String historyTitle = GuiUtils.formatMiniMessage(cfg.getString("title.history", "EzEconomy - History"));
@@ -57,19 +55,19 @@ public class GuiListener implements Listener {
         String name = meta.hasDisplayName() ? meta.getDisplayName() : "";
         Player player = (Player) e.getWhoClicked();
         // detect GUI action stored in PDC or legacy lore marker
-        java.util.Optional<String> maybeAction = GuiUtils.getGuiAction(meta, plugin);
+        java.util.Optional<String> maybeAction = GuiUtils.getGuiAction(meta, com.skyblockexp.ezeconomy.core.Registry.getPlugin());
         if (maybeAction.isPresent()) {
             String action = maybeAction.get();
             if (action.equals("back")) {
                 player.closeInventory();
-                MainGui.open(plugin, player);
+                MainGui.open(com.skyblockexp.ezeconomy.core.Registry.getPlugin(), player);
                 return;
             }
             if (action.startsWith("page:")) {
                 try {
                     int target = Integer.parseInt(action.substring("page:".length()));
                     player.closeInventory();
-                    PayPlayerSelectionGui.open(plugin, player, target);
+                    PayPlayerSelectionGui.open(com.skyblockexp.ezeconomy.core.Registry.getPlugin(), player, target);
                     return;
                 } catch (NumberFormatException ex) {
                     // ignore malformed
@@ -89,7 +87,7 @@ public class GuiListener implements Listener {
                 player.closeInventory();
                 PayCurrencySelectionGui.open(plugin, player, targetName);
                 return;
-            }
+                PayAmountGui.open(com.skyblockexp.ezeconomy.core.Registry.getPlugin(), player, uuidStr);
 
             // back from currency selector to the pay amount GUI
             if (action.startsWith("back_to_pay:")) {
@@ -97,15 +95,15 @@ public class GuiListener implements Listener {
                 player.closeInventory();
                 PayAmountGui.open(plugin, player, targetName);
                 return;
-            }
+                PayCurrencySelectionGui.open(com.skyblockexp.ezeconomy.core.Registry.getPlugin(), player, targetName);
 
             // currency select action from currency selection GUI
             if (action.startsWith("select_currency:")) {
                 String key = action.substring("select_currency:".length());
                 // set chosen currency for the pay flow and return to PayAmountGui
-                plugin.getPayFlowManager().setCurrency(player.getUniqueId(), key);
+                com.skyblockexp.ezeconomy.core.Registry.get(com.skyblockexp.ezeconomy.gui.PayFlowManager.class).setCurrency(player.getUniqueId(), key);
                 // determine return target from title (if present)
-                String target = "";
+                PayAmountGui.open(com.skyblockexp.ezeconomy.core.Registry.getPlugin(), player, targetName);
                 if (title.startsWith(payToPrefix)) target = title.substring(payToPrefix.length());
                 else if (title.startsWith(rawPayToPrefix)) target = title.substring(rawPayToPrefix.length());
                 player.closeInventory();
@@ -119,19 +117,19 @@ public class GuiListener implements Listener {
                     String amtStr = action.substring("amount:".length());
                     try {
                         java.math.BigDecimal bd = new java.math.BigDecimal(amtStr);
-                        String chosen = plugin.getPayFlowManager().getCurrency(player.getUniqueId());
-                        String currency = chosen == null ? plugin.getDefaultCurrency() : chosen;
+                PayAmountGui.open(com.skyblockexp.ezeconomy.core.Registry.getPlugin(), player, target);
+                        String currency = chosen == null ? com.skyblockexp.ezeconomy.core.Registry.get(com.skyblockexp.ezeconomy.manager.CurrencyManager.class).getDefaultCurrency() : chosen;
                         String target;
                         if (title.startsWith(payToPrefix)) target = title.substring(payToPrefix.length());
                         else target = title.substring(rawPayToPrefix.length());
                         UUID targetUuid = getPlayerUuidByName(target);
-                        int timeoutSeconds = plugin.getConfig().getInt("pay.confirmation.timeout_seconds", 30);
+                        int timeoutSeconds = com.skyblockexp.ezeconomy.core.Registry.getPlugin().getConfig().getInt("pay.confirmation.timeout_seconds", 30);
                         long expiresAt = System.currentTimeMillis() + (timeoutSeconds * 1000L);
                         com.skyblockexp.ezeconomy.core.Money money = com.skyblockexp.ezeconomy.core.Money.of(bd, currency);
-                        plugin.getPayFlowManager().createPendingTransfer(player.getUniqueId(), targetUuid, target, money, currency, expiresAt);
+                        com.skyblockexp.ezeconomy.core.Registry.get(com.skyblockexp.ezeconomy.gui.PayFlowManager.class).createPendingTransfer(player.getUniqueId(), targetUuid, target, money, currency, expiresAt);
                         player.closeInventory();
                         PayConfirmGui.open(plugin, player, target, bd.toPlainString());
-                        Bukkit.getScheduler().runTaskLater(plugin, () -> plugin.getPayFlowManager().removeIfExpired(player.getUniqueId()), timeoutSeconds * 20L);
+                        Bukkit.getScheduler().runTaskLater(plugin, () -> com.skyblockexp.ezeconomy.core.Registry.get(com.skyblockexp.ezeconomy.gui.PayFlowManager.class).removeIfExpired(player.getUniqueId()), timeoutSeconds * 20L);
                         return;
                     } catch (NumberFormatException ex) {
                         player.sendMessage(org.bukkit.ChatColor.RED + "Invalid preset amount.");
@@ -140,7 +138,7 @@ public class GuiListener implements Listener {
                 }
             }
         }
-
+                        PayConfirmGui.open(com.skyblockexp.ezeconomy.core.Registry.getPlugin(), player, target, bd.toPlainString());
         if ("menu".equals(holderId) || title.equals(menuTitle) || title.equals(rawMenu) || title.startsWith("EzEconomy")) {
             java.util.Optional<String> maybe = GuiUtils.getGuiAction(meta, plugin);
             if (maybe.isPresent()) {
@@ -163,11 +161,11 @@ public class GuiListener implements Listener {
             String target;
             if (title.startsWith(payToPrefix)) target = title.substring(payToPrefix.length());
             else target = title.substring(rawPayToPrefix.length());
-            String currencyLabel = plugin.getUserGuiConfig().getString("pay.currency.label", "Currency: ");
+                        String currencyLabel = cfg.getString("pay.currency.label", "Currency: ");
             if (name.contains(currencyLabel)) {
                 // pick currency
-                String key = ChatColor.stripColor(name).replace(currencyLabel, "").split(" ")[0];
-                plugin.getPayFlowManager().setCurrency(player.getUniqueId(), key);
+                PayAmountGui.open(com.skyblockexp.ezeconomy.core.Registry.getPlugin(), player, target);
+                com.skyblockexp.ezeconomy.core.Registry.get(com.skyblockexp.ezeconomy.gui.PayFlowManager.class).setCurrency(player.getUniqueId(), key);
                 player.sendMessage(ChatColor.AQUA + "Selected currency: " + key);
                 // reopen the GUI to reflect selection (simple UX)
                 player.closeInventory();
@@ -179,24 +177,24 @@ public class GuiListener implements Listener {
                 // start awaiting custom amount via chat
                 player.closeInventory();
                 UUID targetUuid = getPlayerUuidByName(target);
-                plugin.getPayFlowManager().startAwaiting(player.getUniqueId(), targetUuid, target);
+                com.skyblockexp.ezeconomy.core.Registry.get(com.skyblockexp.ezeconomy.gui.PayFlowManager.class).startAwaiting(player.getUniqueId(), targetUuid, target);
                 player.sendMessage(ChatColor.AQUA + "Enter the amount to pay " + target + " in chat.");
-            } else if (name.contains("Pay ")) {
+                PayAmountGui.open(com.skyblockexp.ezeconomy.core.Registry.getPlugin(), player, target);
                 // preset amount selected
                 String amt = name.replaceAll("[^0-9.]", "");
                 player.closeInventory();
                 // create pending transfer and open confirm GUI
                 try {
                     BigDecimal bd = new BigDecimal(amt);
-                    String chosen = plugin.getPayFlowManager().getCurrency(player.getUniqueId());
-                    String currency = chosen == null ? plugin.getDefaultCurrency() : chosen;
+                    String chosen = com.skyblockexp.ezeconomy.core.Registry.get(com.skyblockexp.ezeconomy.gui.PayFlowManager.class).getCurrency(player.getUniqueId());
+                    String currency = chosen == null ? com.skyblockexp.ezeconomy.core.Registry.get(com.skyblockexp.ezeconomy.manager.CurrencyManager.class).getDefaultCurrency() : chosen;
                     Money money = Money.of(bd, currency);
                     UUID targetUuid = getPlayerUuidByName(target);
-                    int timeoutSeconds = plugin.getConfig().getInt("pay.confirmation.timeout_seconds", 30);
+                    int timeoutSeconds = com.skyblockexp.ezeconomy.core.Registry.getPlugin().getConfig().getInt("pay.confirmation.timeout_seconds", 30);
                     long expiresAt = System.currentTimeMillis() + (timeoutSeconds * 1000L);
-                    plugin.getPayFlowManager().createPendingTransfer(player.getUniqueId(), targetUuid, target, money, currency, expiresAt);
+                    com.skyblockexp.ezeconomy.core.Registry.get(com.skyblockexp.ezeconomy.gui.PayFlowManager.class).createPendingTransfer(player.getUniqueId(), targetUuid, target, money, currency, expiresAt);
                     PayConfirmGui.open(plugin, player, target, amt);
-                    Bukkit.getScheduler().runTaskLater(plugin, () -> plugin.getPayFlowManager().removeIfExpired(player.getUniqueId()), timeoutSeconds * 20L);
+                    Bukkit.getScheduler().runTaskLater(plugin, () -> com.skyblockexp.ezeconomy.core.Registry.get(com.skyblockexp.ezeconomy.gui.PayFlowManager.class).removeIfExpired(player.getUniqueId()), timeoutSeconds * 20L);
                 } catch (NumberFormatException ex) {
                     player.sendMessage(ChatColor.RED + "Invalid preset amount.");
                 }
@@ -204,8 +202,8 @@ public class GuiListener implements Listener {
         } else if ("confirm_pay".equals(holderId) || title.equals(confirmPayTitle) || title.equals(rawConfirm)) {
             if (name.contains("Confirm")) {
                 // Execute the stored pending transfer for this player
-                var pt = plugin.getPayFlowManager().pollPendingTransfer(player.getUniqueId());
-                if (pt == null) {
+                var pt = com.skyblockexp.ezeconomy.core.Registry.get(com.skyblockexp.ezeconomy.gui.PayFlowManager.class).pollPendingTransfer(player.getUniqueId());
+                    PayConfirmGui.open(com.skyblockexp.ezeconomy.core.Registry.getPlugin(), player, target, amt);
                     player.sendMessage(ChatColor.RED + "No pending payment found.");
                 } else {
                     player.closeInventory();
@@ -214,7 +212,7 @@ public class GuiListener implements Listener {
                 }
             } else if (name.contains("Cancel")) {
                 player.closeInventory();
-                plugin.getPayFlowManager().stopAwaiting(player.getUniqueId());
+                com.skyblockexp.ezeconomy.core.Registry.get(com.skyblockexp.ezeconomy.gui.PayFlowManager.class).stopAwaiting(player.getUniqueId());
                 player.sendMessage(ChatColor.RED + "Payment cancelled.");
             }
         }
@@ -223,28 +221,28 @@ public class GuiListener implements Listener {
     @EventHandler
     public void onPlayerChat(AsyncPlayerChatEvent e) {
         UUID uuid = e.getPlayer().getUniqueId();
-        if (!plugin.getPayFlowManager().isAwaiting(uuid)) return;
+        if (!com.skyblockexp.ezeconomy.core.Registry.get(com.skyblockexp.ezeconomy.gui.PayFlowManager.class).isAwaiting(uuid)) return;
         e.setCancelled(true);
         String msg = e.getMessage().trim();
         // parse amount (supports suffixes like 1k, 2.5m via NumberUtil)
-        var parsedMoney = com.skyblockexp.ezeconomy.util.NumberUtil.parseMoney(msg, plugin.getDefaultCurrency());
+        var parsedMoney = com.skyblockexp.ezeconomy.util.NumberUtil.parseMoney(msg, com.skyblockexp.ezeconomy.core.Registry.get(com.skyblockexp.ezeconomy.manager.CurrencyManager.class).getDefaultCurrency());
         if (parsedMoney == null) {
             e.getPlayer().sendMessage(ChatColor.RED + "Invalid number. Please enter a valid amount.");
             return;
         }
-        UUID target = plugin.getPayFlowManager().getTarget(uuid);
+        UUID target = com.skyblockexp.ezeconomy.core.Registry.get(com.skyblockexp.ezeconomy.gui.PayFlowManager.class).getTarget(uuid);
         if (target == null) {
             e.getPlayer().sendMessage(ChatColor.RED + "Target not found or expired.");
-            plugin.getPayFlowManager().stopAwaiting(uuid);
+            com.skyblockexp.ezeconomy.core.Registry.get(com.skyblockexp.ezeconomy.gui.PayFlowManager.class).stopAwaiting(uuid);
             return;
         }
-        String targetName = plugin.getServer().getPlayer(target) != null ? plugin.getServer().getPlayer(target).getName() : target.toString();
+        String targetName = com.skyblockexp.ezeconomy.core.Registry.getPlugin().getServer().getPlayer(target) != null ? com.skyblockexp.ezeconomy.core.Registry.getPlugin().getServer().getPlayer(target).getName() : target.toString();
         // create pending transfer and open confirm GUI on main thread
-        int timeoutSeconds = plugin.getConfig().getInt("pay.confirmation.timeout_seconds", 30);
+        int timeoutSeconds = com.skyblockexp.ezeconomy.core.Registry.getPlugin().getConfig().getInt("pay.confirmation.timeout_seconds", 30);
         long expiresAt = System.currentTimeMillis() + (timeoutSeconds * 1000L);
-        plugin.getPayFlowManager().createPendingTransfer(uuid, target, targetName, parsedMoney, plugin.getDefaultCurrency(), expiresAt);
+        com.skyblockexp.ezeconomy.core.Registry.get(com.skyblockexp.ezeconomy.gui.PayFlowManager.class).createPendingTransfer(uuid, target, targetName, parsedMoney, com.skyblockexp.ezeconomy.core.Registry.get(com.skyblockexp.ezeconomy.manager.CurrencyManager.class).getDefaultCurrency(), expiresAt);
         Bukkit.getScheduler().runTask(plugin, () -> PayConfirmGui.open(plugin, e.getPlayer(), targetName, parsedMoney.getAmount().toPlainString()));
-        Bukkit.getScheduler().runTaskLater(plugin, () -> plugin.getPayFlowManager().removeIfExpired(uuid), timeoutSeconds * 20L);
+        Bukkit.getScheduler().runTaskLater(plugin, () -> com.skyblockexp.ezeconomy.core.Registry.get(com.skyblockexp.ezeconomy.gui.PayFlowManager.class).removeIfExpired(uuid), timeoutSeconds * 20L);
     }
 
     private java.util.UUID getPlayerUuidByName(String name) {
@@ -255,7 +253,7 @@ public class GuiListener implements Listener {
             } catch (IllegalArgumentException ignored) {
             }
         }
-        var p = plugin.getServer().getPlayerExact(name);
+        var p = com.skyblockexp.ezeconomy.core.Registry.getPlugin().getServer().getPlayerExact(name);
         return p == null ? null : p.getUniqueId();
     }
 }

@@ -1,6 +1,7 @@
 package com.skyblockexp.ezeconomy.command;
 
 import com.skyblockexp.ezeconomy.core.EzEconomyPlugin;
+import com.skyblockexp.ezeconomy.core.Registry;
 import com.skyblockexp.ezeconomy.util.MessageUtils;
 import com.skyblockexp.ezeconomy.manager.CurrencyPreferenceManager;
 import org.bukkit.command.Command;
@@ -23,7 +24,7 @@ public class CurrencyCommand implements CommandExecutor {
 	@Override
 	public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
 		// MessageProvider replaced by MessageUtils
-		FileConfiguration config = plugin.getConfig();
+		FileConfiguration config = Registry.getPlugin().getConfig();
 		boolean multiEnabled = config.getBoolean("multi-currency.enabled", false);
 		if (!multiEnabled) {
 			MessageUtils.send(sender, plugin, "multi_currency_disabled");
@@ -35,7 +36,7 @@ public class CurrencyCommand implements CommandExecutor {
 			return true;
 		}
 		Player player = (Player) sender;
-		CurrencyPreferenceManager preferenceManager = plugin.getCurrencyPreferenceManager();
+		CurrencyPreferenceManager preferenceManager = Registry.get(com.skyblockexp.ezeconomy.manager.CurrencyPreferenceManager.class);
 
 		Map<String, Object> currencies = config.getConfigurationSection("multi-currency.currencies").getValues(false);
 		String preferred = preferenceManager.getPreferredCurrency(player.getUniqueId());
@@ -71,14 +72,14 @@ public class CurrencyCommand implements CommandExecutor {
 				return true;
 			}
 			double amt = m.getAmount().doubleValue();
-			double converted = CurrencyUtil.convert(plugin, amt, from, to);
+			double converted = CurrencyUtil.convert(Registry.getPlugin(), amt, from, to);
 			if (Double.isNaN(converted)) {
 				MessageUtils.send(sender, plugin, "unknown_conversion");
 				return true;
 			}
-			String fromDisplay = plugin.format(amt, from);
-			String toDisplay = plugin.format(converted, to);
-			sender.sendMessage(plugin.getMessageProvider().color("&eConversion: " + fromDisplay + " → " + toDisplay));
+			String fromDisplay = Registry.get(com.skyblockexp.ezeconomy.manager.CurrencyManager.class).format(amt, from);
+			String toDisplay = Registry.get(com.skyblockexp.ezeconomy.manager.CurrencyManager.class).format(converted, to);
+			sender.sendMessage(Registry.get(com.skyblockexp.ezeconomy.core.MessageProvider.class).color("&eConversion: " + fromDisplay + " → " + toDisplay));
 			return true;
 		}
 

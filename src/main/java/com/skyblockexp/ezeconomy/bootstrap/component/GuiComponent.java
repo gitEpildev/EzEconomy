@@ -2,6 +2,7 @@ package com.skyblockexp.ezeconomy.bootstrap.component;
 
 import com.skyblockexp.ezeconomy.bootstrap.BootstrapComponent;
 import com.skyblockexp.ezeconomy.core.EzEconomyPlugin;
+import com.skyblockexp.ezeconomy.core.Registry;
 import java.io.File;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -22,7 +23,8 @@ public class GuiComponent implements BootstrapComponent {
             }
         }
         FileConfiguration cfg = YamlConfiguration.loadConfiguration(file);
-        plugin.setUserGuiConfig(cfg);
+        // register user GUI config for consumers/tests
+        Registry.register(FileConfiguration.class, cfg);
     }
 
     @Override

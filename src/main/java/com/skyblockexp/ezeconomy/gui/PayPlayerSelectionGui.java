@@ -22,7 +22,7 @@ public final class PayPlayerSelectionGui {
     public static void open(EzEconomyPlugin plugin, Player player, int page) {
         int size = 9;
         final int playersPerPage = 6; // slots 0-5 for players
-        var cfg = plugin.getUserGuiConfig();
+        var cfg = com.skyblockexp.ezeconomy.core.Registry.get(org.bukkit.configuration.file.FileConfiguration.class);
         String title = cfg.getString("title.pay", "EzEconomy - Pay");
         Inventory inv = Bukkit.createInventory(new GuiInventoryHolder("pay"), size, GuiUtils.formatMiniMessage(title));
 
@@ -32,8 +32,8 @@ public final class PayPlayerSelectionGui {
             if (!p.getUniqueId().equals(player.getUniqueId())) uuids.add(p.getUniqueId());
         }
 
-        var storage = plugin.getStorageOrWarn();
-        String currency = plugin.getDefaultCurrency();
+        var storage = com.skyblockexp.ezeconomy.core.Registry.get(com.skyblockexp.ezeconomy.api.storage.StorageProvider.class);
+        String currency = com.skyblockexp.ezeconomy.core.Registry.get(com.skyblockexp.ezeconomy.manager.CurrencyManager.class).getDefaultCurrency();
         if (storage != null) {
             try {
                 var all = storage.getAllBalances(currency);
@@ -43,7 +43,7 @@ public final class PayPlayerSelectionGui {
                     }
                 }
             } catch (Exception ex) {
-                plugin.getLogger().warning("Failed to load known players from storage: " + ex.getMessage());
+                com.skyblockexp.ezeconomy.core.Registry.getPlugin().getLogger().warning("Failed to load known players from storage: " + ex.getMessage());
             }
         }
 

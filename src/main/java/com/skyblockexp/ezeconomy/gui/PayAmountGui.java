@@ -13,7 +13,7 @@ import com.skyblockexp.ezeconomy.core.EzEconomyPlugin;
 
 public class PayAmountGui {
     public static void open(EzEconomyPlugin plugin, Player player, String targetName) {
-        var cfg = plugin.getUserGuiConfig();
+        var cfg = com.skyblockexp.ezeconomy.core.Registry.get(org.bukkit.configuration.file.FileConfiguration.class);
         String payToPrefix = cfg.getString("title.pay_to_prefix", "EzEconomy - Pay to ");
 
         // GUI size (configurable, default 27 for a more professional layout)
@@ -24,14 +24,14 @@ public class PayAmountGui {
         java.util.UUID targetUuid = null;
         try {
             targetUuid = java.util.UUID.fromString(targetName);
-            var off = plugin.getServer().getOfflinePlayer(targetUuid);
+            var off = com.skyblockexp.ezeconomy.core.Registry.getPlugin().getServer().getOfflinePlayer(targetUuid);
             if (off != null && off.getName() != null) displayTarget = off.getName();
             else displayTarget = targetUuid.toString();
         } catch (IllegalArgumentException ex) {
-            var p = plugin.getServer().getPlayerExact(targetName);
+            var p = com.skyblockexp.ezeconomy.core.Registry.getPlugin().getServer().getPlayerExact(targetName);
             if (p != null) displayTarget = p.getName();
             else {
-                var off = plugin.getServer().getOfflinePlayer(targetName);
+                var off = com.skyblockexp.ezeconomy.core.Registry.getPlugin().getServer().getOfflinePlayer(targetName);
                 if (off != null && off.getName() != null) displayTarget = off.getName();
             }
         }
@@ -49,10 +49,11 @@ public class PayAmountGui {
         java.util.List<String> headerLore = new java.util.ArrayList<>();
         // show payer balance (optional)
         try {
-            var storage = plugin.getStorageOrWarn();
+            var storage = com.skyblockexp.ezeconomy.core.Registry.get(com.skyblockexp.ezeconomy.api.storage.StorageProvider.class);
             if (storage != null) {
-                double bal = storage.getBalance(player.getUniqueId(), plugin.getDefaultCurrency());
-                headerLore.add(plugin.format(bal, plugin.getDefaultCurrency()));
+                String defCur = com.skyblockexp.ezeconomy.core.Registry.get(com.skyblockexp.ezeconomy.manager.CurrencyManager.class).getDefaultCurrency();
+                double bal = storage.getBalance(player.getUniqueId(), defCur);
+                headerLore.add(((com.skyblockexp.ezeconomy.core.EzEconomyPlugin)com.skyblockexp.ezeconomy.core.Registry.getPlugin()).format(bal, defCur));
             }
         } catch (Exception ignore) {}
         String headerHint = cfg.getString("pay.header.lore", "Click a preset or choose Custom to enter an amount");
@@ -60,8 +61,8 @@ public class PayAmountGui {
         hm.setLore(headerLore);
         // try to set skull owner if we have a UUID
         try {
-            if (hm instanceof org.bukkit.inventory.meta.SkullMeta && targetUuid != null) {
-                ((org.bukkit.inventory.meta.SkullMeta) hm).setOwningPlayer(plugin.getServer().getOfflinePlayer(targetUuid));
+                if (hm instanceof org.bukkit.inventory.meta.SkullMeta && targetUuid != null) {
+                ((org.bukkit.inventory.meta.SkullMeta) hm).setOwningPlayer(com.skyblockexp.ezeconomy.core.Registry.getPlugin().getServer().getOfflinePlayer(targetUuid));
             }
         } catch (Throwable ignore) {}
         header.setItemMeta(hm);
@@ -107,10 +108,11 @@ public class PayAmountGui {
             presetSlots.add(idx);
         }
 
+        String defCur = com.skyblockexp.ezeconomy.core.Registry.get(com.skyblockexp.ezeconomy.manager.CurrencyManager.class).getDefaultCurrency();
         int placed = 0;
         for (String s : amountStrings) {
             if (placed >= presetSlots.size()) break;
-            var money = com.skyblockexp.ezeconomy.util.NumberUtil.parseMoney(s, plugin.getDefaultCurrency());
+            var money = com.skyblockexp.ezeconomy.util.NumberUtil.parseMoney(s, defCur);
             if (money == null) continue;
             java.math.BigDecimal parsed = money.getAmount();
             ItemStack it = new ItemStack(presetMat);
@@ -118,10 +120,10 @@ public class PayAmountGui {
             String shortAmount = com.skyblockexp.ezeconomy.util.NumberUtil.formatShort(parsed);
             String display = presetFormat.replace("{amount}", shortAmount);
             m.setDisplayName(GuiUtils.formatMiniMessage(display));
-            String fullAmount = plugin.format(parsed.doubleValue(), plugin.getDefaultCurrency());
+                String fullAmount = com.skyblockexp.ezeconomy.core.Registry.get(com.skyblockexp.ezeconomy.manager.CurrencyManager.class).format(parsed.doubleValue(), defCur);
             String lore = presetLore.replace("{amount}", fullAmount).replace("{target}", displayTarget);
             m.setLore(java.util.List.of(GuiUtils.formatMiniMessage(lore)));
-            GuiUtils.setGuiAction(m, plugin, "amount:" + parsed.toPlainString());
+            GuiUtils.setGuiAction(m, com.skyblockexp.ezeconomy.core.Registry.getPlugin(), "amount:" + parsed.toPlainString());
             it.setItemMeta(m);
             inv.setItem(presetSlots.get(placed), it);
             placed++;
@@ -146,7 +148,7 @@ public class PayAmountGui {
             if (ench != null) cm.addEnchant(ench, 1, true);
             cm.addItemFlags(ItemFlag.HIDE_ENCHANTS);
         } catch (Exception ignore) {}
-        GuiUtils.setGuiAction(cm, plugin, "custom:" + displayTarget);
+            GuiUtils.setGuiAction(cm, com.skyblockexp.ezeconomy.core.Registry.getPlugin(), "custom:" + displayTarget);
         custom.setItemMeta(cm);
         if (centerIndex < inv.getSize()) inv.setItem(centerIndex, custom);
 
@@ -156,10 +158,10 @@ public class PayAmountGui {
         }
 
         // --- show only the currently selected currency (click to open full currency selector) ---
-        var mainCfg = plugin.getConfig();
+        var mainCfg = com.skyblockexp.ezeconomy.core.Registry.getPlugin().getConfig();
         var section = mainCfg.getConfigurationSection("multi-currency.currencies");
-        String selected = plugin.getPayFlowManager().getCurrency(player.getUniqueId());
-        String displayKey = selected == null ? plugin.getDefaultCurrency() : selected;
+        String selected = com.skyblockexp.ezeconomy.core.Registry.get(com.skyblockexp.ezeconomy.gui.PayFlowManager.class).getCurrency(player.getUniqueId());
+        String displayKey = selected == null ? defCur : selected;
 
         String currSelectedIcon = cfg.getString("pay.currency.selected.icon", "EMERALD");
         Material selMat = Material.EMERALD;
@@ -188,7 +190,7 @@ public class PayAmountGui {
         java.util.List<String> formatted = new java.util.ArrayList<>();
         for (String l : lore) formatted.add(GuiUtils.formatMiniMessage(l));
         bm.setLore(formatted);
-        GuiUtils.setGuiAction(bm, plugin, "back");
+        GuiUtils.setGuiAction(bm, com.skyblockexp.ezeconomy.core.Registry.getPlugin(), "back");
         back.setItemMeta(bm);
         inv.setItem(inv.getSize()-1, back);
 

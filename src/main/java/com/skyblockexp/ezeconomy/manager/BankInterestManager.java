@@ -1,6 +1,5 @@
 package com.skyblockexp.ezeconomy.manager;
 
-import com.skyblockexp.ezeconomy.core.EzEconomyPlugin;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -9,7 +8,7 @@ import java.util.Set;
 import java.util.UUID;
 
 public class BankInterestManager {
-    private final EzEconomyPlugin plugin;
+    // plugin reference is obtained from Registry when needed
     private int taskId = -1;
 
     // THREAD SAFETY NOTE:
@@ -36,7 +35,7 @@ public class BankInterestManager {
             public void run() {
                 payInterestToAll();
             }
-        }.runTaskTimer(plugin, intervalTicks, intervalTicks).getTaskId();
+        }.runTaskTimer(com.skyblockexp.ezeconomy.core.Registry.getPlugin(), intervalTicks, intervalTicks).getTaskId();
     }
 
     public void stop() {
@@ -47,11 +46,11 @@ public class BankInterestManager {
     }
 
     private void payInterestToAll() {
-        com.skyblockexp.ezeconomy.api.storage.StorageProvider storage = plugin.getStorageOrWarn();
+        com.skyblockexp.ezeconomy.api.storage.StorageProvider storage = com.skyblockexp.ezeconomy.core.Registry.get(com.skyblockexp.ezeconomy.api.storage.StorageProvider.class);
         if (storage == null) {
             return;
         }
-        org.bukkit.configuration.file.FileConfiguration config = plugin.getConfig();
+        org.bukkit.configuration.file.FileConfiguration config = com.skyblockexp.ezeconomy.core.Registry.getPlugin().getConfig();
         boolean multiEnabled = config.getBoolean("multi-currency.enabled", false);
         Set<String> currencies;
         if (multiEnabled) {
@@ -73,7 +72,8 @@ public class BankInterestManager {
                         // If storage.setBalance is not thread-safe, synchronize here or in the provider.
                         storage.setBalance(uuid, currency, storage.getBalance(uuid, currency) + perMemberInterest);
                         if (player.isOnline()) {
-                            player.getPlayer().sendMessage("You received " + plugin.getEconomy().format(perMemberInterest) + " " + currency + " interest from bank '" + bank + "'");
+                            String formatted = com.skyblockexp.ezeconomy.core.Registry.get(com.skyblockexp.ezeconomy.manager.CurrencyManager.class).format(perMemberInterest, currency);
+                            player.getPlayer().sendMessage("You received " + formatted + " " + currency + " interest from bank '" + bank + "'");
                         }
                     }
                 }

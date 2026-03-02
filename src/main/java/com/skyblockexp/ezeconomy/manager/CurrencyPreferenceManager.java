@@ -1,6 +1,6 @@
 package com.skyblockexp.ezeconomy.manager;
 
-import com.skyblockexp.ezeconomy.core.EzEconomyPlugin;
+import com.skyblockexp.ezeconomy.core.Registry;
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
@@ -11,15 +11,12 @@ import org.bukkit.configuration.file.YamlConfiguration;
 
 public class CurrencyPreferenceManager {
     private static final String PREFERENCES_PATH = "preferences";
-
-    private final EzEconomyPlugin plugin;
     private final File dataFile;
     private final Map<UUID, String> preferences = new ConcurrentHashMap<>();
     private YamlConfiguration config;
 
-    public CurrencyPreferenceManager(EzEconomyPlugin plugin) {
-        this.plugin = plugin;
-        this.dataFile = new File(plugin.getDataFolder(), "currency-preferences.yml");
+    public CurrencyPreferenceManager() {
+        this.dataFile = new File(Registry.getPlugin().getDataFolder(), "currency-preferences.yml");
         load();
     }
 
@@ -46,7 +43,7 @@ public class CurrencyPreferenceManager {
                     preferences.put(uuid, currency.toLowerCase());
                 }
             } catch (IllegalArgumentException ignored) {
-                plugin.getLogger().warning("Invalid UUID in currency preferences: " + key);
+                Registry.getPlugin().getLogger().warning("Invalid UUID in currency preferences: " + key);
             }
         }
     }
@@ -61,7 +58,7 @@ public class CurrencyPreferenceManager {
         try {
             config.save(dataFile);
         } catch (IOException e) {
-            plugin.getLogger().warning("Failed to save currency preferences: " + e.getMessage());
+            Registry.getPlugin().getLogger().warning("Failed to save currency preferences: " + e.getMessage());
         }
     }
 
@@ -73,12 +70,12 @@ public class CurrencyPreferenceManager {
         try {
             config.save(dataFile);
         } catch (IOException e) {
-            plugin.getLogger().warning("Failed to save currency preferences: " + e.getMessage());
+            Registry.getPlugin().getLogger().warning("Failed to save currency preferences: " + e.getMessage());
         }
     }
 
     private String getDefaultCurrency() {
-        var config = plugin.getConfig();
+        var config = Registry.getPlugin().getConfig();
         boolean multiEnabled = config.getBoolean("multi-currency.enabled", false);
         return multiEnabled ? config.getString("multi-currency.default", "dollar") : "dollar";
     }

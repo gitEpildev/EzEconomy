@@ -18,20 +18,21 @@ public class MainGui {
     };
 
     public static void open(EzEconomyPlugin plugin, Player player) {
-        String title = plugin.getUserGuiConfig().getString("title.menu", "EzEconomy - Menu");
+        var cfg = com.skyblockexp.ezeconomy.core.Registry.get(org.bukkit.configuration.file.FileConfiguration.class);
+        String title = cfg.getString("title.menu", "EzEconomy - Menu");
         String legacyTitle = GuiUtils.formatMiniMessage(title);
         Inventory inv = Bukkit.createInventory(new GuiInventoryHolder("menu"), 9, legacyTitle);
         int slot = 0;
         for (GuiAction action : ACTIONS) {
             String basePath = "actions." + action.getKey();
-            String matName = plugin.getUserGuiConfig().getString(basePath + ".icon", "PAPER");
+            String matName = cfg.getString(basePath + ".icon", "PAPER");
             Material mat = Material.PAPER;
             try { mat = Material.valueOf(matName.toUpperCase()); } catch (Exception ex) {}
             ItemStack item = new ItemStack(mat);
             ItemMeta meta = item.getItemMeta();
-            String display = plugin.getUserGuiConfig().getString(basePath + ".display-name", action.getDisplayName());
+            String display = cfg.getString(basePath + ".display-name", action.getDisplayName());
             meta.setDisplayName(GuiUtils.formatMiniMessage(display));
-            java.util.List<String> lore = plugin.getUserGuiConfig().getStringList(basePath + ".lore");
+            java.util.List<String> lore = cfg.getStringList(basePath + ".lore");
             if (lore == null || lore.isEmpty()) lore = java.util.List.of("Click to open");
             java.util.List<String> formattedLore = new ArrayList<>();
             for (String l : lore) formattedLore.add(GuiUtils.formatMiniMessage(l));

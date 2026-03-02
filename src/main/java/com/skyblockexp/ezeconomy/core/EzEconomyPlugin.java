@@ -37,6 +37,7 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
 import net.milkbowl.vault.economy.Economy;
+import com.skyblockexp.ezeconomy.core.Registry;
 
 public class EzEconomyPlugin extends JavaPlugin {
     private static final int SPIGOT_RESOURCE_ID = 130975;
@@ -69,62 +70,25 @@ public class EzEconomyPlugin extends JavaPlugin {
     private com.skyblockexp.ezeconomy.bootstrap.Bootstrap bootstrap;
 
     public String format(double amount) {
-        return format(amount, getDefaultCurrency());
+        com.skyblockexp.ezeconomy.manager.CurrencyManager cm = Registry.get(com.skyblockexp.ezeconomy.manager.CurrencyManager.class);
+        return cm == null ? String.valueOf(amount) : cm.format(amount);
     }
 
     /**
      * Format an amount for a specific currency using configured decimals and symbol.
      */
     public String format(double amount, String currency) {
-        if (currency == null) {
-            java.text.NumberFormat nf = java.text.NumberFormat.getNumberInstance(java.util.Locale.getDefault());
-            nf.setGroupingUsed(true);
-            nf.setMinimumFractionDigits(2);
-            nf.setMaximumFractionDigits(2);
-            return nf.format(amount);
-        }
-        var cfg = getConfig();
-        if (cfg.getConfigurationSection("multi-currency.currencies") == null) {
-            java.text.NumberFormat nf = java.text.NumberFormat.getNumberInstance(java.util.Locale.getDefault());
-            nf.setGroupingUsed(true);
-            nf.setMinimumFractionDigits(2);
-            nf.setMaximumFractionDigits(2);
-            return nf.format(amount);
-        }
-        String key = currency.toLowerCase();
-        String symbol = cfg.getString("multi-currency.currencies." + key + ".symbol", "");
-        int decimals = cfg.getInt("multi-currency.currencies." + key + ".decimals", 2);
-
-        // Locale configuration: server-wide override optional
-        String localeCfg = cfg.getString("currency.format.locale", "");
-        java.util.Locale locale = java.util.Locale.getDefault();
-        if (localeCfg != null && !localeCfg.isBlank()) {
-            String[] parts = localeCfg.split("[_-]");
-            if (parts.length == 1) locale = new java.util.Locale(parts[0]);
-            else locale = new java.util.Locale(parts[0], parts[1]);
-        }
-
-        java.text.NumberFormat nf = java.text.NumberFormat.getNumberInstance(locale);
-        nf.setGroupingUsed(true);
-        nf.setMinimumFractionDigits(decimals);
-        nf.setMaximumFractionDigits(decimals);
-        String formatted = nf.format(java.math.BigDecimal.valueOf(amount).setScale(decimals, java.math.RoundingMode.HALF_UP));
-
-        // Symbol placement: optional per-currency setting (prefix/suffix)
-        String placement = cfg.getString("multi-currency.currencies." + key + ".symbol_placement", "suffix").toLowerCase();
-        boolean prefix = placement.equals("prefix") || placement.equals("before");
-        if (symbol == null || symbol.isEmpty()) {
-            return formatted;
-        }
-        return prefix ? (symbol + " " + formatted) : (formatted + " " + symbol);
+        com.skyblockexp.ezeconomy.manager.CurrencyManager cm = Registry.get(com.skyblockexp.ezeconomy.manager.CurrencyManager.class);
+        return cm == null ? String.valueOf(amount) : cm.format(amount, currency);
     }
 
     public VaultEconomyImpl getEconomy() {
-        return vaultEconomy;
+        return Registry.get(VaultEconomyImpl.class);
     }
 
     @Override
     public void onEnable() {
+        Registry.initialize(this);
         this.bootstrap = new com.skyblockexp.ezeconomy.bootstrap.Bootstrap(this);
         try {
             this.bootstrap.start();
@@ -137,7 +101,7 @@ public class EzEconomyPlugin extends JavaPlugin {
     }
 
     public EzEconomyMetrics getMetrics() {
-        return metrics;
+        return Registry.get(EzEconomyMetrics.class);
     }
 
     @Override
@@ -147,11 +111,15 @@ public class EzEconomyPlugin extends JavaPlugin {
         } else {
             Bukkit.getServicesManager().unregister(Economy.class, vaultEconomy);
         }
+        // Ensure any registered managers/services are shut down.
+        try {
+            Registry.shutdownAll();
+        } catch (Exception ignored) {}
         getLogger().info("EzEconomy disabled.");
     }
 
     public MessageProvider getMessageProvider() {
-        return messageProvider;
+        return Registry.get(MessageProvider.class);
     }
     public void loadMessageProvider() {
         // Delegate runtime reload of messages to the ConfigComponent implementation.
@@ -159,7 +127,7 @@ public class EzEconomyPlugin extends JavaPlugin {
     }
 
     public VaultEconomyImpl getVaultEconomy() {
-        return vaultEconomy;
+        return Registry.get(VaultEconomyImpl.class);
     }
     
     public BankInterestManager getBankInterestManager() {
@@ -170,57 +138,57 @@ public class EzEconomyPlugin extends JavaPlugin {
      * Returns the default currency as defined in config or "dollar" if not set.
      */
     public String getDefaultCurrency() {
-        return currencyManager.getDefaultCurrency();
+        CurrencyManager cm = Registry.get(CurrencyManager.class);
+        return cm == null ? "dollar" : cm.getDefaultCurrency();
     }
 
     /**
      * Returns the CurrencyManager instance.
      */
     public com.skyblockexp.ezeconomy.manager.CurrencyManager getCurrencyManager() {
-        return currencyManager;
+        return Registry.get(CurrencyManager.class);
     }
 
     /**
      * Returns the storage provider, logging a warning if not available.
      */
     public StorageProvider getStorageOrWarn() {
-        if (storage == null && !storageWarningLogged) {
+        StorageProvider sp = Registry.get(StorageProvider.class);
+        if (sp == null && !storageWarningLogged) {
             getLogger().warning("Storage provider is not initialized!");
             storageWarningLogged = true;
         }
-        return storage;
+        return sp;
     }
 
     /**
      * Returns the storage provider (may be null if not initialized).
      */
     public StorageProvider getStorage() {
-        return storage;
+        return Registry.get(StorageProvider.class);
     }
 
     /**
      * Returns the CurrencyPreferenceManager instance.
      */
     public CurrencyPreferenceManager getCurrencyPreferenceManager() {
-        return currencyPreferenceManager;
+        return Registry.get(CurrencyPreferenceManager.class);
     }
 
     /**
      * Logs a transaction using the storage provider.
      */
     public void logTransaction(com.skyblockexp.ezeconomy.api.storage.models.Transaction transaction) {
-        if (storage != null) {
-            storage.logTransaction(transaction);
-        }
+        StorageProvider sp = Registry.get(StorageProvider.class);
+        if (sp != null) sp.logTransaction(transaction);
     }
 
     /**
      * Retrieves transaction history for a player and currency.
      */
     public java.util.List<com.skyblockexp.ezeconomy.api.storage.models.Transaction> getTransactions(java.util.UUID uuid, String currency) {
-        if (storage != null) {
-            return storage.getTransactions(uuid, currency);
-        }
+        StorageProvider sp = Registry.get(StorageProvider.class);
+        if (sp != null) return sp.getTransactions(uuid, currency);
         return java.util.Collections.emptyList();
     }
 
@@ -239,13 +207,13 @@ public class EzEconomyPlugin extends JavaPlugin {
     }
 
     public void setMessageProvider(MessageProvider provider) {
-        this.messageProvider = provider;
+        Registry.register(MessageProvider.class, provider);
     }
 
     public boolean initializeStorage() {
         // Storage initialization moved to StorageComponent during bootstrap.
         // Keep method for compatibility; actual initialization is no-op here.
-        return storage != null;
+        return Registry.get(StorageProvider.class) != null;
     }
 
     public YamlConfiguration loadStorageConfig(String fileName) {
@@ -254,7 +222,7 @@ public class EzEconomyPlugin extends JavaPlugin {
     }
 
     public void setStorage(StorageProvider provider) {
-        this.storage = provider;
+        Registry.register(StorageProvider.class, provider);
     }
 
     public void initializeManagers() {
@@ -263,35 +231,35 @@ public class EzEconomyPlugin extends JavaPlugin {
     }
 
     public void setCurrencyPreferenceManager(CurrencyPreferenceManager m) {
-        this.currencyPreferenceManager = m;
+        Registry.register(CurrencyPreferenceManager.class, m);
     }
 
     public void setCurrencyManager(CurrencyManager m) {
-        this.currencyManager = m;
+        Registry.register(CurrencyManager.class, m);
     }
 
     public void setBankInterestManager(BankInterestManager m) {
-        this.bankInterestManager = m;
+        Registry.register(BankInterestManager.class, m);
     }
 
     public void setDailyRewardManager(DailyRewardManager m) {
-        this.dailyRewardManager = m;
+        Registry.register(DailyRewardManager.class, m);
     }
 
     public void setPayFlowManager(com.skyblockexp.ezeconomy.gui.PayFlowManager m) {
-        this.payFlowManager = m;
+        Registry.register(com.skyblockexp.ezeconomy.gui.PayFlowManager.class, m);
     }
 
     public com.skyblockexp.ezeconomy.gui.PayFlowManager getPayFlowManager() {
-        return this.payFlowManager;
+        return Registry.get(com.skyblockexp.ezeconomy.gui.PayFlowManager.class);
     }
 
     public DailyRewardManager getDailyRewardManager() {
-        return this.dailyRewardManager;
+        return Registry.get(DailyRewardManager.class);
     }
 
     public void setMetrics(EzEconomyMetrics metrics) {
-        this.metrics = metrics;
+        Registry.register(EzEconomyMetrics.class, metrics);
     }
 
     public void registerEconomy() {
@@ -300,7 +268,7 @@ public class EzEconomyPlugin extends JavaPlugin {
     }
 
     public void setVaultEconomy(VaultEconomyImpl impl) {
-        this.vaultEconomy = impl;
+        Registry.register(VaultEconomyImpl.class, impl);
     }
 
     public void registerCommands() {

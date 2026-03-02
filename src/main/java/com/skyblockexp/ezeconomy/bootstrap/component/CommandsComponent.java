@@ -2,6 +2,7 @@ package com.skyblockexp.ezeconomy.bootstrap.component;
 
 import com.skyblockexp.ezeconomy.bootstrap.BootstrapComponent;
 import com.skyblockexp.ezeconomy.core.EzEconomyPlugin;
+import com.skyblockexp.ezeconomy.core.Registry;
 import com.skyblockexp.ezeconomy.command.BalanceCommand;
 import com.skyblockexp.ezeconomy.command.BaltopCommand;
 import com.skyblockexp.ezeconomy.command.BankCommand;
@@ -26,20 +27,45 @@ public class CommandsComponent implements BootstrapComponent {
 
     @Override
     public void start() {
-        plugin.getCommand("balance").setExecutor(new BalanceCommand(plugin));
+        // Create and register command executors
+        BalanceCommand balanceCmd = new BalanceCommand(plugin);
+        plugin.getCommand("balance").setExecutor(balanceCmd);
         plugin.getCommand("balance").setTabCompleter(new BalanceTabCompleter(plugin));
-        plugin.getCommand("eco").setExecutor(new EcoCommand(plugin));
+
+        EcoCommand ecoCmd = new EcoCommand(plugin);
+        plugin.getCommand("eco").setExecutor(ecoCmd);
         plugin.getCommand("eco").setTabCompleter(new EcoTabCompleter(plugin));
-        plugin.getCommand("baltop").setExecutor(new BaltopCommand(plugin));
+
+        BaltopCommand baltopCmd = new BaltopCommand(plugin);
+        plugin.getCommand("baltop").setExecutor(baltopCmd);
         plugin.getCommand("baltop").setTabCompleter(new BaltopTabCompleter(plugin));
-        plugin.getCommand("bank").setExecutor(new BankCommand(plugin));
+
+        BankCommand bankCmd = new BankCommand(plugin);
+        plugin.getCommand("bank").setExecutor(bankCmd);
         plugin.getCommand("bank").setTabCompleter(new BankTabCompleter(plugin));
-        plugin.getCommand("pay").setExecutor(new PayCommand(plugin));
+
+        PayCommand payCmd = new PayCommand(plugin);
+        plugin.getCommand("pay").setExecutor(payCmd);
         plugin.getCommand("pay").setTabCompleter(new PayTabCompleter(plugin));
-        plugin.getCommand("currency").setExecutor(new CurrencyCommand(plugin));
+
+        CurrencyCommand currencyCmd = new CurrencyCommand(plugin);
+        plugin.getCommand("currency").setExecutor(currencyCmd);
         plugin.getCommand("currency").setTabCompleter(new CurrencyTabCompleter(plugin));
-        plugin.getCommand("ezeconomy").setExecutor(new EzEconomyCommand(plugin, plugin.getDailyRewardManager()));
+
+        // Use Registry for manager lookup (ManagersComponent should have registered it earlier)
+        com.skyblockexp.ezeconomy.manager.DailyRewardManager drm = Registry.get(com.skyblockexp.ezeconomy.manager.DailyRewardManager.class);
+        EzEconomyCommand ezCmd = new EzEconomyCommand(plugin, drm);
+        plugin.getCommand("ezeconomy").setExecutor(ezCmd);
         plugin.getCommand("ezeconomy").setTabCompleter(new EzEconomyCommandTabCompleter(plugin));
+
+        // register command instances for potential runtime access/tests
+        Registry.register(BalanceCommand.class, balanceCmd);
+        Registry.register(EcoCommand.class, ecoCmd);
+        Registry.register(BaltopCommand.class, baltopCmd);
+        Registry.register(BankCommand.class, bankCmd);
+        Registry.register(PayCommand.class, payCmd);
+        Registry.register(CurrencyCommand.class, currencyCmd);
+        Registry.register(EzEconomyCommand.class, ezCmd);
     }
 
     @Override

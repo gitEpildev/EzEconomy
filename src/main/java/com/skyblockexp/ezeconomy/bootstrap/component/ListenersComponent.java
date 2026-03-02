@@ -2,6 +2,7 @@ package com.skyblockexp.ezeconomy.bootstrap.component;
 
 import com.skyblockexp.ezeconomy.bootstrap.BootstrapComponent;
 import com.skyblockexp.ezeconomy.core.EzEconomyPlugin;
+import com.skyblockexp.ezeconomy.core.Registry;
 import com.skyblockexp.ezeconomy.listener.DailyRewardListener;
 import com.skyblockexp.ezeconomy.gui.GuiListener;
 import org.bukkit.Bukkit;
@@ -15,8 +16,15 @@ public class ListenersComponent implements BootstrapComponent {
 
     @Override
     public void start() {
-        Bukkit.getPluginManager().registerEvents(new DailyRewardListener(plugin.getDailyRewardManager()), plugin);
-        Bukkit.getPluginManager().registerEvents(new GuiListener(plugin), plugin);
+        com.skyblockexp.ezeconomy.manager.DailyRewardManager drm = Registry.get(com.skyblockexp.ezeconomy.manager.DailyRewardManager.class);
+        DailyRewardListener drl = new DailyRewardListener(drm);
+        GuiListener gl = new GuiListener(plugin);
+        Bukkit.getPluginManager().registerEvents(drl, plugin);
+        Bukkit.getPluginManager().registerEvents(gl, plugin);
+
+        // register listener instances for potential access
+        Registry.register(DailyRewardListener.class, drl);
+        Registry.register(GuiListener.class, gl);
     }
 
     @Override

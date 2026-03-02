@@ -14,7 +14,8 @@ import java.util.Map;
 public class BalanceGui {
     public static void open(EzEconomyPlugin plugin, Player player, Map<String, Double> currencies, Map<String, Double> banks) {
         int size = 27;
-        String title = plugin.getUserGuiConfig().getString("title.balance", "\u00A7aYour Balances");
+        var cfg = com.skyblockexp.ezeconomy.core.Registry.get(org.bukkit.configuration.file.FileConfiguration.class);
+        String title = cfg.getString("title.balance", "\u00A7aYour Balances");
         Inventory inv = Bukkit.createInventory(new GuiInventoryHolder("balance"), size, GuiUtils.formatMiniMessage(title));
         int slot = 0;
         for (Map.Entry<String, Double> entry : currencies.entrySet()) {
@@ -33,18 +34,18 @@ public class BalanceGui {
         }
 
         // back button
-        String backIcon = plugin.getUserGuiConfig().getString("back.icon", "ARROW");
+        String backIcon = cfg.getString("back.icon", "ARROW");
         Material mat = Material.ARROW;
         try { mat = Material.valueOf(backIcon.toUpperCase()); } catch (Exception ex) {}
         ItemStack back = new ItemStack(mat);
         ItemMeta bm = back.getItemMeta();
-        bm.setDisplayName(GuiUtils.formatMiniMessage(plugin.getUserGuiConfig().getString("back.display-name", "&cBack")));
-        List<String> lore = plugin.getUserGuiConfig().getStringList("back.lore");
+        bm.setDisplayName(GuiUtils.formatMiniMessage(cfg.getString("back.display-name", "&cBack")));
+        List<String> lore = cfg.getStringList("back.lore");
         if (lore == null || lore.isEmpty()) lore = List.of("&7Return to menu");
         List<String> formatted = new java.util.ArrayList<>();
         for (String l : lore) formatted.add(GuiUtils.formatMiniMessage(l));
         bm.setLore(formatted);
-        GuiUtils.setGuiAction(bm, plugin, "back");
+        GuiUtils.setGuiAction(bm, com.skyblockexp.ezeconomy.core.Registry.getPlugin(), "back");
         back.setItemMeta(bm);
         inv.setItem(inv.getSize() - 1, back);
 
