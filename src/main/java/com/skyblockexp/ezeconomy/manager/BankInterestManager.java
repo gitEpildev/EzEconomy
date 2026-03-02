@@ -1,6 +1,7 @@
 package com.skyblockexp.ezeconomy.manager;
 
 import org.bukkit.Bukkit;
+import com.skyblockexp.ezeconomy.core.EzEconomyPlugin;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.scheduler.BukkitRunnable;
 import java.util.Map;
@@ -8,7 +9,7 @@ import java.util.Set;
 import java.util.UUID;
 
 public class BankInterestManager {
-    // plugin reference is obtained from Registry when needed
+    private final EzEconomyPlugin plugin;
     private int taskId = -1;
 
     // THREAD SAFETY NOTE:

@@ -18,7 +18,7 @@ public class HistoryAction extends GuiAction {
     public void open(EzEconomyPlugin plugin, Player player) {
         String currency = com.skyblockexp.ezeconomy.core.Registry.get(com.skyblockexp.ezeconomy.manager.CurrencyManager.class).getDefaultCurrency();
         var storage = com.skyblockexp.ezeconomy.core.Registry.get(com.skyblockexp.ezeconomy.api.storage.StorageProvider.class);
-        var txs = storage == null ? java.util.Collections.emptyList() : storage.getTransactions(player.getUniqueId(), currency);
+        java.util.List<com.skyblockexp.ezeconomy.api.storage.models.Transaction> txs = storage == null ? java.util.Collections.<com.skyblockexp.ezeconomy.api.storage.models.Transaction>emptyList() : storage.getTransactions(player.getUniqueId(), currency);
         int size = 9 * Math.max(1, (int) Math.ceil(txs.size() / 9.0));
         var cfg = com.skyblockexp.ezeconomy.core.Registry.get(org.bukkit.configuration.file.FileConfiguration.class);
         String title = cfg.getString("title.history", "EzEconomy - History");
@@ -35,14 +35,14 @@ public class HistoryAction extends GuiAction {
             inv.setItem(slot++, item);
         }
         // back button
-        var cfg = com.skyblockexp.ezeconomy.core.Registry.get(org.bukkit.configuration.file.FileConfiguration.class);
+        var cfg2 = com.skyblockexp.ezeconomy.core.Registry.get(org.bukkit.configuration.file.FileConfiguration.class);
         String backIcon = cfg.getString("back.icon", "ARROW");
         Material mat = Material.ARROW;
         try { mat = Material.valueOf(backIcon.toUpperCase()); } catch (Exception ex) {}
         ItemStack back = new ItemStack(mat);
         ItemMeta bm = back.getItemMeta();
-        bm.setDisplayName(GuiUtils.formatMiniMessage(cfg.getString("back.display-name", "&cBack")));
-        java.util.List<String> lore = cfg.getStringList("back.lore");
+        bm.setDisplayName(GuiUtils.formatMiniMessage(cfg2.getString("back.display-name", "&cBack")));
+        java.util.List<String> lore = cfg2.getStringList("back.lore");
         if (lore == null || lore.isEmpty()) lore = java.util.List.of("&7Return to menu");
         java.util.List<String> formatted = new java.util.ArrayList<>();
         for (String l : lore) formatted.add(GuiUtils.formatMiniMessage(l));

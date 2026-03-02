@@ -4,7 +4,8 @@ import com.skyblockexp.ezeconomy.bootstrap.BootstrapComponent;
 import com.skyblockexp.ezeconomy.core.EzEconomyPlugin;
 import com.skyblockexp.ezeconomy.core.Registry;
 import com.skyblockexp.ezeconomy.listener.DailyRewardListener;
-import com.skyblockexp.ezeconomy.gui.GuiListener;
+import com.skyblockexp.ezeconomy.gui.GuiInventoryClickListener;
+import com.skyblockexp.ezeconomy.gui.GuiPlayerChatListener;
 import org.bukkit.Bukkit;
 
 public class ListenersComponent implements BootstrapComponent {
@@ -18,13 +19,16 @@ public class ListenersComponent implements BootstrapComponent {
     public void start() {
         com.skyblockexp.ezeconomy.manager.DailyRewardManager drm = Registry.get(com.skyblockexp.ezeconomy.manager.DailyRewardManager.class);
         DailyRewardListener drl = new DailyRewardListener(drm);
-        GuiListener gl = new GuiListener(plugin);
+        GuiInventoryClickListener inv = new GuiInventoryClickListener(plugin);
+        GuiPlayerChatListener chat = new GuiPlayerChatListener(plugin);
         Bukkit.getPluginManager().registerEvents(drl, plugin);
-        Bukkit.getPluginManager().registerEvents(gl, plugin);
+        Bukkit.getPluginManager().registerEvents(inv, plugin);
+        Bukkit.getPluginManager().registerEvents(chat, plugin);
 
         // register listener instances for potential access
         Registry.register(DailyRewardListener.class, drl);
-        Registry.register(GuiListener.class, gl);
+        Registry.register(GuiInventoryClickListener.class, inv);
+        Registry.register(GuiPlayerChatListener.class, chat);
     }
 
     @Override

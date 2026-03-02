@@ -1,6 +1,7 @@
 package com.skyblockexp.ezeconomy.core;
 
 import org.bukkit.plugin.java.JavaPlugin;
+import com.skyblockexp.ezeconomy.core.EzEconomyPlugin;
 
 import java.lang.reflect.Method;
 import java.util.Map;
@@ -10,12 +11,12 @@ import java.util.concurrent.ConcurrentHashMap;
  * Simple typed registry for plugin managers and services.
  */
 public final class Registry {
-    private static JavaPlugin plugin;
+    private static EzEconomyPlugin plugin;
     private static final Map<Class<?>, Object> services = new ConcurrentHashMap<>();
 
     private Registry() {}
 
-    public static void initialize(JavaPlugin plugin) {
+    public static void initialize(EzEconomyPlugin plugin) {
         Registry.plugin = plugin;
         services.clear();
     }
@@ -32,7 +33,7 @@ public final class Registry {
         return (T) o;
     }
 
-    public static JavaPlugin getPlugin() {
+    public static EzEconomyPlugin getPlugin() {
         return plugin;
     }
 

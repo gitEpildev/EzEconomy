@@ -147,9 +147,9 @@ public class DailyRewardManager {
     }
 
     private void debug(String message) {
-        if (!plugin.getConfig().getBoolean("daily-reward.debug", false)) {
+        if (!com.skyblockexp.ezeconomy.core.Registry.getPlugin().getConfig().getBoolean("daily-reward.debug", false)) {
             return;
         }
-        plugin.getLogger().info("[DailyReward] " + message);
+        com.skyblockexp.ezeconomy.core.Registry.getPlugin().getLogger().info("[DailyReward] " + message);
     }
 }
