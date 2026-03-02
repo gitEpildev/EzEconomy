@@ -14,7 +14,7 @@ EzEconomy integrates with PlaceholderAPI for use in chat, scoreboards, and other
 
 EzEconomy provides a language-level template to control how currency amounts are rendered in messages.
 
-Add the `price_message_format` key to your language file under `src/main/resources/languages/` (or in your data folder language file). The template supports two placeholders:
+Add the `price_message_format` key to your language file under `EzEconomy/languages/` (or in your data folder language file). The template supports two placeholders:
 
 - `{amount}`: the localized numeric amount (respecting decimals and locale settings)
 - `{symbol}`: the raw currency symbol from the multi-currency config
