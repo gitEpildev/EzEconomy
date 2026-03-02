@@ -10,6 +10,33 @@ EzEconomy integrates with PlaceholderAPI for use in chat, scoreboards, and other
 | `%ezeconomy_balance_<currency>%` | Player balance in the specified currency. |
 | `%ezeconomy_currency%` | Player's preferred currency key. |
 
+## Price formatting
+
+EzEconomy provides a language-level template to control how currency amounts are rendered in messages.
+
+Add the `price_message_format` key to your language file under `src/main/resources/languages/` (or in your data folder language file). The template supports two placeholders:
+
+- `{amount}`: the localized numeric amount (respecting decimals and locale settings)
+- `{symbol}`: the raw currency symbol from the multi-currency config
+
+Default (bundled):
+
+```
+price_message_format: "{amount} {symbol}"
+```
+
+Examples:
+
+- `price_message_format: "{symbol} {amount}"` -> `$ 190`
+- `price_message_format: "{amount}{symbol}"` -> `190$`
+- `price_message_format: "{amount} {symbol} ({amount_default})"` -> `190 $ (≈ 170 $)`
+
+Notes:
+
+- The plugin supplies `{amount}` (number with sign and locale) and `{symbol}` (no surrounding spaces). Keep spacing in the template to control visual spacing.
+- If the key is missing, the plugin falls back to `"{amount} {symbol}"` to preserve current behaviour.
+- This template only affects how amounts are displayed in messages and placeholders; numeric parsing and storage are unchanged.
+
 ## Leaderboard Placeholders
 
 | Placeholder | Description |
