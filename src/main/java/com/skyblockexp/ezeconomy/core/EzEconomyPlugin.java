@@ -119,6 +119,69 @@ public class EzEconomyPlugin extends JavaPlugin {
         return prefix ? (symbol + " " + formatted) : (formatted + " " + symbol);
     }
 
+    /**
+     * Format only the numeric amount part (no currency symbol or placement).
+     * This preserves locale and decimals but excludes the symbol so message
+     * templates can control placement.
+     */
+    public String formatAmountOnly(double amount, String currency) {
+        if (currency == null) {
+            java.text.NumberFormat nf = java.text.NumberFormat.getNumberInstance(java.util.Locale.getDefault());
+            nf.setGroupingUsed(true);
+            nf.setMinimumFractionDigits(2);
+            nf.setMaximumFractionDigits(2);
+            return nf.format(amount);
+        }
+        var cfg = getConfig();
+        if (cfg.getConfigurationSection("multi-currency.currencies") == null) {
+            java.text.NumberFormat nf = java.text.NumberFormat.getNumberInstance(java.util.Locale.getDefault());
+            nf.setGroupingUsed(true);
+            nf.setMinimumFractionDigits(2);
+            nf.setMaximumFractionDigits(2);
+            return nf.format(amount);
+        }
+        String key = currency.toLowerCase();
+        int decimals = cfg.getInt("multi-currency.currencies." + key + ".decimals", 2);
+
+        // Locale configuration: server-wide override optional
+        String localeCfg = cfg.getString("currency.format.locale", "");
+        java.util.Locale locale = java.util.Locale.getDefault();
+        if (localeCfg != null && !localeCfg.isBlank()) {
+            String[] parts = localeCfg.split("[_-]");
+            if (parts.length == 1) locale = new java.util.Locale(parts[0]);
+            else locale = new java.util.Locale(parts[0], parts[1]);
+        }
+
+        java.text.NumberFormat nf = java.text.NumberFormat.getNumberInstance(locale);
+        nf.setGroupingUsed(true);
+        nf.setMinimumFractionDigits(decimals);
+        nf.setMaximumFractionDigits(decimals);
+        String formatted = nf.format(java.math.BigDecimal.valueOf(amount).setScale(decimals, java.math.RoundingMode.HALF_UP));
+        return formatted;
+    }
+
+    /**
+     * Get the raw currency symbol for a currency key (no surrounding whitespace).
+     */
+    public String getCurrencySymbol(String currency) {
+        if (currency == null) return "";
+        var cfg = getConfig();
+        String key = currency.toLowerCase();
+        return cfg.getString("multi-currency.currencies." + key + ".symbol", "");
+    }
+
+    /**
+     * Format a price string suitable for messages. Uses the loaded MessageProvider's
+     * `price_message_format` template when available; otherwise falls back to the
+     * existing combined `format(...)` behavior.
+     */
+    public String formatPriceForMessage(double amount, String currency) {
+        if (this.messageProvider != null) {
+            return this.messageProvider.formatPrice(this, amount, currency);
+        }
+        return format(amount, currency);
+    }
+
     public VaultEconomyImpl getEconomy() {
         return vaultEconomy;
     }

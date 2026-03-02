@@ -76,8 +76,8 @@ public class CurrencyCommand implements CommandExecutor {
 				MessageUtils.send(sender, plugin, "unknown_conversion");
 				return true;
 			}
-			String fromDisplay = plugin.format(amt, from);
-			String toDisplay = plugin.format(converted, to);
+			String fromDisplay = plugin.formatPriceForMessage(amt, from);
+			String toDisplay = plugin.formatPriceForMessage(converted, to);
 			sender.sendMessage(plugin.getMessageProvider().color("&eConversion: " + fromDisplay + " → " + toDisplay));
 			return true;
 		}

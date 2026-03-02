@@ -35,7 +35,12 @@ public class MessageProviderTest {
 
         // Should include the payer/player text and the default equivalent amount
         assertTrue(out.contains("You paid Bob"), "Rendered message should contain player and action");
-        assertTrue(out.contains("≈ $95") || out.contains("(≈ $95)"), "Rendered message should include amount_default equivalent");
+        // Accept either "$95" or "95 $" depending on configured placement
+        assertTrue(
+            out.contains("≈ $95") || out.contains("(≈ $95)") ||
+            out.contains("≈ 95 $") || out.contains("(≈ 95 $)"),
+            "Rendered message should include amount_default equivalent"
+        );
     }
 
     @Test
@@ -51,6 +56,11 @@ public class MessageProviderTest {
         ));
 
         assertTrue(out.contains("received"), "Rendered message should mention received");
-        assertTrue(out.contains("≈ $40") || out.contains("(≈ $40)"), "Rendered message should include amount_default equivalent");
+        // Accept either "$40" or "40 $" depending on configured placement
+        assertTrue(
+            out.contains("≈ $40") || out.contains("(≈ $40)") ||
+            out.contains("≈ 40 $") || out.contains("(≈ 40 $)"),
+            "Rendered message should include amount_default equivalent"
+        );
     }
 }
