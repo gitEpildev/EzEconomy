@@ -31,7 +31,13 @@ public class DatabaseSubcommand implements Subcommand {
             return true;
         }
 
-        String storageType = plugin.getConfig().getString("storage.type", "yml").toUpperCase();
+        Object storageCfg = plugin.getConfig().get("storage");
+        String storageType;
+        if (storageCfg instanceof String) {
+            storageType = ((String) storageCfg).toUpperCase();
+        } else {
+            storageType = plugin.getConfig().getString("storage.type", "yml").toUpperCase();
+        }
         sender.sendMessage(com.skyblockexp.ezeconomy.util.MessageUtils.color(plugin, "&6=== Database Information ==="));
         sender.sendMessage(com.skyblockexp.ezeconomy.util.MessageUtils.color(plugin, "&eStorage Type: &f" + storageType));
         boolean connected = false;

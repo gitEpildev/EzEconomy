@@ -18,7 +18,14 @@ public class StorageComponent implements BootstrapComponent {
 
     @Override
     public void start() {
-        String type = plugin.getConfig().getString("storage.type", "yml").toLowerCase();
+        // Support both top-level `storage: mysql` and nested `storage.type: mysql`
+        Object storageCfg = plugin.getConfig().get("storage");
+        String type;
+        if (storageCfg instanceof String) {
+            type = ((String) storageCfg).toLowerCase();
+        } else {
+            type = plugin.getConfig().getString("storage.type", "yml").toLowerCase();
+        }
         StorageProvider provider = null;
         try {
             switch (type) {
