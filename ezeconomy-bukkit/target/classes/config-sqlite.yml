@@ -1,5 +1,0 @@
-# SQLite Database Configuration
-sqlite:
-  file: ezeconomy.db
-  table: balances
-  banksTable: banks
