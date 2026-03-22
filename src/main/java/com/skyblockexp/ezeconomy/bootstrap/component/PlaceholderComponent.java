@@ -17,6 +17,11 @@ public class PlaceholderComponent implements BootstrapComponent {
         if (!Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) {
             return;
         }
+        // If an external dedicated expansion plugin is present, skip internal registration
+        if (Bukkit.getPluginManager().getPlugin("EzEconomy-PAPI") != null) {
+            plugin.getLogger().info("Detected external EzEconomy-PAPI expansion; skipping built-in placeholders.");
+            return;
+        }
         new EzEconomyPlaceholderExpansion(plugin).register();
         plugin.getLogger().info("Registered EzEconomy placeholders with PlaceholderAPI.");
     }

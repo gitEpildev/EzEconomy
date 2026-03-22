@@ -1,5 +1,12 @@
 # Ignore Maven target directory
-/target/
+/**/target/
+
+# Ignore compiled classes directories
+**/classes/
+
+# Ignore module build outputs
+ezeconomy-bukkit/target/
+ezeconomy-papi/target/
 
 # Ignore IDE files
 /.idea/

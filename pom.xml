@@ -3,15 +3,20 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.github.ez-plugins</groupId>
-    <artifactId>ezeconomy</artifactId>
-    <version>2.3.1</version>
-    <packaging>jar</packaging>
+    <artifactId>ezeconomy-parent</artifactId>
+    <version>2.4.0</version>
+    <packaging>pom</packaging>
     <name>EzEconomy</name>
     <description>Vault-compatible economy provider with YML and MySQL support</description>
+    <modules>
+        <module>ezeconomy-bukkit</module>
+        <module>ezeconomy-papi</module>
+    </modules>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+        <maven.compiler.release>21</maven.compiler.release>
         <!-- Target Java 21 to match Paper API (class file version 65) -->
         <!-- Allow CI to override the Paper API version with -Dpaper.version -->
         <paper.version>1.21.11-R0.1-SNAPSHOT</paper.version>
@@ -85,6 +90,7 @@
                 <configuration>
                     <source>${maven.compiler.source}</source>
                     <target>${maven.compiler.target}</target>
+                    <release>${maven.compiler.release}</release>
                 </configuration>
             </plugin>
             <plugin>
@@ -335,6 +341,7 @@
                         <artifactId>maven-surefire-plugin</artifactId>
                         <version>3.0.0-M7</version>
                         <configuration>
+                            <failIfNoSpecifiedTests>false</failIfNoSpecifiedTests>
                             <includes>
                                 <include>**/*FeatureTest.java</include>
                             </includes>
