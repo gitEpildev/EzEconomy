@@ -33,6 +33,7 @@ Permissions shown in parentheses are required to run the command. Commands witho
 | --- | --- | --- |
 | `/ezeconomy cleanup` | Remove orphaned player data from all storage types. | `ezeconomy.admin` |
 | `/ezeconomy daily reset` | Reset all daily rewards for all players. | `ezeconomy.admin` |
+| `/ezeconomy dynamic reset` | Reset runtime dynamic pricing adjustments to defaults. | `ezeconomy.dynamic.reset` |
 | `/ezeconomy reload` | Reload the plugin configuration. | `ezeconomy.admin` |
 | `/ezeconomy reload messages` | Reload only the message file. | `ezeconomy.admin` |
 | `/ezeconomy database info` | Show current database connection info. | `ezeconomy.admin` |

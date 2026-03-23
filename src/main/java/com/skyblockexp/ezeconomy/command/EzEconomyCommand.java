@@ -7,6 +7,7 @@ import com.skyblockexp.ezeconomy.command.ezeconomy.DatabaseTestSubcommand;
 import com.skyblockexp.ezeconomy.command.ezeconomy.DailyResetSubcommand;
 import com.skyblockexp.ezeconomy.command.ezeconomy.ReloadMessagesSubcommand;
 import com.skyblockexp.ezeconomy.command.ezeconomy.ReloadSubcommand;
+import com.skyblockexp.ezeconomy.command.ezeconomy.DynamicPricingResetSubcommand;
 import com.skyblockexp.ezeconomy.command.Subcommand;
 import com.skyblockexp.ezeconomy.core.EzEconomyPlugin;
 import com.skyblockexp.ezeconomy.util.MessageUtils;
@@ -38,6 +39,7 @@ public class EzEconomyCommand implements CommandExecutor {
         this.subcommands.put("dailyreset", new DailyResetSubcommand(plugin, dailyRewardManager));
         this.subcommands.put("reload", new ReloadSubcommand(plugin));
         this.subcommands.put("reloadmessages", new ReloadMessagesSubcommand(plugin));
+        this.subcommands.put("dynamicreset", new DynamicPricingResetSubcommand(plugin));
         // Single database subcommand handles info, test, and reset
         this.subcommands.put("database", new DatabaseSubcommand(plugin));
     }
@@ -55,6 +57,9 @@ public class EzEconomyCommand implements CommandExecutor {
         // Handle multi-level subcommands
         if (subcommandKey.equals("daily") && subArgs.length > 0 && subArgs[0].equalsIgnoreCase("reset")) {
             subcommandKey = "dailyreset";
+            subArgs = Arrays.copyOfRange(subArgs, 1, subArgs.length);
+        } else if (subcommandKey.equals("dynamic") && subArgs.length > 0 && subArgs[0].equalsIgnoreCase("reset")) {
+            subcommandKey = "dynamicreset";
             subArgs = Arrays.copyOfRange(subArgs, 1, subArgs.length);
         } else if (subcommandKey.equals("reload") && subArgs.length > 0 && subArgs[0].equalsIgnoreCase("messages")) {
             subcommandKey = "reloadmessages";
