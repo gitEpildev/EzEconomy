@@ -121,6 +121,26 @@ public class YMLStorageProvider implements StorageProvider {
     }
 
     @Override
+    public boolean playerExists(UUID uuid) {
+        synchronized (getPlayerLock(uuid)) {
+            File file = getPlayerFile(uuid);
+            if (file.exists()) return true;
+            // If using username naming scheme the file may be named by username.
+            // Fallback: scan files for a stored 'uuid' field (costly but correct).
+            File[] files = dataFolder.listFiles((dir, name) -> name.endsWith(".yml"));
+            if (files == null) return false;
+            for (File f : files) {
+                try {
+                    YamlConfiguration pdata = YamlConfiguration.loadConfiguration(f);
+                    String stored = pdata.getString("uuid");
+                    if (stored != null && stored.equalsIgnoreCase(uuid.toString())) return true;
+                } catch (Exception ignored) {}
+            }
+            return false;
+        }
+    }
+
+    @Override
     public void setBalance(UUID uuid, String currency, double amount) {
         // write immediately to avoid races during tests and to keep behaviour
         // consistent with other storage providers

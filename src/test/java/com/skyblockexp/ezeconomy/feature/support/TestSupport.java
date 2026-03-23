@@ -128,6 +128,15 @@ public final class TestSupport {
         }
 
         @Override
+        public boolean playerExists(UUID uuid) {
+            String prefix = uuid.toString() + ":";
+            for (String k : balances.keySet()) {
+                if (k.startsWith(prefix)) return true;
+            }
+            return false;
+        }
+
+        @Override
         public void shutdown() {}
 
         // Bank methods - trivial implementations for tests

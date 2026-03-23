@@ -147,6 +147,21 @@ public class MySQLStorageProvider implements StorageProvider {
     }
 
     @Override
+    public boolean playerExists(UUID uuid) {
+        synchronized (lock) {
+            try {
+                PreparedStatement ps = connection.prepareStatement("SELECT 1 FROM `" + table + "` WHERE uuid=? LIMIT 1");
+                ps.setString(1, uuid.toString());
+                ResultSet rs = ps.executeQuery();
+                return rs.next();
+            } catch (SQLException e) {
+                plugin.getLogger().severe("[EzEconomy] MySQL playerExists failed for " + uuid + ": " + e.getMessage());
+                return false;
+            }
+        }
+    }
+
+    @Override
     public void setBalance(UUID uuid, String currency, double amount) {
         synchronized (lock) {
             try {
