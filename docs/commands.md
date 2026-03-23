@@ -8,7 +8,8 @@ Permissions shown in parentheses are required to run the command. Commands witho
 | `/balance <player>` | View another player's balance. | `ezeconomy.balance.others` |
 | `/baltop [amount]` | View the top balances. | — |
 | `/pay <player> <amount>` | Send money to another player. | `ezeconomy.pay` |
-| `/currency [currency]` | View or set your preferred currency. | `ezeconomy.currency` |
+| `/currency [currency]` | View or set your preferred currency.  | `ezeconomy.currency` |
+| `/currency convert <from> <to> <amount>` | Use  to convert between currencies. | `ezeconomy.currency` |
 | `/eco give <player> <amount>` | Add funds to a player. | `ezeconomy.eco` |
 | `/eco take <player> <amount>` | Remove funds from a player. | `ezeconomy.eco` |
 | `/eco set <player> <amount>` | Set a player's balance. | `ezeconomy.eco` |
