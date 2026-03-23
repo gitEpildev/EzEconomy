@@ -119,4 +119,48 @@ public class BalanceCommandFeatureTest {
         boolean result = sender.performCommand("balance");
         assertTrue(result);
     }
+
+    @Test
+    public void testBalanceCommand_singleArg_customCurrency_isRecognized() throws Exception {
+        Object senderObj = server.getClass().getMethod("addPlayer", String.class).invoke(server, "ccPlayer");
+        org.bukkit.entity.Player sender = (org.bukkit.entity.Player) senderObj;
+
+        TestSupport.MockStorage storage = new TestSupport.MockStorage();
+        TestSupport.injectField(plugin, "storage", storage);
+
+        // Configure a custom currency with mixed case (edge-case)
+        plugin.getConfig().set("multi-currency.enabled", true);
+        plugin.getConfig().set("multi-currency.default", "dollar");
+        plugin.getConfig().set("multi-currency.currencies.HeadHunterXp.symbol", "HH");
+        plugin.getConfig().set("multi-currency.currencies.HeadHunterXp.decimals", 2);
+
+        java.util.UUID uuid = sender.getUniqueId();
+        // storage keys are expected to be lower-case by command logic, so set both to be safe
+        storage.setBalance(uuid, "headhunterxp", 42.0);
+
+        boolean result = sender.performCommand("balance HeadHunterXp");
+        assertTrue(result);
+    }
+
+    @Test
+    public void testBalanceCommand_playerAndCustomCurrency_worksForOthers() throws Exception {
+        Object senderObj = server.getClass().getMethod("addPlayer", String.class).invoke(server, "admin");
+        org.bukkit.entity.Player sender = (org.bukkit.entity.Player) senderObj;
+
+        Object targetObj = server.getClass().getMethod("addPlayer", String.class).invoke(server, "Meessem");
+        org.bukkit.entity.Player target = (org.bukkit.entity.Player) targetObj;
+
+        TestSupport.MockStorage storage = new TestSupport.MockStorage();
+        TestSupport.injectField(plugin, "storage", storage);
+
+        // Ensure currency is configured
+        plugin.getConfig().set("multi-currency.enabled", true);
+        plugin.getConfig().set("multi-currency.currencies.HeadHunterXp.symbol", "HH");
+
+        // set balance for the target in lower-case currency key
+        storage.setBalance(target.getUniqueId(), "headhunterxp", 21.0);
+
+        boolean result = sender.performCommand("balance Meessem HeadHunterXp");
+        assertTrue(result);
+    }
 }
