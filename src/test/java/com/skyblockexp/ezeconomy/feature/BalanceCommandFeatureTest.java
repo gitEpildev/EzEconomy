@@ -4,6 +4,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockbukkit.mockbukkit.MockBukkit;
+import org.mockbukkit.mockbukkit.entity.PlayerMock;
 
 import com.skyblockexp.ezeconomy.core.EzEconomyPlugin;
 import com.skyblockexp.ezeconomy.feature.support.TestSupport;
@@ -140,6 +141,9 @@ public class BalanceCommandFeatureTest {
 
         boolean result = sender.performCommand("balance HeadHunterXp");
         assertTrue(result);
+        // verify the returned message contains the expected formatted amount and symbol
+        String msg = ((PlayerMock) sender).nextMessage();
+        assertTrue(msg.contains("42") && msg.toLowerCase().contains("hh"));
     }
 
     @Test
@@ -160,7 +164,11 @@ public class BalanceCommandFeatureTest {
         // set balance for the target in lower-case currency key
         storage.setBalance(target.getUniqueId(), "headhunterxp", 21.0);
 
+        // grant permission to view others' balances
+        sender.setOp(true);
         boolean result = sender.performCommand("balance Meessem HeadHunterXp");
         assertTrue(result);
+        String msg = ((PlayerMock) sender).nextMessage();
+        assertTrue(msg.contains("Meessem") && msg.contains("21") && msg.toLowerCase().contains("hh"));
     }
 }
