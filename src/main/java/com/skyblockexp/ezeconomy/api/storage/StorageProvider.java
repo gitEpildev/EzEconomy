@@ -40,6 +40,21 @@ public interface StorageProvider {
     double getBalance(UUID uuid, String currency);
 
     /**
+     * Checks whether a record exists for the given player UUID in the storage backend.
+     * <p>
+     * Providers should override this with an efficient implementation. The default
+     * implementation falls back to checking whether {@link #getBalance(UUID)} returns
+     * a non-zero value which is not perfectly accurate for zero-balance players, so
+     * overriding is recommended.
+     * </p>
+     * @param uuid Player UUID to check
+     * @return true if the storage backend contains a record for the player
+     */
+    default boolean playerExists(UUID uuid) {
+        return getBalance(uuid) != 0.0;
+    }
+
+    /**
      * Sets the balance for a player and currency.
      * @param uuid Player UUID
      * @param currency Currency identifier

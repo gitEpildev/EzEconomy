@@ -231,6 +231,19 @@ public class MongoDBStorageProvider implements StorageProvider {
     }
 
     @Override
+    public boolean playerExists(UUID uuid) {
+        synchronized (lock) {
+            try {
+                Document doc = balances.find(new Document("uuid", uuid.toString())).first();
+                return doc != null;
+            } catch (Exception e) {
+                plugin.getLogger().severe("[EzEconomy] MongoDB playerExists failed for " + uuid + ": " + e.getMessage());
+                return false;
+            }
+        }
+    }
+
+    @Override
     public Map<UUID, Double> getAllBalances(String currency) {
         Map<UUID, Double> map = new HashMap<>();
         synchronized (lock) {

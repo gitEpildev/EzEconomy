@@ -33,10 +33,9 @@ public class PlayerJoinListener implements Listener {
 
         String currency = plugin.getDefaultCurrency();
         try {
-            Map<UUID, Double> all = storage.getAllBalances(currency);
-            if (!all.containsKey(event.getPlayer().getUniqueId())) {
-                // Create a record for the player with zero balance
-                storage.setBalance(event.getPlayer().getUniqueId(), currency, 0.0);
+            UUID uuid = event.getPlayer().getUniqueId();
+            if (!storage.playerExists(uuid)) {
+                storage.setBalance(uuid, currency, 0.0);
                 plugin.getLogger().info("Stored player " + event.getPlayer().getName() + " on join");
             }
         } catch (Exception e) {
