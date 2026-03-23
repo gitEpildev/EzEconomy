@@ -5,7 +5,9 @@ Permissions shown in parentheses are required to run the command. Commands witho
 | Command | Description | Permission |
 | --- | --- | --- |
 | `/balance` | View your balance. | — |
+| `/balance <currency>` | View your balance in the specified currency (player only). | — |
 | `/balance <player>` | View another player's balance. | `ezeconomy.balance.others` |
+| `/balance <player> <currency>` | View another player's balance in the specified currency. | `ezeconomy.balance.others` |
 | `/baltop [amount]` | View the top balances. | — |
 | `/pay <player> <amount>` | Send money to another player. | `ezeconomy.pay` |
 | `/currency [currency]` | View or set your preferred currency.  | `ezeconomy.currency` |
