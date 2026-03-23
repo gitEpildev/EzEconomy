@@ -2,7 +2,7 @@ package com.skyblockexp.ezeconomy.bootstrap.component;
 
 import com.skyblockexp.ezeconomy.bootstrap.BootstrapComponent;
 import com.skyblockexp.ezeconomy.core.EzEconomyPlugin;
-import com.skyblockexp.ezeconomy.listener.DailyRewardListener;
+import com.skyblockexp.ezeconomy.listener.PlayerJoinListener;
 import com.skyblockexp.ezeconomy.gui.GuiListener;
 import org.bukkit.Bukkit;
 
@@ -15,7 +15,7 @@ public class ListenersComponent implements BootstrapComponent {
 
     @Override
     public void start() {
-        Bukkit.getPluginManager().registerEvents(new DailyRewardListener(plugin.getDailyRewardManager()), plugin);
+        Bukkit.getPluginManager().registerEvents(new PlayerJoinListener(plugin, plugin.getDailyRewardManager()), plugin);
         Bukkit.getPluginManager().registerEvents(new GuiListener(plugin), plugin);
     }
 

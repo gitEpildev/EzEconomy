@@ -8,7 +8,6 @@ import com.skyblockexp.ezeconomy.command.CurrencyCommand;
 import com.skyblockexp.ezeconomy.command.EcoCommand;
 import com.skyblockexp.ezeconomy.command.EzEconomyCommand;
 import com.skyblockexp.ezeconomy.command.PayCommand;
-import com.skyblockexp.ezeconomy.listener.DailyRewardListener;
 import com.skyblockexp.ezeconomy.gui.GuiListener;
 import com.skyblockexp.ezeconomy.manager.BankInterestManager;
 import com.skyblockexp.ezeconomy.manager.CurrencyManager;
