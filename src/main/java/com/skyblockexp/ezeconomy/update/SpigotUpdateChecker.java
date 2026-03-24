@@ -26,7 +26,7 @@ public final class SpigotUpdateChecker {
                     return;
                 }
                 String currentVersion = plugin.getDescription().getVersion();
-                if (!latestVersion.equalsIgnoreCase(currentVersion)) {
+                if (isStableVersion(latestVersion) && isNewer(latestVersion, currentVersion)) {
                     plugin.getLogger().info("A new EzEconomy version is available: " + latestVersion
                             + " (current: " + currentVersion + "). Download: https://www.spigotmc.org/resources/"
                             + resourceId + "/");
@@ -37,6 +37,32 @@ public final class SpigotUpdateChecker {
                 plugin.getLogger().warning("Failed to check for EzEconomy updates: " + ex.getMessage());
             }
         });
+    }
+
+    private boolean isStableVersion(String version) {
+        return version != null && version.matches("\\d+(\\.\\d+)*");
+    }
+
+    private boolean isNewer(String latest, String current) {
+        if (latest == null || current == null) return false;
+        String[] lParts = latest.split("\\.");
+        String[] cParts = current.split("\\.");
+        int len = Math.max(lParts.length, cParts.length);
+        for (int i = 0; i < len; i++) {
+            int l = i < lParts.length ? parsePart(lParts[i]) : 0;
+            int c = i < cParts.length ? parsePart(cParts[i]) : 0;
+            if (l > c) return true;
+            if (l < c) return false;
+        }
+        return false;
+    }
+
+    private int parsePart(String part) {
+        try {
+            return Integer.parseInt(part);
+        } catch (NumberFormatException ex) {
+            return 0;
+        }
     }
 
     private String fetchLatestVersion() throws Exception {
