@@ -9,6 +9,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 import java.util.UUID;
 
 import com.skyblockexp.ezeconomy.core.EzEconomyPlugin;
+import com.skyblockexp.ezeconomy.dto.EconomyPlayer;
 
 public final class PayCurrencySelectionGui {
     private PayCurrencySelectionGui() {}
@@ -29,8 +30,23 @@ public final class PayCurrencySelectionGui {
             Player tp = Bukkit.getPlayer(id);
             if (tp != null) displayName = tp.getDisplayName();
             else {
-                var off = Bukkit.getOfflinePlayer(id);
-                if (off != null && off.getName() != null) displayName = off.getName();
+                try {
+                    var storage = plugin.getStorageOrWarn();
+                    if (storage != null) {
+                        EconomyPlayer ep = storage.getPlayer(id);
+                        if (ep != null) displayName = ep.getDisplayName() == null ? ep.getName() : ep.getDisplayName();
+                        else {
+                            var off = Bukkit.getOfflinePlayer(id);
+                            if (off != null && off.getName() != null) displayName = off.getName();
+                        }
+                    } else {
+                        var off = Bukkit.getOfflinePlayer(id);
+                        if (off != null && off.getName() != null) displayName = off.getName();
+                    }
+                } catch (Throwable ignore2) {
+                    var off = Bukkit.getOfflinePlayer(id);
+                    if (off != null && off.getName() != null) displayName = off.getName();
+                }
             }
         } catch (Exception ignore) {
             // not a UUID, keep cleaned displayName

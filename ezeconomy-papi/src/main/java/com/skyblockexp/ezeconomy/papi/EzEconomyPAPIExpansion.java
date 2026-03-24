@@ -5,6 +5,7 @@ import com.skyblockexp.ezeconomy.core.EzEconomyPlugin;
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
+import com.skyblockexp.ezeconomy.dto.EconomyPlayer;
 
 import java.util.Comparator;
 import java.util.List;
@@ -183,8 +184,12 @@ public class EzEconomyPAPIExpansion extends PlaceholderExpansion {
                                         .limit(nFinal)
                                         .collect(Collectors.toList());
                                 String result = top.stream().map(e -> {
-                                    OfflinePlayer p = Bukkit.getOfflinePlayer(e.getKey());
-                                    String name = p == null ? e.getKey().toString() : (p.getName() == null ? e.getKey().toString() : p.getName());
+                                    EconomyPlayer ep = null;
+                                    try {
+                                        StorageProvider storage = testEz.getStorageOrWarn();
+                                        ep = storage == null ? null : storage.getPlayer(e.getKey());
+                                    } catch (Throwable ignored) {}
+                                    String name = ep == null ? (Bukkit.getOfflinePlayer(e.getKey()).getName() == null ? e.getKey().toString() : Bukkit.getOfflinePlayer(e.getKey()).getName()) : (ep.getDisplayName() == null ? ep.getName() : ep.getDisplayName());
                                     return name + " - " + testEz.format(e.getValue(), currency);
                                 }).collect(Collectors.joining(", "));
                                 topCache.put(cacheKey, new CacheEntry(result, System.currentTimeMillis() + TOP_CACHE_TTL_MS));
@@ -212,8 +217,12 @@ public class EzEconomyPAPIExpansion extends PlaceholderExpansion {
                                     .limit(nFinal)
                                     .collect(Collectors.toList());
                             String result = top.stream().map(e -> {
-                                OfflinePlayer p = Bukkit.getOfflinePlayer(e.getKey());
-                                String name = p == null ? e.getKey().toString() : (p.getName() == null ? e.getKey().toString() : p.getName());
+                                EconomyPlayer ep = null;
+                                try {
+                                    StorageProvider storage = finalEz.getStorageOrWarn();
+                                    ep = storage == null ? null : storage.getPlayer(e.getKey());
+                                } catch (Throwable ignored) {}
+                                String name = ep == null ? (Bukkit.getOfflinePlayer(e.getKey()).getName() == null ? e.getKey().toString() : Bukkit.getOfflinePlayer(e.getKey()).getName()) : (ep.getDisplayName() == null ? ep.getName() : ep.getDisplayName());
                                 return name + " - " + finalEz.format(e.getValue(), currency);
                             }).collect(Collectors.joining(", "));
                             topCache.put(cacheKey, new CacheEntry(result, System.currentTimeMillis() + TOP_CACHE_TTL_MS));
