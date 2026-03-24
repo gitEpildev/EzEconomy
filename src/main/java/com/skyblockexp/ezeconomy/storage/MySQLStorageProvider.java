@@ -59,6 +59,8 @@ public class MySQLStorageProvider implements StorageProvider {
                 stmt.executeUpdate("CREATE TABLE IF NOT EXISTS `" + table + "` (uuid VARCHAR(36), currency VARCHAR(32), balance DOUBLE, PRIMARY KEY (uuid, currency))");
                 stmt.executeUpdate("CREATE TABLE IF NOT EXISTS banks (name VARCHAR(64), currency VARCHAR(32), balance DOUBLE, PRIMARY KEY (name, currency))");
                 stmt.executeUpdate("CREATE TABLE IF NOT EXISTS bank_members (bank VARCHAR(64), uuid VARCHAR(36), owner BOOLEAN, PRIMARY KEY (bank, uuid))");
+                // Optional player info table to persist last-known name and displayName
+                stmt.executeUpdate("CREATE TABLE IF NOT EXISTS players (uuid VARCHAR(36) PRIMARY KEY, name VARCHAR(64), displayName VARCHAR(128))");
             } catch (SQLException e) {
                 plugin.getLogger().warning("MySQL schema init failed: " + e.getMessage());
                 throw new StorageInitException("Failed to initialize MySQL schema", e);
@@ -147,6 +149,28 @@ public class MySQLStorageProvider implements StorageProvider {
     }
 
     @Override
+    public com.skyblockexp.ezeconomy.dto.EconomyPlayer getPlayer(UUID uuid) {
+        synchronized (lock) {
+            try {
+                PreparedStatement ps = connection.prepareStatement("SELECT name, displayName FROM players WHERE uuid=?");
+                ps.setString(1, uuid.toString());
+                ResultSet rs = ps.executeQuery();
+                if (rs.next()) {
+                    String name = rs.getString(1);
+                    String display = rs.getString(2);
+                    if (name == null) name = uuid.toString();
+                    if (display == null) display = name;
+                    return new com.skyblockexp.ezeconomy.dto.EconomyPlayer(uuid, name, display);
+                }
+            } catch (Exception ignored) {}
+            org.bukkit.OfflinePlayer of = org.bukkit.Bukkit.getOfflinePlayer(uuid);
+            String name = of != null && of.getName() != null ? of.getName() : uuid.toString();
+            String display = (of instanceof org.bukkit.entity.Player) ? ((org.bukkit.entity.Player) of).getDisplayName() : name;
+            return new com.skyblockexp.ezeconomy.dto.EconomyPlayer(uuid, name, display);
+        }
+    }
+
+    @Override
     public boolean playerExists(UUID uuid) {
         synchronized (lock) {
             try {
@@ -170,6 +194,15 @@ public class MySQLStorageProvider implements StorageProvider {
                 ps.setString(2, currency);
                 ps.setDouble(3, amount);
                 ps.executeUpdate();
+                // Persist last known name/displayName
+                org.bukkit.OfflinePlayer of = org.bukkit.Bukkit.getOfflinePlayer(uuid);
+                String name = of != null && of.getName() != null ? of.getName() : uuid.toString();
+                String display = (of instanceof org.bukkit.entity.Player) ? ((org.bukkit.entity.Player) of).getDisplayName() : name;
+                PreparedStatement ps2 = connection.prepareStatement("REPLACE INTO players (uuid, name, displayName) VALUES (?, ?, ?)");
+                ps2.setString(1, uuid.toString());
+                ps2.setString(2, name);
+                ps2.setString(3, display);
+                ps2.executeUpdate();
             } catch (SQLException e) {
                 plugin.getLogger().severe("[EzEconomy] MySQL setBalance failed for " + uuid + " (" + currency + "): " + e.getMessage());
             } catch (Exception e) {
@@ -211,6 +244,15 @@ public class MySQLStorageProvider implements StorageProvider {
                 ps.setString(2, currency);
                 ps.setDouble(3, amount);
                 ps.executeUpdate();
+                // Persist last known name/displayName
+                org.bukkit.OfflinePlayer of = org.bukkit.Bukkit.getOfflinePlayer(uuid);
+                String name = of != null && of.getName() != null ? of.getName() : uuid.toString();
+                String display = (of instanceof org.bukkit.entity.Player) ? ((org.bukkit.entity.Player) of).getDisplayName() : name;
+                PreparedStatement ps2 = connection.prepareStatement("REPLACE INTO players (uuid, name, displayName) VALUES (?, ?, ?)");
+                ps2.setString(1, uuid.toString());
+                ps2.setString(2, name);
+                ps2.setString(3, display);
+                ps2.executeUpdate();
             } catch (SQLException e) {
                 plugin.getLogger().severe("[EzEconomy] MySQL deposit failed for " + uuid + " (" + currency + "): " + e.getMessage());
             } catch (Exception e) {
