@@ -90,9 +90,9 @@ public final class PayPlayerSelectionGui {
             if (online != null) name = online.getDisplayName();
             if (name == null) {
                 try {
-                    var storage = plugin.getStorageOrWarn();
-                    if (storage != null) {
-                        EconomyPlayer ep = storage.getPlayer(uuid);
+                    var sp = plugin.getStorageOrWarn();
+                    if (sp != null) {
+                        EconomyPlayer ep = sp.getPlayer(uuid);
                         if (ep != null) name = ep.getDisplayName() == null ? ep.getName() : ep.getDisplayName();
                     }
                 } catch (Throwable ignored) {}
