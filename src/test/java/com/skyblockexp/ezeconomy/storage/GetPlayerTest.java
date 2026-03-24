@@ -68,4 +68,52 @@ public class GetPlayerTest {
         assertEquals("onlineOne", p.getName());
         assertEquals("CoolName", p.getDisplayName());
     }
+
+    @Test
+    public void testMongoProviderFallbackToOffline() throws Exception {
+        org.bukkit.OfflinePlayer off = org.bukkit.Bukkit.getOfflinePlayer("mongoOffline");
+        com.skyblockexp.ezeconomy.storage.MongoDBStorageProvider mongo = new com.skyblockexp.ezeconomy.storage.MongoDBStorageProvider(plugin, new YamlConfiguration());
+        // No Mongo connection set -> should fallback to OfflinePlayer
+        com.skyblockexp.ezeconomy.dto.EconomyPlayer p = mongo.getPlayer(off.getUniqueId());
+        assertEquals("mongoOffline", p.getName());
+        assertEquals("mongoOffline", p.getDisplayName());
+    }
+
+    @Test
+    public void testMySQLProviderFallbackToOffline() throws Exception {
+        org.bukkit.OfflinePlayer off = org.bukkit.Bukkit.getOfflinePlayer("mysqlOffline");
+        YamlConfiguration cfg = new YamlConfiguration();
+        cfg.set("mysql.table", "balances_test");
+        com.skyblockexp.ezeconomy.storage.MySQLStorageProvider mysql = new com.skyblockexp.ezeconomy.storage.MySQLStorageProvider(plugin, cfg);
+        // No DB connection initialized -> should fallback to OfflinePlayer
+        com.skyblockexp.ezeconomy.dto.EconomyPlayer p = mysql.getPlayer(off.getUniqueId());
+        assertEquals("mysqlOffline", p.getName());
+        assertEquals("mysqlOffline", p.getDisplayName());
+    }
+
+    @Test
+    public void testSQLiteProviderPersistsNameAndDisplayName() throws Exception {
+        YamlConfiguration cfg = new YamlConfiguration();
+        cfg.set("sqlite.file", "test-sqlite.db");
+        cfg.set("sqlite.table", "balances_test");
+        com.skyblockexp.ezeconomy.storage.SQLiteStorageProvider sqlite = new com.skyblockexp.ezeconomy.storage.SQLiteStorageProvider(plugin, cfg);
+        TestSupport.injectField(plugin, "storage", sqlite);
+
+        // create offline recipient
+        Object offlineObj;
+        try {
+            java.lang.reflect.Method addOffline = server.getClass().getMethod("addOfflinePlayer", String.class);
+            offlineObj = addOffline.invoke(server, "sqliteOffline");
+        } catch (NoSuchMethodException ignored) {
+            offlineObj = org.bukkit.Bukkit.getOfflinePlayer("sqliteOffline");
+        }
+        org.bukkit.OfflinePlayer offline = (org.bukkit.OfflinePlayer) offlineObj;
+
+        // Trigger write
+        sqlite.setBalance(offline.getUniqueId(), "dollar", 2.0);
+
+        com.skyblockexp.ezeconomy.dto.EconomyPlayer p = sqlite.getPlayer(offline.getUniqueId());
+        assertEquals("sqliteOffline", p.getName());
+        assertEquals("sqliteOffline", p.getDisplayName());
+    }
 }

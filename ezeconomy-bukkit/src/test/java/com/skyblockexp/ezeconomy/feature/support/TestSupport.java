@@ -219,6 +219,14 @@ public final class TestSupport {
             java.util.Set<UUID> m = bankMembers.get(name);
             return m == null ? java.util.Collections.emptySet() : new java.util.HashSet<>(m);
         }
+
+        @Override
+        public com.skyblockexp.ezeconomy.dto.EconomyPlayer getPlayer(UUID uuid) {
+            org.bukkit.OfflinePlayer of = org.bukkit.Bukkit.getOfflinePlayer(uuid);
+            String name = of != null && of.getName() != null ? of.getName() : uuid.toString();
+            String display = (of instanceof org.bukkit.entity.Player) ? ((org.bukkit.entity.Player) of).getDisplayName() : name;
+            return new com.skyblockexp.ezeconomy.dto.EconomyPlayer(uuid, name, display);
+        }
     }
 
     public static java.io.File createTestDataFolder(EzEconomyPlugin plugin, String folderName) {

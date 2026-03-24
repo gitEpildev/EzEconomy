@@ -204,13 +204,15 @@ public class MongoDBStorageProvider implements StorageProvider {
     public com.skyblockexp.ezeconomy.dto.EconomyPlayer getPlayer(UUID uuid) {
         synchronized (lock) {
             try {
-                Document doc = balances.find(new Document("uuid", uuid.toString())).first();
-                if (doc != null) {
-                    String name = doc.getString("name");
-                    String display = doc.getString("displayName");
-                    if (name == null) name = uuid.toString();
-                    if (display == null) display = name;
-                    return new com.skyblockexp.ezeconomy.dto.EconomyPlayer(uuid, name, display);
+                if (balances != null) {
+                    Document doc = balances.find(new Document("uuid", uuid.toString())).first();
+                    if (doc != null) {
+                        String name = doc.getString("name");
+                        String display = doc.getString("displayName");
+                        if (name == null) name = uuid.toString();
+                        if (display == null) display = name;
+                        return new com.skyblockexp.ezeconomy.dto.EconomyPlayer(uuid, name, display);
+                    }
                 }
             } catch (Exception ignored) {}
             org.bukkit.OfflinePlayer of = org.bukkit.Bukkit.getOfflinePlayer(uuid);
