@@ -4,6 +4,7 @@ import com.skyblockexp.ezeconomy.api.storage.exceptions.StorageInitException;
 import com.skyblockexp.ezeconomy.api.storage.exceptions.StorageLoadException;
 import com.skyblockexp.ezeconomy.api.storage.exceptions.StorageSaveException;
 import com.skyblockexp.ezeconomy.api.storage.models.Transaction;
+import com.skyblockexp.ezeconomy.dto.EconomyPlayer;
 import com.skyblockexp.ezeconomy.storage.TransferLockManager;
 import com.skyblockexp.ezeconomy.storage.TransferResult;
 import java.util.List;
@@ -245,6 +246,15 @@ public interface StorageProvider {
      * Shuts down the storage provider and closes any open resources.
      */
     void shutdown();
+
+    /**
+     * Retrieve lightweight player information from the storage provider.
+     * Implementations should return last-known name/displayName when available
+     * to avoid an extra Bukkit/Mojang lookup.
+     * @param uuid player UUID
+     * @return EconomyPlayer with name/displayName or null if unknown
+     */
+    EconomyPlayer getPlayer(UUID uuid);
 
     /**
      * Creates a new bank with the given name and owner.

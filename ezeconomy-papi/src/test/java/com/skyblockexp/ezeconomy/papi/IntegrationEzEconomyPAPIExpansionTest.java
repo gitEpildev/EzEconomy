@@ -48,6 +48,11 @@ public class IntegrationEzEconomyPAPIExpansionTest {
         @Override public boolean addBankMember(String name, UUID uuid) { return false; }
         @Override public boolean removeBankMember(String name, UUID uuid) { return false; }
         @Override public Set<UUID> getBankMembers(String name) { return Collections.emptySet(); }
+        @Override
+        public com.skyblockexp.ezeconomy.dto.EconomyPlayer getPlayer(UUID uuid) {
+            if (!balances.containsKey(uuid)) return null;
+            return new com.skyblockexp.ezeconomy.dto.EconomyPlayer(uuid, "TestPlayer", "TestPlayer");
+        }
     }
 
     static class StubEzEconomy implements EzEconomyPAPIExpansion.TestEzEconomy {

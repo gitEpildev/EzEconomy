@@ -73,6 +73,8 @@ public class SQLiteStorageProvider implements StorageProvider {
             Statement stmt = connection.createStatement();
             stmt.executeUpdate("CREATE TABLE IF NOT EXISTS '" + table + "' (uuid TEXT, currency TEXT, balance DOUBLE, PRIMARY KEY (uuid, currency))");
             stmt.executeUpdate("CREATE TABLE IF NOT EXISTS '" + banksTable + "' (name TEXT PRIMARY KEY, owner TEXT, members TEXT, balances TEXT)");
+            // Optional players table to persist last-known name/displayName
+            stmt.executeUpdate("CREATE TABLE IF NOT EXISTS players (uuid TEXT PRIMARY KEY, name TEXT, displayName TEXT)");
         } catch (SQLException e) {
             plugin.getLogger().severe("SQLite connection failed: " + e.getMessage());
             throw new RuntimeException("Failed to initialize SQLiteStorageProvider", e);
@@ -191,6 +193,28 @@ public class SQLiteStorageProvider implements StorageProvider {
     }
 
     @Override
+    public com.skyblockexp.ezeconomy.dto.EconomyPlayer getPlayer(UUID uuid) {
+        synchronized (lock) {
+            try {
+                PreparedStatement ps = connection.prepareStatement("SELECT name, displayName FROM players WHERE uuid=?");
+                ps.setString(1, uuid.toString());
+                ResultSet rs = ps.executeQuery();
+                if (rs.next()) {
+                    String name = rs.getString(1);
+                    String display = rs.getString(2);
+                    if (name == null) name = uuid.toString();
+                    if (display == null) display = name;
+                    return new com.skyblockexp.ezeconomy.dto.EconomyPlayer(uuid, name, display);
+                }
+            } catch (Exception ignored) {}
+            org.bukkit.OfflinePlayer of = plugin.getServer().getOfflinePlayer(uuid);
+            String name = of != null && of.getName() != null ? of.getName() : uuid.toString();
+            String display = (of instanceof org.bukkit.entity.Player) ? ((org.bukkit.entity.Player) of).getDisplayName() : name;
+            return new com.skyblockexp.ezeconomy.dto.EconomyPlayer(uuid, name, display);
+        }
+    }
+
+    @Override
     public boolean playerExists(UUID uuid) {
         synchronized (lock) {
             try {
@@ -214,6 +238,16 @@ public class SQLiteStorageProvider implements StorageProvider {
                 ps.setString(2, currency);
                 ps.setDouble(3, amount);
                 ps.executeUpdate();
+            try {
+                PreparedStatement ps2 = connection.prepareStatement("REPLACE INTO players (uuid, name, displayName) VALUES (?, ?, ?)");
+                org.bukkit.OfflinePlayer of = plugin.getServer().getOfflinePlayer(uuid);
+                String name = of != null && of.getName() != null ? of.getName() : uuid.toString();
+                String display = (of instanceof org.bukkit.entity.Player) ? ((org.bukkit.entity.Player) of).getDisplayName() : name;
+                ps2.setString(1, uuid.toString());
+                ps2.setString(2, name);
+                ps2.setString(3, display);
+                ps2.executeUpdate();
+            } catch (Exception ignored) {}
             } catch (SQLException e) {
                 plugin.getLogger().severe("[EzEconomy] SQLite setBalance failed for " + uuid + " (" + currency + "): " + e.getMessage());
             }
@@ -251,6 +285,16 @@ public class SQLiteStorageProvider implements StorageProvider {
                 ps.setString(2, currency);
                 ps.setDouble(3, amount);
                 ps.executeUpdate();
+            try {
+                PreparedStatement ps2 = connection.prepareStatement("REPLACE INTO players (uuid, name, displayName) VALUES (?, ?, ?)");
+                org.bukkit.OfflinePlayer of = plugin.getServer().getOfflinePlayer(uuid);
+                String name = of != null && of.getName() != null ? of.getName() : uuid.toString();
+                String display = (of instanceof org.bukkit.entity.Player) ? ((org.bukkit.entity.Player) of).getDisplayName() : name;
+                ps2.setString(1, uuid.toString());
+                ps2.setString(2, name);
+                ps2.setString(3, display);
+                ps2.executeUpdate();
+            } catch (Exception ignored) {}
             } catch (SQLException e) {
                 plugin.getLogger().severe("[EzEconomy] SQLite deposit failed for " + uuid + " (" + currency + "): " + e.getMessage());
             }

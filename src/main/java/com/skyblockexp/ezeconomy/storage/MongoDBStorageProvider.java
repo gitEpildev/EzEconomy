@@ -201,10 +201,36 @@ public class MongoDBStorageProvider implements StorageProvider {
     }
 
     @Override
+    public com.skyblockexp.ezeconomy.dto.EconomyPlayer getPlayer(UUID uuid) {
+        synchronized (lock) {
+            try {
+                if (balances != null) {
+                    Document doc = balances.find(new Document("uuid", uuid.toString())).first();
+                    if (doc != null) {
+                        String name = doc.getString("name");
+                        String display = doc.getString("displayName");
+                        if (name == null) name = uuid.toString();
+                        if (display == null) display = name;
+                        return new com.skyblockexp.ezeconomy.dto.EconomyPlayer(uuid, name, display);
+                    }
+                }
+            } catch (Exception ignored) {}
+            org.bukkit.OfflinePlayer of = org.bukkit.Bukkit.getOfflinePlayer(uuid);
+            String name = of != null && of.getName() != null ? of.getName() : uuid.toString();
+            String display = (of instanceof org.bukkit.entity.Player) ? ((org.bukkit.entity.Player) of).getDisplayName() : name;
+            return new com.skyblockexp.ezeconomy.dto.EconomyPlayer(uuid, name, display);
+        }
+    }
+
+    @Override
     public void setBalance(UUID uuid, String currency, double amount) {
         synchronized (lock) {
+            org.bukkit.OfflinePlayer of = org.bukkit.Bukkit.getOfflinePlayer(uuid);
+            String name = of != null && of.getName() != null ? of.getName() : uuid.toString();
+            String display = (of instanceof org.bukkit.entity.Player) ? ((org.bukkit.entity.Player) of).getDisplayName() : name;
             Document query = new Document("uuid", uuid.toString()).append("currency", currency);
-            Document update = new Document("$set", new Document("balance", amount));
+            Document setDoc = new Document("balance", amount).append("name", name).append("displayName", display);
+            Document update = new Document("$set", setDoc);
             balances.updateOne(query, update, new UpdateOptions().upsert(true));
         }
     }
@@ -224,8 +250,11 @@ public class MongoDBStorageProvider implements StorageProvider {
     @Override
     public void deposit(UUID uuid, String currency, double amount) {
         synchronized (lock) {
+            org.bukkit.OfflinePlayer of = org.bukkit.Bukkit.getOfflinePlayer(uuid);
+            String name = of != null && of.getName() != null ? of.getName() : uuid.toString();
+            String display = (of instanceof org.bukkit.entity.Player) ? ((org.bukkit.entity.Player) of).getDisplayName() : name;
             Document query = new Document("uuid", uuid.toString()).append("currency", currency);
-            Document update = new Document("$inc", new Document("balance", amount));
+            Document update = new Document("$inc", new Document("balance", amount)).append("$set", new Document("name", name).append("displayName", display));
             balances.updateOne(query, update, new UpdateOptions().upsert(true));
         }
     }

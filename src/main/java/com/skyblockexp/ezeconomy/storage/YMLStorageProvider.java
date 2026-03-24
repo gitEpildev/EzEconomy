@@ -97,6 +97,15 @@ public class YMLStorageProvider implements StorageProvider {
             if (!data.isString("uuid")) {
                 data.set("uuid", uuid.toString());
             }
+            // Persist latest known username and displayName for faster lookups
+            org.bukkit.OfflinePlayer of = org.bukkit.Bukkit.getOfflinePlayer(uuid);
+            String username = of != null && of.getName() != null ? of.getName() : uuid.toString();
+            data.set("name", username);
+            if (of instanceof org.bukkit.entity.Player) {
+                data.set("displayName", ((org.bukkit.entity.Player) of).getDisplayName());
+            } else {
+                data.set("displayName", username);
+            }
             data.save(file);
         } catch (IOException ioex2) {
         }
@@ -116,6 +125,25 @@ public class YMLStorageProvider implements StorageProvider {
             } catch (Exception e) {
                 System.err.println("[EzEconomy] Failed to get balance for " + uuid + " (" + currency + "): " + e.getMessage());
                 return 0.0;
+            }
+        }
+    }
+
+    @Override
+    public com.skyblockexp.ezeconomy.dto.EconomyPlayer getPlayer(UUID uuid) {
+        synchronized (getPlayerLock(uuid)) {
+            try {
+                YamlConfiguration pdata = loadPlayerData(uuid);
+                String name = pdata.getString("name", null);
+                String display = pdata.getString("displayName", null);
+                if (name == null) {
+                    org.bukkit.OfflinePlayer of = org.bukkit.Bukkit.getOfflinePlayer(uuid);
+                    name = of != null && of.getName() != null ? of.getName() : uuid.toString();
+                }
+                if (display == null) display = name;
+                return new com.skyblockexp.ezeconomy.dto.EconomyPlayer(uuid, name, display);
+            } catch (Exception e) {
+                return new com.skyblockexp.ezeconomy.dto.EconomyPlayer(uuid, uuid.toString(), uuid.toString());
             }
         }
     }

@@ -8,6 +8,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
 import com.skyblockexp.ezeconomy.core.EzEconomyPlugin;
+import com.skyblockexp.ezeconomy.dto.EconomyPlayer;
 
 /**
  * Player selection GUI for initiating a payment.
@@ -48,10 +49,21 @@ public final class PayPlayerSelectionGui {
         }
 
         java.util.List<java.util.UUID> entries = new java.util.ArrayList<>(uuids);
-        // sort by name for stable ordering
+        // sort by name for stable ordering (prefer stored/display name)
+        var storageForSort = plugin.getStorageOrWarn();
         entries.sort((a, b) -> {
-            String na = Bukkit.getOfflinePlayer(a).getName();
-            String nb = Bukkit.getOfflinePlayer(b).getName();
+            String na = null;
+            String nb = null;
+            try {
+                if (storageForSort != null) {
+                    EconomyPlayer ea = storageForSort.getPlayer(a);
+                    EconomyPlayer eb = storageForSort.getPlayer(b);
+                    if (ea != null) na = ea.getDisplayName() == null ? ea.getName() : ea.getDisplayName();
+                    if (eb != null) nb = eb.getDisplayName() == null ? eb.getName() : eb.getDisplayName();
+                }
+            } catch (Throwable ignored) {}
+            if (na == null) na = Bukkit.getOfflinePlayer(a).getName();
+            if (nb == null) nb = Bukkit.getOfflinePlayer(b).getName();
             if (na == null) na = a.toString();
             if (nb == null) nb = b.toString();
             return na.compareToIgnoreCase(nb);
@@ -76,6 +88,15 @@ public final class PayPlayerSelectionGui {
             String name = null;
             var online = Bukkit.getPlayer(uuid);
             if (online != null) name = online.getDisplayName();
+            if (name == null) {
+                try {
+                    var sp = plugin.getStorageOrWarn();
+                    if (sp != null) {
+                        EconomyPlayer ep = sp.getPlayer(uuid);
+                        if (ep != null) name = ep.getDisplayName() == null ? ep.getName() : ep.getDisplayName();
+                    }
+                } catch (Throwable ignored) {}
+            }
             if (name == null) {
                 var off = Bukkit.getOfflinePlayer(uuid);
                 if (off != null && off.getName() != null) name = off.getName();
