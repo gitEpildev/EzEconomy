@@ -186,8 +186,8 @@ public class EzEconomyPAPIExpansion extends PlaceholderExpansion {
                                 String result = top.stream().map(e -> {
                                     EconomyPlayer ep = null;
                                     try {
-                                        StorageProvider storage = testEz.getStorageOrWarn();
-                                        ep = storage == null ? null : storage.getPlayer(e.getKey());
+                                        StorageProvider sp = testEz.getStorageOrWarn();
+                                        ep = sp == null ? null : sp.getPlayer(e.getKey());
                                     } catch (Throwable ignored) {}
                                     String name = ep == null ? (Bukkit.getOfflinePlayer(e.getKey()).getName() == null ? e.getKey().toString() : Bukkit.getOfflinePlayer(e.getKey()).getName()) : (ep.getDisplayName() == null ? ep.getName() : ep.getDisplayName());
                                     return name + " - " + testEz.format(e.getValue(), currency);
@@ -219,8 +219,8 @@ public class EzEconomyPAPIExpansion extends PlaceholderExpansion {
                             String result = top.stream().map(e -> {
                                 EconomyPlayer ep = null;
                                 try {
-                                    StorageProvider storage = finalEz.getStorageOrWarn();
-                                    ep = storage == null ? null : storage.getPlayer(e.getKey());
+                                    StorageProvider sp = finalEz.getStorageOrWarn();
+                                    ep = sp == null ? null : sp.getPlayer(e.getKey());
                                 } catch (Throwable ignored) {}
                                 String name = ep == null ? (Bukkit.getOfflinePlayer(e.getKey()).getName() == null ? e.getKey().toString() : Bukkit.getOfflinePlayer(e.getKey()).getName()) : (ep.getDisplayName() == null ? ep.getName() : ep.getDisplayName());
                                 return name + " - " + finalEz.format(e.getValue(), currency);
