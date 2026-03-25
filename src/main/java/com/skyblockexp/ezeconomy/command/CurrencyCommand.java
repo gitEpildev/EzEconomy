@@ -12,6 +12,7 @@ import com.skyblockexp.ezeconomy.util.NumberUtil;
 import com.skyblockexp.ezeconomy.core.Money;
 import com.skyblockexp.ezeconomy.util.CurrencyUtil;
 import java.util.Map;
+import java.util.UUID;
 
 public class CurrencyCommand implements CommandExecutor {
 	private final EzEconomyPlugin plugin;
@@ -76,9 +77,38 @@ public class CurrencyCommand implements CommandExecutor {
 				MessageUtils.send(sender, plugin, "unknown_conversion");
 				return true;
 			}
+
+			var storage = plugin.getStorageOrWarn();
+			if (storage == null) {
+				MessageUtils.send(sender, plugin, "storage_unavailable");
+				return true;
+			}
+
+			double balance = storage.getBalance(player.getUniqueId(), from);
+			if (balance < amt) {
+				MessageUtils.send(sender, plugin, "not_enough_money");
+				return true;
+			}
+
+			// Attempt an atomic withdraw; tryWithdraw will fail if concurrent change removed funds
+			boolean withdrawn = storage.tryWithdraw(player.getUniqueId(), from, amt);
+			if (!withdrawn) {
+				MessageUtils.send(sender, plugin, "not_enough_money");
+				return true;
+			}
+
+			// Deposit converted amount to target currency
+			storage.deposit(player.getUniqueId(), to, converted);
+
+			// Log both sides of the conversion as transactions
+			long now = System.currentTimeMillis();
+			plugin.logTransaction(new com.skyblockexp.ezeconomy.api.storage.models.Transaction(player.getUniqueId(), from, -amt, now));
+			plugin.logTransaction(new com.skyblockexp.ezeconomy.api.storage.models.Transaction(player.getUniqueId(), to, converted, now));
+
 			String fromDisplay = plugin.formatPriceForMessage(amt, from);
 			String toDisplay = plugin.formatPriceForMessage(converted, to);
 			sender.sendMessage(plugin.getMessageProvider().color("&eConversion: " + fromDisplay + " → " + toDisplay));
+			sender.sendMessage(plugin.getMessageProvider().color("&aConversion successful."));
 			return true;
 		}
 
