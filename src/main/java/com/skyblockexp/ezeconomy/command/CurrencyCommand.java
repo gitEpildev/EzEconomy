@@ -78,6 +78,13 @@ public class CurrencyCommand implements CommandExecutor {
 				return true;
 			}
 
+			// Prevent conversions that would round to zero in the target currency
+			double roundedConverted = CurrencyUtil.roundToCurrency(plugin, converted, to);
+			if (roundedConverted == 0.0) {
+				MessageUtils.send(sender, plugin, "conversion_too_small");
+				return true;
+			}
+
 			var storage = plugin.getStorageOrWarn();
 			if (storage == null) {
 				MessageUtils.send(sender, plugin, "storage_unavailable");
