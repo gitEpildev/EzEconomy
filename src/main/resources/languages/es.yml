@@ -59,3 +59,4 @@ daily_reward_success: "&a¡Has recibido {amount} en {currency} como recompensa d
 reload_messages_success: "&aMensajes recargados exitosamente."
 reload_success: "&aTodas las configuraciones recargadas exitosamente."
 price_message_format: "{amount} {symbol}"
+conversion_too_small: "&cLa conversión se redondearía a 0 en la moneda destino. Aumenta la cantidad o usa una moneda con más decimales."

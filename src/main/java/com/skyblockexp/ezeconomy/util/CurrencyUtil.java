@@ -77,7 +77,7 @@ public final class CurrencyUtil {
         return Double.NaN;
     }
 
-    private static double roundToCurrency(EzEconomyPlugin plugin, double value, String currency) {
+    public static double roundToCurrency(EzEconomyPlugin plugin, double value, String currency) {
         var cfg = plugin.getConfig();
         int decimals = cfg.getInt("multi-currency.currencies." + currency + ".decimals", 2);
         BigDecimal bd = BigDecimal.valueOf(value).setScale(decimals, RoundingMode.HALF_UP);

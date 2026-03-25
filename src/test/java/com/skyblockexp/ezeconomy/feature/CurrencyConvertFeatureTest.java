@@ -91,4 +91,66 @@ public class CurrencyConvertFeatureTest {
             throw new RuntimeException(e);
         }
     }
+
+    @Test
+    public void testCurrencyConvert_failsWhenRoundedToZero() {
+        try {
+            Object pObj = server.getClass().getMethod("addPlayer", String.class).invoke(server, "convplayer3");
+            org.bukkit.entity.Player player = (org.bukkit.entity.Player) pObj;
+
+            // Enable multi-currency and configure currencies + conversion
+            plugin.getConfig().set("multi-currency.enabled", true);
+            plugin.getConfig().set("multi-currency.currencies.dollars.symbol", "$D");
+            plugin.getConfig().set("multi-currency.currencies.dollars.decimals", 2);
+            plugin.getConfig().set("multi-currency.currencies.gems.symbol", "G");
+            // gems decimals = 0 (will cause small conversions to round to 0)
+            plugin.getConfig().set("multi-currency.currencies.gems.decimals", 0);
+            // conversion: 1 dollar = 0.01 gems
+            plugin.getConfig().set("multi-currency.conversion.dollars.gems", 0.01);
+
+            // Give the player some dollars
+            storage.setBalance(player.getUniqueId(), "dollars", 3.0);
+
+            // Attempt to convert 3 dollars -> gems (would be 0.03 -> rounds to 0)
+            player.performCommand("currency convert dollars gems 3");
+
+            // Dollars should be unchanged because conversion was rejected
+            assertEquals(3.0, storage.getBalance(player.getUniqueId(), "dollars"), 0.0001);
+            // Gems should remain zero
+            assertEquals(0.0, storage.getBalance(player.getUniqueId(), "gems"), 0.0001);
+        } catch (ReflectiveOperationException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test
+    public void testCurrencyConvert_succeedsWhenTargetHasDecimals() {
+        try {
+            Object pObj = server.getClass().getMethod("addPlayer", String.class).invoke(server, "convplayer4");
+            org.bukkit.entity.Player player = (org.bukkit.entity.Player) pObj;
+
+            // Enable multi-currency and configure currencies + conversion
+            plugin.getConfig().set("multi-currency.enabled", true);
+            plugin.getConfig().set("multi-currency.currencies.dollars.symbol", "$D");
+            plugin.getConfig().set("multi-currency.currencies.dollars.decimals", 2);
+            plugin.getConfig().set("multi-currency.currencies.gems.symbol", "G");
+            // gems decimals = 2 (so 0.03 should be preserved)
+            plugin.getConfig().set("multi-currency.currencies.gems.decimals", 2);
+            // conversion: 1 dollar = 0.01 gems
+            plugin.getConfig().set("multi-currency.conversion.dollars.gems", 0.01);
+
+            // Give the player some dollars
+            storage.setBalance(player.getUniqueId(), "dollars", 3.0);
+
+            // Convert 3 dollars -> gems (should yield 0.03)
+            player.performCommand("currency convert dollars gems 3");
+
+            // Dollars should be debited by 3
+            assertEquals(0.0, storage.getBalance(player.getUniqueId(), "dollars"), 0.0001);
+            // Gems should be credited with 0.03
+            assertEquals(0.03, storage.getBalance(player.getUniqueId(), "gems"), 0.0001);
+        } catch (ReflectiveOperationException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }
