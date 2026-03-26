@@ -33,11 +33,12 @@ public class LockingComponent implements BootstrapComponent {
         FileConfiguration redisCfg = YamlConfiguration.loadConfiguration(redisFile);
 
         if ("REDIS".equals(strategy) && redisCfg.getBoolean("enabled", false)) {
-            String host = redisCfg.getString("host", cfg.getString("redis.host", "localhost"));
-            int port = redisCfg.getInt("port", cfg.getInt("redis.port", 6379));
-            String password = redisCfg.getString("password", cfg.getString("redis.password", ""));
-            int database = redisCfg.getInt("database", cfg.getInt("redis.database", 0));
-            boolean fallback = redisCfg.getBoolean("fallback-to-local", cfg.getBoolean("redis.fallback-to-local", true));
+            // Read Redis configuration exclusively from redis.yml (do not read Redis keys from config.yml)
+            String host = redisCfg.getString("host", "localhost");
+            int port = redisCfg.getInt("port", 6379);
+            String password = redisCfg.getString("password", "");
+            int database = redisCfg.getInt("database", 0);
+            boolean fallback = redisCfg.getBoolean("fallback-to-local", true);
             try {
                 // 1) Try ServiceLoader using current classloader (useful for development/classpath-loaded providers)
                 ServiceLoader<LockManager> loader = ServiceLoader.load(LockManager.class);

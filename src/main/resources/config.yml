@@ -60,20 +60,3 @@ multi-currency:
 # Locking strategy used for balance updates. Options: LOCAL, REDIS
 # LOCAL: plugin uses in-process locks only. REDIS: uses a distributed Redis lock.
 locking-strategy: LOCAL
-
-# Redis configuration for distributed locking (optional)
-redis:
-  enabled: false
-  host: localhost
-  port: 6379
-  # Leave empty for no password
-  password: ''
-  database: 0
-  # Lock TTL in milliseconds (how long the lock survives if not released)
-  ttl-ms: 5000
-  # Wait between acquire retries in milliseconds
-  retry-ms: 50
-  # Maximum acquire attempts before failing
-  max-attempts: 100
-  # If true and Redis connection fails, fall back to local locking
-  fallback-to-local: true
