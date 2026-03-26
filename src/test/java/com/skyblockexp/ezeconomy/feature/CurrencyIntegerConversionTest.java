@@ -102,4 +102,29 @@ public class CurrencyIntegerConversionTest {
             throw new RuntimeException(e);
         }
     }
+
+    @Test
+    public void testHighRateInsufficientRequestedAmount() {
+        try {
+            Object pObj = server.getClass().getMethod("addPlayer", String.class).invoke(server, "intplayer4");
+            org.bukkit.entity.Player player = (org.bukkit.entity.Player) pObj;
+
+            plugin.getConfig().set("multi-currency.enabled", true);
+            plugin.getConfig().set("multi-currency.currencies.source.decimals", 0);
+            plugin.getConfig().set("multi-currency.currencies.target.decimals", 0);
+            // source -> target rate = 1000
+            plugin.getConfig().set("multi-currency.conversion.source.target", 1000);
+
+            // Player has 500 source
+            storage.setBalance(player.getUniqueId(), "source", 500.0);
+
+            // Attempt to convert 600 source -> target (requested > balance) should fail
+            player.performCommand("currency convert source target 600");
+
+            assertEquals(500.0, storage.getBalance(player.getUniqueId(), "source"), 0.0001);
+            assertEquals(0.0, storage.getBalance(player.getUniqueId(), "target"), 0.0001);
+        } catch (ReflectiveOperationException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }

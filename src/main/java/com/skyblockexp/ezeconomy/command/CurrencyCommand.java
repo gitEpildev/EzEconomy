@@ -93,6 +93,12 @@ public class CurrencyCommand implements CommandExecutor {
 			BigDecimal usedSource = res.usedSource == null ? amt : res.usedSource;
 
 			double balance = storage.getBalance(player.getUniqueId(), from);
+			// Require the player to have at least the requested amount, and also ensure
+			// they have enough to cover the actual source used for an integer conversion.
+			if (BigDecimal.valueOf(balance).compareTo(amt) < 0) {
+				MessageUtils.send(sender, plugin, "not_enough_money");
+				return true;
+			}
 			if (BigDecimal.valueOf(balance).compareTo(usedSource) < 0) {
 				MessageUtils.send(sender, plugin, "not_enough_money");
 				return true;
