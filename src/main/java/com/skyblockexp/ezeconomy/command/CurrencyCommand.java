@@ -13,6 +13,7 @@ import com.skyblockexp.ezeconomy.core.Money;
 import com.skyblockexp.ezeconomy.util.CurrencyUtil;
 import java.util.Map;
 import java.util.UUID;
+import java.math.BigDecimal;
 
 public class CurrencyCommand implements CommandExecutor {
 	private final EzEconomyPlugin plugin;
@@ -71,16 +72,14 @@ public class CurrencyCommand implements CommandExecutor {
 				MessageUtils.send(sender, plugin, "invalid_amount", java.util.Map.of("input", args[3]));
 				return true;
 			}
-			double amt = m.getAmount().doubleValue();
-			double converted = CurrencyUtil.convert(plugin, amt, from, to);
-			if (Double.isNaN(converted)) {
+			BigDecimal amt = m.getAmount();
+			var res = CurrencyUtil.convertBigDecimal(plugin, amt, from, to);
+			if (res == null) {
 				MessageUtils.send(sender, plugin, "unknown_conversion");
 				return true;
 			}
 
-			// Prevent conversions that would round to zero in the target currency
-			double roundedConverted = CurrencyUtil.roundToCurrency(plugin, converted, to);
-			if (roundedConverted == 0.0) {
+			if (res.converted == null || res.converted.compareTo(BigDecimal.ZERO) == 0) {
 				MessageUtils.send(sender, plugin, "conversion_too_small");
 				return true;
 			}
@@ -91,29 +90,31 @@ public class CurrencyCommand implements CommandExecutor {
 				return true;
 			}
 
+			BigDecimal usedSource = res.usedSource == null ? amt : res.usedSource;
+
 			double balance = storage.getBalance(player.getUniqueId(), from);
-			if (balance < amt) {
+			if (BigDecimal.valueOf(balance).compareTo(usedSource) < 0) {
 				MessageUtils.send(sender, plugin, "not_enough_money");
 				return true;
 			}
 
 			// Attempt an atomic withdraw; tryWithdraw will fail if concurrent change removed funds
-			boolean withdrawn = storage.tryWithdraw(player.getUniqueId(), from, amt);
+			boolean withdrawn = storage.tryWithdraw(player.getUniqueId(), from, usedSource.doubleValue());
 			if (!withdrawn) {
 				MessageUtils.send(sender, plugin, "not_enough_money");
 				return true;
 			}
 
 			// Deposit converted amount to target currency
-			storage.deposit(player.getUniqueId(), to, converted);
+			storage.deposit(player.getUniqueId(), to, res.converted.doubleValue());
 
 			// Log both sides of the conversion as transactions
 			long now = System.currentTimeMillis();
-			plugin.logTransaction(new com.skyblockexp.ezeconomy.api.storage.models.Transaction(player.getUniqueId(), from, -amt, now));
-			plugin.logTransaction(new com.skyblockexp.ezeconomy.api.storage.models.Transaction(player.getUniqueId(), to, converted, now));
+			plugin.logTransaction(new com.skyblockexp.ezeconomy.api.storage.models.Transaction(player.getUniqueId(), from, -usedSource.doubleValue(), now));
+			plugin.logTransaction(new com.skyblockexp.ezeconomy.api.storage.models.Transaction(player.getUniqueId(), to, res.converted.doubleValue(), now));
 
-			String fromDisplay = plugin.formatPriceForMessage(amt, from);
-			String toDisplay = plugin.formatPriceForMessage(converted, to);
+			String fromDisplay = plugin.formatPriceForMessage(usedSource.doubleValue(), from);
+			String toDisplay = plugin.formatPriceForMessage(res.converted.doubleValue(), to);
 			sender.sendMessage(plugin.getMessageProvider().color("&eConversion: " + fromDisplay + " → " + toDisplay));
 			sender.sendMessage(plugin.getMessageProvider().color("&aConversion successful."));
 			return true;
