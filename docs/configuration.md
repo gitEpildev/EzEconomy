@@ -34,6 +34,17 @@ multi-currency:
       euro: 80
 ```
 
+### Banking toggle
+
+Enable or disable the built-in bank subsystem (commands, GUIs, Vault bank methods, and bank placeholders).
+
+```yaml
+banking:
+  enabled: true
+```
+
+Set `banking.enabled` to `false` if you prefer using a different bank plugin or want to disable shared bank accounts.
+
 ### Notes
 
 - `storage` must match one of the supported providers: `yml`, `mysql`, `sqlite`, `mongodb`, or `custom`.

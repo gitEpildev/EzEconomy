@@ -9,6 +9,7 @@ EzEconomy is a Vault-compatible economy provider built for reliability, clarity,
 - **Multi-currency**: Optional per-player currency selection with conversion rates.
 - **Async caching**: Keeps balance lookups fast on busy servers.
 - **Banking system**: Shared accounts with member management and permissions.
+- **Banking system**: Shared accounts with member management and permissions. You can disable the built-in banking subsystem via `banking.enabled: false` in `config.yml` if you run an external bank plugin or don't need bank features.
 
 ## Supported Versions
 

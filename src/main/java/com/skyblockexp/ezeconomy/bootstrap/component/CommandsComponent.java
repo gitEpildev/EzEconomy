@@ -32,8 +32,21 @@ public class CommandsComponent implements BootstrapComponent {
         plugin.getCommand("eco").setTabCompleter(new EcoTabCompleter(plugin));
         plugin.getCommand("baltop").setExecutor(new BaltopCommand(plugin));
         plugin.getCommand("baltop").setTabCompleter(new BaltopTabCompleter(plugin));
-        plugin.getCommand("bank").setExecutor(new BankCommand(plugin));
-        plugin.getCommand("bank").setTabCompleter(new BankTabCompleter(plugin));
+        boolean bankingEnabled = plugin.getConfig().getBoolean("banking.enabled", true);
+        if (bankingEnabled) {
+            if (plugin.getCommand("bank") != null) {
+                plugin.getCommand("bank").setExecutor(new BankCommand(plugin));
+                plugin.getCommand("bank").setTabCompleter(new BankTabCompleter(plugin));
+            }
+        } else {
+            // Ensure any previously-registered bank handlers are cleared when banking disabled
+            if (plugin.getCommand("bank") != null) {
+                try {
+                    plugin.getCommand("bank").setExecutor(null);
+                    plugin.getCommand("bank").setTabCompleter(null);
+                } catch (Exception ignored) {}
+            }
+        }
         plugin.getCommand("pay").setExecutor(new PayCommand(plugin));
         plugin.getCommand("pay").setTabCompleter(new PayTabCompleter(plugin));
         plugin.getCommand("currency").setExecutor(new CurrencyCommand(plugin));

@@ -29,6 +29,11 @@ daily-reward:
 store-on-join:
   enabled: false
 
+# Banking feature toggle: set to `false` to disable built-in bank subsystem
+# (commands, GUIs, Vault bank methods, and bank PAPI placeholders).
+banking:
+  enabled: true
+
 # Multi-currency support (optional)
 multi-currency:
   enabled: false

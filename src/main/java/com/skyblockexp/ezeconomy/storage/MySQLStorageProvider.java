@@ -439,20 +439,23 @@ public class MySQLStorageProvider implements StorageProvider {
                 if (!rs.next()) return false;
                 double current = rs.getDouble(1);
 
-                BankPreTransactionEvent pre = new BankPreTransactionEvent(name, null, BigDecimal.valueOf(amount), TransactionType.BANK_WITHDRAW);
-                if (plugin.getServer().isPrimaryThread()) {
-                    plugin.getServer().getPluginManager().callEvent(pre);
-                } else {
-                    try {
-                        plugin.getServer().getScheduler().callSyncMethod(plugin, () -> {
-                            plugin.getServer().getPluginManager().callEvent(pre);
-                            return null;
-                        }).get();
-                    } catch (Exception e) {
-                        plugin.getLogger().warning("[EzEconomy] Failed to fire BankPreTransactionEvent: " + e.getMessage());
+                boolean bankingEnabled = plugin.getConfig().getBoolean("banking.enabled", true);
+                if (bankingEnabled) {
+                    BankPreTransactionEvent pre = new BankPreTransactionEvent(name, null, BigDecimal.valueOf(amount), TransactionType.BANK_WITHDRAW);
+                    if (plugin.getServer().isPrimaryThread()) {
+                        plugin.getServer().getPluginManager().callEvent(pre);
+                    } else {
+                        try {
+                            plugin.getServer().getScheduler().callSyncMethod(plugin, () -> {
+                                plugin.getServer().getPluginManager().callEvent(pre);
+                                return null;
+                            }).get();
+                        } catch (Exception e) {
+                            plugin.getLogger().warning("[EzEconomy] Failed to fire BankPreTransactionEvent: " + e.getMessage());
+                        }
                     }
+                    if (pre.isCancelled()) return false;
                 }
-                if (pre.isCancelled()) return false;
 
                 PreparedStatement ps = connection.prepareStatement(
                     "UPDATE banks SET balance = balance - ? WHERE name=? AND currency=? AND balance >= ?"
@@ -462,7 +465,7 @@ public class MySQLStorageProvider implements StorageProvider {
                 ps.setString(3, currency);
                 ps.setDouble(4, amount);
                 boolean ok = ps.executeUpdate() > 0;
-                if (ok) {
+                if (ok && bankingEnabled) {
                     BankPostTransactionEvent post = new BankPostTransactionEvent(name, null, BigDecimal.valueOf(amount), TransactionType.BANK_WITHDRAW, true, BigDecimal.valueOf(current), BigDecimal.valueOf(current - amount));
                     try {
                         plugin.getServer().getScheduler().callSyncMethod(plugin, () -> {
@@ -493,16 +496,19 @@ public class MySQLStorageProvider implements StorageProvider {
                 double before = 0.0;
                 if (rs.next()) before = rs.getDouble(1);
 
-                BankPreTransactionEvent pre = new BankPreTransactionEvent(name, null, BigDecimal.valueOf(amount), TransactionType.BANK_DEPOSIT);
-                try {
-                    plugin.getServer().getScheduler().callSyncMethod(plugin, () -> {
-                        plugin.getServer().getPluginManager().callEvent(pre);
-                        return null;
-                    }).get();
-                } catch (Exception e) {
-                    plugin.getLogger().warning("[EzEconomy] Failed to fire BankPreTransactionEvent: " + e.getMessage());
+                boolean bankingEnabled = plugin.getConfig().getBoolean("banking.enabled", true);
+                if (bankingEnabled) {
+                    BankPreTransactionEvent pre = new BankPreTransactionEvent(name, null, BigDecimal.valueOf(amount), TransactionType.BANK_DEPOSIT);
+                    try {
+                        plugin.getServer().getScheduler().callSyncMethod(plugin, () -> {
+                            plugin.getServer().getPluginManager().callEvent(pre);
+                            return null;
+                        }).get();
+                    } catch (Exception e) {
+                        plugin.getLogger().warning("[EzEconomy] Failed to fire BankPreTransactionEvent: " + e.getMessage());
+                    }
+                    if (pre.isCancelled()) return;
                 }
-                if (pre.isCancelled()) return;
 
                 PreparedStatement ps = connection.prepareStatement(
                     "INSERT INTO banks (name, currency, balance) VALUES (?, ?, ?) " +
@@ -513,17 +519,19 @@ public class MySQLStorageProvider implements StorageProvider {
                 ps.setDouble(3, amount);
                 ps.executeUpdate();
 
-                BankPostTransactionEvent post = new BankPostTransactionEvent(name, null, BigDecimal.valueOf(amount), TransactionType.BANK_DEPOSIT, true, BigDecimal.valueOf(before), BigDecimal.valueOf(before + amount));
-                if (plugin.getServer().isPrimaryThread()) {
-                    plugin.getServer().getPluginManager().callEvent(post);
-                } else {
-                    try {
-                        plugin.getServer().getScheduler().callSyncMethod(plugin, () -> {
-                            plugin.getServer().getPluginManager().callEvent(post);
-                            return null;
-                        }).get();
-                    } catch (Exception e) {
-                        plugin.getLogger().warning("[EzEconomy] Failed to fire BankPostTransactionEvent: " + e.getMessage());
+                if (bankingEnabled) {
+                    BankPostTransactionEvent post = new BankPostTransactionEvent(name, null, BigDecimal.valueOf(amount), TransactionType.BANK_DEPOSIT, true, BigDecimal.valueOf(before), BigDecimal.valueOf(before + amount));
+                    if (plugin.getServer().isPrimaryThread()) {
+                        plugin.getServer().getPluginManager().callEvent(post);
+                    } else {
+                        try {
+                            plugin.getServer().getScheduler().callSyncMethod(plugin, () -> {
+                                plugin.getServer().getPluginManager().callEvent(post);
+                                return null;
+                            }).get();
+                        } catch (Exception e) {
+                            plugin.getLogger().warning("[EzEconomy] Failed to fire BankPostTransactionEvent: " + e.getMessage());
+                        }
                     }
                 }
             } catch (SQLException e) {
