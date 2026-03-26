@@ -380,8 +380,9 @@ public class MongoDBStorageProvider implements StorageProvider {
             Document balancesDoc = doc.get("balances", Document.class);
             double before = 0.0;
             if (balancesDoc != null && balancesDoc.containsKey(currency)) before = balancesDoc.getDouble(currency);
-
-            BankPreTransactionEvent pre = new BankPreTransactionEvent(name, null, BigDecimal.valueOf(amount), TransactionType.BANK_WITHDRAW);
+            boolean bankingEnabled = plugin.getConfig().getBoolean("banking.enabled", true);
+            if (bankingEnabled) {
+                BankPreTransactionEvent pre = new BankPreTransactionEvent(name, null, BigDecimal.valueOf(amount), TransactionType.BANK_WITHDRAW);
                 if (plugin.getServer().isPrimaryThread()) {
                     plugin.getServer().getPluginManager().callEvent(pre);
                 } else {
@@ -394,14 +395,15 @@ public class MongoDBStorageProvider implements StorageProvider {
                         plugin.getLogger().warning("[EzEconomy] Failed to fire BankPreTransactionEvent: " + e.getMessage());
                     }
                 }
-            if (pre.isCancelled()) return false;
+                if (pre.isCancelled()) return false;
+            }
 
             Document query = new Document("name", name)
                 .append("balances." + currency, new Document("$gte", amount));
             Document update = new Document("$inc", new Document("balances." + currency, -amount));
             Document updated = banks.findOneAndUpdate(query, update);
             boolean ok = updated != null;
-            if (ok) {
+            if (ok && bankingEnabled) {
                 BankPostTransactionEvent post = new BankPostTransactionEvent(name, null, BigDecimal.valueOf(amount), TransactionType.BANK_WITHDRAW, true, BigDecimal.valueOf(before), BigDecimal.valueOf(before - amount));
                 if (plugin.getServer().isPrimaryThread()) {
                     plugin.getServer().getPluginManager().callEvent(post);
@@ -429,31 +431,35 @@ public class MongoDBStorageProvider implements StorageProvider {
                 Document balancesDoc = doc.get("balances", Document.class);
                 if (balancesDoc != null && balancesDoc.containsKey(currency)) before = balancesDoc.getDouble(currency);
             }
-
-            BankPreTransactionEvent pre = new BankPreTransactionEvent(name, null, BigDecimal.valueOf(amount), TransactionType.BANK_DEPOSIT);
-            try {
-                plugin.getServer().getScheduler().callSyncMethod(plugin, () -> {
-                    plugin.getServer().getPluginManager().callEvent(pre);
-                    return null;
-                }).get();
-            } catch (Exception e) {
-                plugin.getLogger().warning("[EzEconomy] Failed to fire BankPreTransactionEvent: " + e.getMessage());
+            boolean bankingEnabled = plugin.getConfig().getBoolean("banking.enabled", true);
+            if (bankingEnabled) {
+                BankPreTransactionEvent pre = new BankPreTransactionEvent(name, null, BigDecimal.valueOf(amount), TransactionType.BANK_DEPOSIT);
+                try {
+                    plugin.getServer().getScheduler().callSyncMethod(plugin, () -> {
+                        plugin.getServer().getPluginManager().callEvent(pre);
+                        return null;
+                    }).get();
+                } catch (Exception e) {
+                    plugin.getLogger().warning("[EzEconomy] Failed to fire BankPreTransactionEvent: " + e.getMessage());
+                }
+                if (pre.isCancelled()) return;
             }
-            if (pre.isCancelled()) return;
 
             banks.updateOne(
                 new Document("name", name),
                 new Document("$inc", new Document("balances." + currency, amount))
             );
 
-            BankPostTransactionEvent post = new BankPostTransactionEvent(name, null, BigDecimal.valueOf(amount), TransactionType.BANK_DEPOSIT, true, BigDecimal.valueOf(before), BigDecimal.valueOf(before + amount));
-            try {
-                plugin.getServer().getScheduler().callSyncMethod(plugin, () -> {
-                    plugin.getServer().getPluginManager().callEvent(post);
-                    return null;
-                }).get();
-            } catch (Exception e) {
-                plugin.getLogger().warning("[EzEconomy] Failed to fire BankPostTransactionEvent: " + e.getMessage());
+            if (bankingEnabled) {
+                BankPostTransactionEvent post = new BankPostTransactionEvent(name, null, BigDecimal.valueOf(amount), TransactionType.BANK_DEPOSIT, true, BigDecimal.valueOf(before), BigDecimal.valueOf(before + amount));
+                try {
+                    plugin.getServer().getScheduler().callSyncMethod(plugin, () -> {
+                        plugin.getServer().getPluginManager().callEvent(post);
+                        return null;
+                    }).get();
+                } catch (Exception e) {
+                    plugin.getLogger().warning("[EzEconomy] Failed to fire BankPostTransactionEvent: " + e.getMessage());
+                }
             }
         }
     }
