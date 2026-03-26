@@ -73,10 +73,85 @@ public class PaymentExecutor {
             UUID toUuid = toOffline.getUniqueId();
             UUID first = fromUuid.compareTo(toUuid) <= 0 ? fromUuid : toUuid;
             UUID second = fromUuid.compareTo(toUuid) <= 0 ? toUuid : fromUuid;
-            java.util.concurrent.locks.ReentrantLock firstLock = TransferLockManager.getLock(first);
-            java.util.concurrent.locks.ReentrantLock secondLock = first.equals(second) ? firstLock : TransferLockManager.getLock(second);
+
+            // Prefer distributed locking if available
+            com.skyblockexp.ezeconomy.lock.LockManager lm = plugin.getLockManager();
+            if (lm != null) {
+                UUID[] uuids = new UUID[]{first, second};
+                String[] tokens = null;
+                try {
+                    tokens = lm.acquireOrdered(uuids, 5000L, 50L, 100);
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    tokens = null;
+                }
+                if (tokens != null) {
+                    try {
+                        double fromBalance = storage.getBalance(fromUuid, currency);
+                        plugin.getLogger().info("PaymentExecutor: currency-preference path fromBalance=" + fromBalance + " netAmount=" + netAmount);
+                        if (fromBalance < netAmount) {
+                            plugin.getLogger().info("PaymentExecutor: not enough money (balance < amount)");
+                            MessageUtils.send(from, plugin, "not_enough_money");
+                            return true;
+                        }
+                        boolean withdrew = storage.tryWithdraw(fromUuid, currency, netAmount);
+                        plugin.getLogger().info("PaymentExecutor: tryWithdraw result=" + withdrew);
+                        if (!withdrew) {
+                            plugin.getLogger().info("PaymentExecutor: withdrawFailed, aborting");
+                            MessageUtils.send(from, plugin, "not_enough_money");
+                            return true;
+                        }
+                        double creditAmount = CurrencyUtil.convert(plugin, netAmount, currency, recipientCurrency);
+                        if (Double.isNaN(creditAmount)) {
+                            storage.deposit(fromUuid, currency, netAmount);
+                            MessageUtils.send(from, plugin, "unknown_currency", java.util.Map.of("currency", recipientCurrency));
+                            return true;
+                        }
+                        plugin.getLogger().info("PaymentExecutor: depositing " + creditAmount + " " + recipientCurrency + " to " + toOffline.getUniqueId());
+                        storage.deposit(toOffline.getUniqueId(), recipientCurrency, creditAmount);
+
+                        String payerDisplay = plugin.formatPriceForMessage(netAmount, currency);
+                        String receiverDisplay = plugin.formatPriceForMessage(creditAmount, recipientCurrency);
+                        String defaultCur = plugin.getDefaultCurrency();
+                        if (!currency.equalsIgnoreCase(defaultCur)) {
+                            double equiv = CurrencyUtil.convert(plugin, netAmount, currency, defaultCur);
+                            if (!Double.isNaN(equiv)) {
+                                String equivDisplay = plugin.formatPriceForMessage(equiv, defaultCur);
+                                MessageUtils.send(from, plugin, "paid_other_currency", java.util.Map.of("player", toOffline.getName(), "amount", payerDisplay, "amount_default", equivDisplay));
+                            } else {
+                                MessageUtils.send(from, plugin, "paid", java.util.Map.of("player", toOffline.getName(), "amount", payerDisplay));
+                            }
+                        } else {
+                            MessageUtils.send(from, plugin, "paid", java.util.Map.of("player", toOffline.getName(), "amount", payerDisplay));
+                        }
+                        if (toOffline.isOnline() && toOffline.getPlayer() != null) {
+                            if (!currency.equalsIgnoreCase(defaultCur)) {
+                                double equiv = CurrencyUtil.convert(plugin, creditAmount, recipientCurrency, defaultCur);
+                                if (!Double.isNaN(equiv)) {
+                                    String equivDisplay = plugin.formatPriceForMessage(equiv, defaultCur);
+                                    MessageUtils.send(toOffline.getPlayer(), plugin, "received_other_currency", java.util.Map.of("player", from.getName(), "amount", receiverDisplay, "amount_default", equivDisplay));
+                                } else {
+                                    MessageUtils.send(toOffline.getPlayer(), plugin, "received", java.util.Map.of("player", from.getName(), "amount", receiverDisplay));
+                                }
+                            } else {
+                                MessageUtils.send(toOffline.getPlayer(), plugin, "received", java.util.Map.of("player", from.getName(), "amount", receiverDisplay));
+                            }
+                        }
+                        return true;
+                    } finally {
+                        lm.releaseOrdered(uuids, tokens);
+                    }
+                }
+                // fallthrough to local locking
+            }
+
+            // Fallback: local in-JVM locks
+            UUID firstLocal = first;
+            UUID secondLocal = second;
+            java.util.concurrent.locks.ReentrantLock firstLock = TransferLockManager.getLock(firstLocal);
+            java.util.concurrent.locks.ReentrantLock secondLock = firstLocal.equals(secondLocal) ? firstLock : TransferLockManager.getLock(secondLocal);
             firstLock.lock();
-            if (!first.equals(second)) secondLock.lock();
+            if (!firstLocal.equals(secondLocal)) secondLock.lock();
             try {
                 double fromBalance = storage.getBalance(fromUuid, currency);
                 plugin.getLogger().info("PaymentExecutor: currency-preference path fromBalance=" + fromBalance + " netAmount=" + netAmount);
@@ -130,7 +205,7 @@ public class PaymentExecutor {
                 }
                 return true;
             } finally {
-                if (!first.equals(second)) secondLock.unlock();
+                if (!firstLocal.equals(secondLocal)) secondLock.unlock();
                 firstLock.unlock();
             }
         }

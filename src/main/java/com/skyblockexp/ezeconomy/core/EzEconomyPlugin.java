@@ -66,6 +66,8 @@ public class EzEconomyPlugin extends JavaPlugin {
     private FileConfiguration userGuiConfig;
     private com.skyblockexp.ezeconomy.gui.PayFlowManager payFlowManager;
     private com.skyblockexp.ezeconomy.bootstrap.Bootstrap bootstrap;
+    private com.skyblockexp.ezeconomy.lock.LockManager lockManager;
+    private static EzEconomyPlugin INSTANCE;
 
     public String format(double amount) {
         return format(amount, getDefaultCurrency());
@@ -187,6 +189,7 @@ public class EzEconomyPlugin extends JavaPlugin {
 
     @Override
     public void onEnable() {
+        INSTANCE = this;
         this.bootstrap = new com.skyblockexp.ezeconomy.bootstrap.Bootstrap(this);
         try {
             this.bootstrap.start();
@@ -210,6 +213,7 @@ public class EzEconomyPlugin extends JavaPlugin {
             Bukkit.getServicesManager().unregister(Economy.class, vaultEconomy);
         }
         getLogger().info("EzEconomy disabled.");
+        INSTANCE = null;
     }
 
     public MessageProvider getMessageProvider() {
@@ -387,6 +391,21 @@ public class EzEconomyPlugin extends JavaPlugin {
 
     public void setUserGuiConfig(FileConfiguration cfg) {
         this.userGuiConfig = cfg;
+    }
+
+    public com.skyblockexp.ezeconomy.lock.LockManager getLockManager() {
+        return this.lockManager;
+    }
+
+    public void setLockManager(com.skyblockexp.ezeconomy.lock.LockManager m) {
+        this.lockManager = m;
+    }
+
+    /**
+     * Returns the active plugin instance, or null if not set.
+     */
+    public static EzEconomyPlugin getInstance() {
+        return INSTANCE;
     }
 
     public void registerPlaceholderExpansion() {

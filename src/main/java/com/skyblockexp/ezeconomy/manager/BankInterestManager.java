@@ -70,8 +70,34 @@ public class BankInterestManager {
                 for (UUID uuid : members) {
                     OfflinePlayer player = Bukkit.getOfflinePlayer(uuid);
                     if (perMemberInterest > 0) {
-                        // If storage.setBalance is not thread-safe, synchronize here or in the provider.
-                        storage.setBalance(uuid, currency, storage.getBalance(uuid, currency) + perMemberInterest);
+                        com.skyblockexp.ezeconomy.lock.LockManager lm = plugin.getLockManager();
+                        if (lm != null) {
+                            String token = null;
+                            try {
+                                token = lm.acquire(uuid, 5000L, 50L, 100);
+                            } catch (InterruptedException ie) {
+                                Thread.currentThread().interrupt();
+                                token = null;
+                            }
+                            if (token != null) {
+                                try {
+                                    storage.setBalance(uuid, currency, storage.getBalance(uuid, currency) + perMemberInterest);
+                                } finally {
+                                    lm.release(uuid, token);
+                                }
+                            } else {
+                                // fallback to local lock
+                                java.util.concurrent.locks.ReentrantLock l = com.skyblockexp.ezeconomy.storage.TransferLockManager.getLock(uuid);
+                                l.lock();
+                                try {
+                                    storage.setBalance(uuid, currency, storage.getBalance(uuid, currency) + perMemberInterest);
+                                } finally {
+                                    l.unlock();
+                                }
+                            }
+                        } else {
+                            storage.setBalance(uuid, currency, storage.getBalance(uuid, currency) + perMemberInterest);
+                        }
                         if (player.isOnline()) {
                             player.getPlayer().sendMessage("You received " + plugin.getEconomy().format(perMemberInterest) + " " + currency + " interest from bank '" + bank + "'");
                         }

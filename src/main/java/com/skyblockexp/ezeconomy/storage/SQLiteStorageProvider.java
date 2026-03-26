@@ -178,6 +178,29 @@ public class SQLiteStorageProvider implements StorageProvider {
 
     @Override
     public double getBalance(UUID uuid, String currency) {
+        com.skyblockexp.ezeconomy.lock.LockManager lm = plugin.getLockManager();
+        if (lm != null) {
+            String token = null;
+            try {
+                token = lm.acquire(uuid, plugin.getConfig().getLong("redis.ttl-ms", 5000), plugin.getConfig().getLong("redis.retry-ms", 50), plugin.getConfig().getInt("redis.max-attempts", 100));
+                if (token != null) {
+                    try {
+                        PreparedStatement ps = connection.prepareStatement("SELECT balance FROM '" + table + "' WHERE uuid=? AND currency=?");
+                        ps.setString(1, uuid.toString());
+                        ps.setString(2, currency);
+                        ResultSet rs = ps.executeQuery();
+                        if (rs.next()) return rs.getDouble(1);
+                    } catch (SQLException e) {
+                        plugin.getLogger().severe("[EzEconomy] SQLite getBalance failed for " + uuid + " (" + currency + "): " + e.getMessage());
+                    }
+                    return 0.0;
+                }
+            } catch (InterruptedException ex) {
+                Thread.currentThread().interrupt();
+            } finally {
+                if (token != null) lm.release(uuid, token);
+            }
+        }
         synchronized (lock) {
             try {
                 PreparedStatement ps = connection.prepareStatement("SELECT balance FROM '" + table + "' WHERE uuid=? AND currency=?");
@@ -194,6 +217,35 @@ public class SQLiteStorageProvider implements StorageProvider {
 
     @Override
     public com.skyblockexp.ezeconomy.dto.EconomyPlayer getPlayer(UUID uuid) {
+        com.skyblockexp.ezeconomy.lock.LockManager lm = plugin.getLockManager();
+        if (lm != null) {
+            String token = null;
+            try {
+                token = lm.acquire(uuid, plugin.getConfig().getLong("redis.ttl-ms", 5000), plugin.getConfig().getLong("redis.retry-ms", 50), plugin.getConfig().getInt("redis.max-attempts", 100));
+                if (token != null) {
+                    try {
+                        PreparedStatement ps = connection.prepareStatement("SELECT name, displayName FROM players WHERE uuid=?");
+                        ps.setString(1, uuid.toString());
+                        ResultSet rs = ps.executeQuery();
+                        if (rs.next()) {
+                            String name = rs.getString(1);
+                            String display = rs.getString(2);
+                            if (name == null) name = uuid.toString();
+                            if (display == null) display = name;
+                            return new com.skyblockexp.ezeconomy.dto.EconomyPlayer(uuid, name, display);
+                        }
+                    } catch (Exception ignored) {}
+                    org.bukkit.OfflinePlayer of = plugin.getServer().getOfflinePlayer(uuid);
+                    String name = of != null && of.getName() != null ? of.getName() : uuid.toString();
+                    String display = (of instanceof org.bukkit.entity.Player) ? ((org.bukkit.entity.Player) of).getDisplayName() : name;
+                    return new com.skyblockexp.ezeconomy.dto.EconomyPlayer(uuid, name, display);
+                }
+            } catch (InterruptedException ex) {
+                Thread.currentThread().interrupt();
+            } finally {
+                if (token != null) lm.release(uuid, token);
+            }
+        }
         synchronized (lock) {
             try {
                 PreparedStatement ps = connection.prepareStatement("SELECT name, displayName FROM players WHERE uuid=?");
@@ -216,6 +268,28 @@ public class SQLiteStorageProvider implements StorageProvider {
 
     @Override
     public boolean playerExists(UUID uuid) {
+        com.skyblockexp.ezeconomy.lock.LockManager lm = plugin.getLockManager();
+        if (lm != null) {
+            String token = null;
+            try {
+                token = lm.acquire(uuid, plugin.getConfig().getLong("redis.ttl-ms", 5000), plugin.getConfig().getLong("redis.retry-ms", 50), plugin.getConfig().getInt("redis.max-attempts", 100));
+                if (token != null) {
+                    try {
+                        PreparedStatement ps = connection.prepareStatement("SELECT 1 FROM '" + table + "' WHERE uuid=? LIMIT 1");
+                        ps.setString(1, uuid.toString());
+                        ResultSet rs = ps.executeQuery();
+                        return rs.next();
+                    } catch (SQLException e) {
+                        plugin.getLogger().severe("[EzEconomy] SQLite playerExists failed for " + uuid + ": " + e.getMessage());
+                        return false;
+                    }
+                }
+            } catch (InterruptedException ex) {
+                Thread.currentThread().interrupt();
+            } finally {
+                if (token != null) lm.release(uuid, token);
+            }
+        }
         synchronized (lock) {
             try {
                 PreparedStatement ps = connection.prepareStatement("SELECT 1 FROM '" + table + "' WHERE uuid=? LIMIT 1");
@@ -231,6 +305,40 @@ public class SQLiteStorageProvider implements StorageProvider {
 
     @Override
     public void setBalance(UUID uuid, String currency, double amount) {
+        com.skyblockexp.ezeconomy.lock.LockManager lm = plugin.getLockManager();
+        if (lm != null) {
+            String token = null;
+            try {
+                token = lm.acquire(uuid, plugin.getConfig().getLong("redis.ttl-ms", 5000), plugin.getConfig().getLong("redis.retry-ms", 50), plugin.getConfig().getInt("redis.max-attempts", 100));
+                if (token != null) {
+                    try {
+                        PreparedStatement ps = connection.prepareStatement("REPLACE INTO '" + table + "' (uuid, currency, balance) VALUES (?, ?, ?)");
+                        ps.setString(1, uuid.toString());
+                        ps.setString(2, currency);
+                        ps.setDouble(3, amount);
+                        ps.executeUpdate();
+                        try {
+                            PreparedStatement ps2 = connection.prepareStatement("REPLACE INTO players (uuid, name, displayName) VALUES (?, ?, ?)");
+                            org.bukkit.OfflinePlayer of = plugin.getServer().getOfflinePlayer(uuid);
+                            String name = of != null && of.getName() != null ? of.getName() : uuid.toString();
+                            String display = (of instanceof org.bukkit.entity.Player) ? ((org.bukkit.entity.Player) of).getDisplayName() : name;
+                            ps2.setString(1, uuid.toString());
+                            ps2.setString(2, name);
+                            ps2.setString(3, display);
+                            ps2.executeUpdate();
+                        } catch (Exception ignored) {}
+                        return;
+                    } catch (SQLException e) {
+                        plugin.getLogger().severe("[EzEconomy] SQLite setBalance failed for " + uuid + " (" + currency + "): " + e.getMessage());
+                        return;
+                    }
+                }
+            } catch (InterruptedException ex) {
+                Thread.currentThread().interrupt();
+            } finally {
+                if (token != null) lm.release(uuid, token);
+            }
+        }
         synchronized (lock) {
             try {
                 PreparedStatement ps = connection.prepareStatement("REPLACE INTO '" + table + "' (uuid, currency, balance) VALUES (?, ?, ?)");
@@ -256,6 +364,32 @@ public class SQLiteStorageProvider implements StorageProvider {
 
     @Override
     public boolean tryWithdraw(UUID uuid, String currency, double amount) {
+        com.skyblockexp.ezeconomy.lock.LockManager lm = plugin.getLockManager();
+        if (lm != null) {
+            String token = null;
+            try {
+                token = lm.acquire(uuid, plugin.getConfig().getLong("redis.ttl-ms", 5000), plugin.getConfig().getLong("redis.retry-ms", 50), plugin.getConfig().getInt("redis.max-attempts", 100));
+                if (token != null) {
+                    try {
+                        PreparedStatement ps = connection.prepareStatement(
+                            "UPDATE '" + table + "' SET balance = balance - ? WHERE uuid=? AND currency=? AND balance >= ?"
+                        );
+                        ps.setDouble(1, amount);
+                        ps.setString(2, uuid.toString());
+                        ps.setString(3, currency);
+                        ps.setDouble(4, amount);
+                        return ps.executeUpdate() > 0;
+                    } catch (SQLException e) {
+                        plugin.getLogger().severe("[EzEconomy] SQLite tryWithdraw failed for " + uuid + " (" + currency + "): " + e.getMessage());
+                        return false;
+                    }
+                }
+            } catch (InterruptedException ex) {
+                Thread.currentThread().interrupt();
+            } finally {
+                if (token != null) lm.release(uuid, token);
+            }
+        }
         synchronized (lock) {
             try {
                 PreparedStatement ps = connection.prepareStatement(
@@ -275,6 +409,43 @@ public class SQLiteStorageProvider implements StorageProvider {
 
     @Override
     public void deposit(UUID uuid, String currency, double amount) {
+        com.skyblockexp.ezeconomy.lock.LockManager lm = plugin.getLockManager();
+        if (lm != null) {
+            String token = null;
+            try {
+                token = lm.acquire(uuid, plugin.getConfig().getLong("redis.ttl-ms", 5000), plugin.getConfig().getLong("redis.retry-ms", 50), plugin.getConfig().getInt("redis.max-attempts", 100));
+                if (token != null) {
+                    try {
+                        PreparedStatement ps = connection.prepareStatement(
+                            "INSERT INTO '" + table + "' (uuid, currency, balance) VALUES (?, ?, ?) " +
+                                "ON CONFLICT(uuid, currency) DO UPDATE SET balance = balance + excluded.balance"
+                        );
+                        ps.setString(1, uuid.toString());
+                        ps.setString(2, currency);
+                        ps.setDouble(3, amount);
+                        ps.executeUpdate();
+                    try {
+                        PreparedStatement ps2 = connection.prepareStatement("REPLACE INTO players (uuid, name, displayName) VALUES (?, ?, ?)");
+                        org.bukkit.OfflinePlayer of = plugin.getServer().getOfflinePlayer(uuid);
+                        String name = of != null && of.getName() != null ? of.getName() : uuid.toString();
+                        String display = (of instanceof org.bukkit.entity.Player) ? ((org.bukkit.entity.Player) of).getDisplayName() : name;
+                        ps2.setString(1, uuid.toString());
+                        ps2.setString(2, name);
+                        ps2.setString(3, display);
+                        ps2.executeUpdate();
+                    } catch (Exception ignored) {}
+                        return;
+                    } catch (SQLException e) {
+                        plugin.getLogger().severe("[EzEconomy] SQLite deposit failed for " + uuid + " (" + currency + "): " + e.getMessage());
+                        return;
+                    }
+                }
+            } catch (InterruptedException ex) {
+                Thread.currentThread().interrupt();
+            } finally {
+                if (token != null) lm.release(uuid, token);
+            }
+        }
         synchronized (lock) {
             try {
                 PreparedStatement ps = connection.prepareStatement(
@@ -321,41 +492,127 @@ public class SQLiteStorageProvider implements StorageProvider {
 
     @Override
     public com.skyblockexp.ezeconomy.storage.TransferResult transfer(UUID fromUuid, UUID toUuid, String currency, double debitAmount, double creditAmount) {
-        double fromBefore = getBalance(fromUuid, currency);
-        double toBefore = getBalance(toUuid, currency);
+        com.skyblockexp.ezeconomy.lock.LockManager lm = plugin.getLockManager();
+        if (lm == null) {
+            double fromBefore = getBalance(fromUuid, currency);
+            double toBefore = getBalance(toUuid, currency);
+            com.skyblockexp.ezeconomy.api.events.PreTransactionEvent pre = new com.skyblockexp.ezeconomy.api.events.PreTransactionEvent(fromUuid, toUuid, java.math.BigDecimal.valueOf(debitAmount), com.skyblockexp.ezeconomy.api.events.TransactionType.TRANSFER);
+            try {
+                plugin.getServer().getScheduler().callSyncMethod(plugin, () -> {
+                    plugin.getServer().getPluginManager().callEvent(pre);
+                    return null;
+                }).get();
+            } catch (Exception e) {
+                plugin.getLogger().warning("[EzEconomy] Failed to fire PreTransactionEvent: " + e.getMessage());
+            }
+            if (pre.isCancelled()) {
+                return com.skyblockexp.ezeconomy.storage.TransferResult.failure(fromBefore, toBefore);
+            }
+            com.skyblockexp.ezeconomy.storage.TransferResult result = StorageProvider.super.transfer(fromUuid, toUuid, currency, debitAmount, creditAmount);
+            com.skyblockexp.ezeconomy.api.events.PostTransactionEvent post = new com.skyblockexp.ezeconomy.api.events.PostTransactionEvent(
+                fromUuid, toUuid, java.math.BigDecimal.valueOf(debitAmount), com.skyblockexp.ezeconomy.api.events.TransactionType.TRANSFER,
+                result.isSuccess(), java.math.BigDecimal.valueOf(fromBefore), java.math.BigDecimal.valueOf(result.getFromBalance()),
+                java.math.BigDecimal.valueOf(toBefore), java.math.BigDecimal.valueOf(result.getToBalance())
+            );
+            try {
+                plugin.getServer().getScheduler().callSyncMethod(plugin, () -> {
+                    plugin.getServer().getPluginManager().callEvent(post);
+                    return null;
+                }).get();
+            } catch (Exception e) {
+                plugin.getLogger().warning("[EzEconomy] Failed to fire PostTransactionEvent: " + e.getMessage());
+            }
+            return result;
+        }
 
-        com.skyblockexp.ezeconomy.api.events.PreTransactionEvent pre = new com.skyblockexp.ezeconomy.api.events.PreTransactionEvent(fromUuid, toUuid, java.math.BigDecimal.valueOf(debitAmount), com.skyblockexp.ezeconomy.api.events.TransactionType.TRANSFER);
+        UUID[] ordered = new UUID[]{fromUuid, toUuid};
+        if (fromUuid.compareTo(toUuid) > 0) ordered = new UUID[]{toUuid, fromUuid};
+        String[] tokens = null;
         try {
-            // Fire synchronously on main thread and wait for result
-            plugin.getServer().getScheduler().callSyncMethod(plugin, () -> {
-                plugin.getServer().getPluginManager().callEvent(pre);
-                return null;
-            }).get();
-        } catch (Exception e) {
-            plugin.getLogger().warning("[EzEconomy] Failed to fire PreTransactionEvent: " + e.getMessage());
+            tokens = lm.acquireOrdered(ordered, plugin.getConfig().getLong("redis.ttl-ms", 5000), plugin.getConfig().getLong("redis.retry-ms", 50), plugin.getConfig().getInt("redis.max-attempts", 100));
+        } catch (InterruptedException ex) {
+            Thread.currentThread().interrupt();
         }
-        if (pre.isCancelled()) {
-            return com.skyblockexp.ezeconomy.storage.TransferResult.failure(fromBefore, toBefore);
+        if (tokens == null) {
+            return StorageProvider.super.transfer(fromUuid, toUuid, currency, debitAmount, creditAmount);
         }
 
-        // Perform the actual transfer using the default implementation
-        com.skyblockexp.ezeconomy.storage.TransferResult result = StorageProvider.super.transfer(fromUuid, toUuid, currency, debitAmount, creditAmount);
-
-        com.skyblockexp.ezeconomy.api.events.PostTransactionEvent post = new com.skyblockexp.ezeconomy.api.events.PostTransactionEvent(
-            fromUuid, toUuid, java.math.BigDecimal.valueOf(debitAmount), com.skyblockexp.ezeconomy.api.events.TransactionType.TRANSFER,
-            result.isSuccess(), java.math.BigDecimal.valueOf(fromBefore), java.math.BigDecimal.valueOf(result.getFromBalance()),
-            java.math.BigDecimal.valueOf(toBefore), java.math.BigDecimal.valueOf(result.getToBalance())
-        );
         try {
-            plugin.getServer().getScheduler().callSyncMethod(plugin, () -> {
-                plugin.getServer().getPluginManager().callEvent(post);
-                return null;
-            }).get();
-        } catch (Exception e) {
-            plugin.getLogger().warning("[EzEconomy] Failed to fire PostTransactionEvent: " + e.getMessage());
-        }
+            double fromBefore;
+            double toBefore;
+            try {
+                PreparedStatement ps = connection.prepareStatement("SELECT balance FROM '" + table + "' WHERE uuid=? AND currency=?");
+                ps.setString(1, fromUuid.toString());
+                ps.setString(2, currency);
+                ResultSet rs = ps.executeQuery();
+                fromBefore = rs.next() ? rs.getDouble(1) : 0.0;
+                PreparedStatement ps2 = connection.prepareStatement("SELECT balance FROM '" + table + "' WHERE uuid=? AND currency=?");
+                ps2.setString(1, toUuid.toString());
+                ps2.setString(2, currency);
+                ResultSet rs2 = ps2.executeQuery();
+                toBefore = rs2.next() ? rs2.getDouble(1) : 0.0;
+            } catch (SQLException e) {
+                plugin.getLogger().severe("[EzEconomy] SQLite transfer balance read failed: " + e.getMessage());
+                return com.skyblockexp.ezeconomy.storage.TransferResult.failure(0.0, 0.0);
+            }
 
-        return result;
+            com.skyblockexp.ezeconomy.api.events.PreTransactionEvent pre = new com.skyblockexp.ezeconomy.api.events.PreTransactionEvent(fromUuid, toUuid, java.math.BigDecimal.valueOf(debitAmount), com.skyblockexp.ezeconomy.api.events.TransactionType.TRANSFER);
+            try {
+                plugin.getServer().getScheduler().callSyncMethod(plugin, () -> {
+                    plugin.getServer().getPluginManager().callEvent(pre);
+                    return null;
+                }).get();
+            } catch (Exception e) {
+                plugin.getLogger().warning("[EzEconomy] Failed to fire PreTransactionEvent: " + e.getMessage());
+            }
+            if (pre.isCancelled()) return com.skyblockexp.ezeconomy.storage.TransferResult.failure(fromBefore, toBefore);
+
+            try {
+                PreparedStatement psw = connection.prepareStatement(
+                    "UPDATE '" + table + "' SET balance = balance - ? WHERE uuid=? AND currency=? AND balance >= ?"
+                );
+                psw.setDouble(1, debitAmount);
+                psw.setString(2, fromUuid.toString());
+                psw.setString(3, currency);
+                psw.setDouble(4, debitAmount);
+                int updated = psw.executeUpdate();
+                if (updated <= 0) {
+                    double refreshedFrom = getBalance(fromUuid, currency);
+                    double refreshedTo = getBalance(toUuid, currency);
+                    return com.skyblockexp.ezeconomy.storage.TransferResult.failure(refreshedFrom, refreshedTo);
+                }
+                if (creditAmount > 0) {
+                    PreparedStatement psd = connection.prepareStatement("INSERT INTO '" + table + "' (uuid, currency, balance) VALUES (?, ?, ?) ON CONFLICT(uuid, currency) DO UPDATE SET balance = balance + excluded.balance");
+                    psd.setString(1, toUuid.toString());
+                    psd.setString(2, currency);
+                    psd.setDouble(3, creditAmount);
+                    psd.executeUpdate();
+                }
+                double updatedFrom = getBalance(fromUuid, currency);
+                double updatedTo = getBalance(toUuid, currency);
+                com.skyblockexp.ezeconomy.storage.TransferResult tr = com.skyblockexp.ezeconomy.storage.TransferResult.success(updatedFrom, updatedTo);
+
+                com.skyblockexp.ezeconomy.api.events.PostTransactionEvent post = new com.skyblockexp.ezeconomy.api.events.PostTransactionEvent(
+                    fromUuid, toUuid, java.math.BigDecimal.valueOf(debitAmount), com.skyblockexp.ezeconomy.api.events.TransactionType.TRANSFER,
+                    tr.isSuccess(), java.math.BigDecimal.valueOf(fromBefore), java.math.BigDecimal.valueOf(tr.getFromBalance()),
+                    java.math.BigDecimal.valueOf(toBefore), java.math.BigDecimal.valueOf(tr.getToBalance())
+                );
+                try {
+                    plugin.getServer().getScheduler().callSyncMethod(plugin, () -> {
+                        plugin.getServer().getPluginManager().callEvent(post);
+                        return null;
+                    }).get();
+                } catch (Exception e) {
+                    plugin.getLogger().warning("[EzEconomy] Failed to fire PostTransactionEvent: " + e.getMessage());
+                }
+                return tr;
+            } catch (SQLException e) {
+                plugin.getLogger().severe("[EzEconomy] SQLite transfer failed: " + e.getMessage());
+                return com.skyblockexp.ezeconomy.storage.TransferResult.failure(fromBefore, toBefore);
+            }
+        } finally {
+            lm.releaseOrdered(ordered, tokens);
+        }
     }
 
     @Override
@@ -365,6 +622,35 @@ public class SQLiteStorageProvider implements StorageProvider {
 
     @Override
     public boolean createBank(String name, UUID owner) {
+        com.skyblockexp.ezeconomy.lock.LockManager lm = plugin.getLockManager();
+        UUID bankId = UUID.nameUUIDFromBytes(name.getBytes());
+        if (lm != null) {
+            String token = null;
+            try {
+                token = lm.acquire(bankId, plugin.getConfig().getLong("redis.ttl-ms", 5000), plugin.getConfig().getLong("redis.retry-ms", 50), plugin.getConfig().getInt("redis.max-attempts", 100));
+                if (token != null) {
+                    if (bankExists(name)) return false;
+                    try {
+                        String members = owner.toString();
+                        String balances = "{}";
+                        PreparedStatement ps = connection.prepareStatement("INSERT INTO '" + banksTable + "' (name, owner, members, balances) VALUES (?, ?, ?, ?)");
+                        ps.setString(1, name);
+                        ps.setString(2, owner.toString());
+                        ps.setString(3, members);
+                        ps.setString(4, balances);
+                        ps.executeUpdate();
+                        return true;
+                    } catch (SQLException e) {
+                        plugin.getLogger().severe("[EzEconomy] SQLite createBank failed: " + e.getMessage());
+                        return false;
+                    }
+                }
+            } catch (InterruptedException ex) {
+                Thread.currentThread().interrupt();
+            } finally {
+                if (token != null) lm.release(bankId, token);
+            }
+        }
         synchronized (lock) {
             if (bankExists(name)) return false;
             try {
@@ -385,6 +671,28 @@ public class SQLiteStorageProvider implements StorageProvider {
     }
     @Override
     public boolean deleteBank(String name) {
+        com.skyblockexp.ezeconomy.lock.LockManager lm = plugin.getLockManager();
+        UUID bankId = UUID.nameUUIDFromBytes(name.getBytes());
+        if (lm != null) {
+            String token = null;
+            try {
+                token = lm.acquire(bankId, plugin.getConfig().getLong("redis.ttl-ms", 5000), plugin.getConfig().getLong("redis.retry-ms", 50), plugin.getConfig().getInt("redis.max-attempts", 100));
+                if (token != null) {
+                    try {
+                        PreparedStatement ps = connection.prepareStatement("DELETE FROM '" + banksTable + "' WHERE name=?");
+                        ps.setString(1, name);
+                        return ps.executeUpdate() > 0;
+                    } catch (SQLException e) {
+                        plugin.getLogger().severe("[EzEconomy] SQLite deleteBank failed: " + e.getMessage());
+                        return false;
+                    }
+                }
+            } catch (InterruptedException ex) {
+                Thread.currentThread().interrupt();
+            } finally {
+                if (token != null) lm.release(bankId, token);
+            }
+        }
         synchronized (lock) {
             try {
                 PreparedStatement ps = connection.prepareStatement("DELETE FROM '" + banksTable + "' WHERE name=?");
@@ -398,6 +706,29 @@ public class SQLiteStorageProvider implements StorageProvider {
     }
     @Override
     public boolean bankExists(String name) {
+        com.skyblockexp.ezeconomy.lock.LockManager lm = plugin.getLockManager();
+        UUID bankId = UUID.nameUUIDFromBytes(name.getBytes());
+        if (lm != null) {
+            String token = null;
+            try {
+                token = lm.acquire(bankId, plugin.getConfig().getLong("redis.ttl-ms", 5000), plugin.getConfig().getLong("redis.retry-ms", 50), plugin.getConfig().getInt("redis.max-attempts", 100));
+                if (token != null) {
+                    try {
+                        PreparedStatement ps = connection.prepareStatement("SELECT 1 FROM '" + banksTable + "' WHERE name=?");
+                        ps.setString(1, name);
+                        ResultSet rs = ps.executeQuery();
+                        return rs.next();
+                    } catch (SQLException e) {
+                        plugin.getLogger().severe("[EzEconomy] SQLite bankExists failed: " + e.getMessage());
+                        return false;
+                    }
+                }
+            } catch (InterruptedException ex) {
+                Thread.currentThread().interrupt();
+            } finally {
+                if (token != null) lm.release(bankId, token);
+            }
+        }
         synchronized (lock) {
             try {
                 PreparedStatement ps = connection.prepareStatement("SELECT 1 FROM '" + banksTable + "' WHERE name=?");
@@ -412,6 +743,33 @@ public class SQLiteStorageProvider implements StorageProvider {
     }
     @Override
     public double getBankBalance(String name, String currency) {
+        com.skyblockexp.ezeconomy.lock.LockManager lm = plugin.getLockManager();
+        UUID bankId = UUID.nameUUIDFromBytes(name.getBytes());
+        if (lm != null) {
+            String token = null;
+            try {
+                token = lm.acquire(bankId, plugin.getConfig().getLong("redis.ttl-ms", 5000), plugin.getConfig().getLong("redis.retry-ms", 50), plugin.getConfig().getInt("redis.max-attempts", 100));
+                if (token != null) {
+                    try {
+                        PreparedStatement ps = connection.prepareStatement("SELECT balances FROM '" + banksTable + "' WHERE name=?");
+                        ps.setString(1, name);
+                        ResultSet rs = ps.executeQuery();
+                        if (rs.next()) {
+                            String balancesJson = rs.getString(1);
+                            Map<String, Double> balances = parseBalances(balancesJson);
+                            return balances.getOrDefault(currency, 0.0);
+                        }
+                    } catch (SQLException e) {
+                        plugin.getLogger().severe("[EzEconomy] SQLite getBankBalance failed: " + e.getMessage());
+                    }
+                    return 0.0;
+                }
+            } catch (InterruptedException ex) {
+                Thread.currentThread().interrupt();
+            } finally {
+                if (token != null) lm.release(bankId, token);
+            }
+        }
         synchronized (lock) {
             try {
                 PreparedStatement ps = connection.prepareStatement("SELECT balances FROM '" + banksTable + "' WHERE name=?");
@@ -430,6 +788,39 @@ public class SQLiteStorageProvider implements StorageProvider {
     }
     @Override
     public void setBankBalance(String name, String currency, double amount) {
+        com.skyblockexp.ezeconomy.lock.LockManager lm = plugin.getLockManager();
+        UUID bankId = UUID.nameUUIDFromBytes(name.getBytes());
+        if (lm != null) {
+            String token = null;
+            try {
+                token = lm.acquire(bankId, plugin.getConfig().getLong("redis.ttl-ms", 5000), plugin.getConfig().getLong("redis.retry-ms", 50), plugin.getConfig().getInt("redis.max-attempts", 100));
+                if (token != null) {
+                    try {
+                        PreparedStatement ps = connection.prepareStatement("SELECT balances FROM '" + banksTable + "' WHERE name=?");
+                        ps.setString(1, name);
+                        ResultSet rs = ps.executeQuery();
+                        Map<String, Double> balances = new HashMap<>();
+                        if (rs.next()) {
+                            balances = parseBalances(rs.getString(1));
+                        }
+                        balances.put(currency, amount);
+                        String newJson = toJson(balances);
+                        PreparedStatement ps2 = connection.prepareStatement("UPDATE '" + banksTable + "' SET balances=? WHERE name=?");
+                        ps2.setString(1, newJson);
+                        ps2.setString(2, name);
+                        ps2.executeUpdate();
+                        return;
+                    } catch (SQLException e) {
+                        plugin.getLogger().severe("[EzEconomy] SQLite setBankBalance failed: " + e.getMessage());
+                        return;
+                    }
+                }
+            } catch (InterruptedException ex) {
+                Thread.currentThread().interrupt();
+            } finally {
+                if (token != null) lm.release(bankId, token);
+            }
+        }
         synchronized (lock) {
             try {
                 PreparedStatement ps = connection.prepareStatement("SELECT balances FROM '" + banksTable + "' WHERE name=?");

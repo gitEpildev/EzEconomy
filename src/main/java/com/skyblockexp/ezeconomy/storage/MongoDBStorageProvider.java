@@ -193,6 +193,27 @@ public class MongoDBStorageProvider implements StorageProvider {
     // --- Player Balance Methods ---
     @Override
     public double getBalance(UUID uuid, String currency) {
+        com.skyblockexp.ezeconomy.lock.LockManager lm = plugin.getLockManager();
+        if (lm != null) {
+            String token = null;
+            try {
+                token = lm.acquire(uuid, plugin.getConfig().getLong("redis.ttl-ms", 5000), plugin.getConfig().getLong("redis.retry-ms", 50), plugin.getConfig().getInt("redis.max-attempts", 100));
+                if (token != null) {
+                    try {
+                        Document doc = balances.find(new Document("uuid", uuid.toString()).append("currency", currency)).first();
+                        if (doc != null) return doc.getDouble("balance");
+                        return 0.0;
+                    } catch (Exception e) {
+                        plugin.getLogger().severe("[EzEconomy] Mongo getBalance failed for " + uuid + " (" + currency + "): " + e.getMessage());
+                        return 0.0;
+                    }
+                }
+            } catch (InterruptedException ex) {
+                Thread.currentThread().interrupt();
+            } finally {
+                if (token != null) lm.release(uuid, token);
+            }
+        }
         synchronized (lock) {
             Document doc = balances.find(new Document("uuid", uuid.toString()).append("currency", currency)).first();
             if (doc != null) return doc.getDouble("balance");
@@ -202,6 +223,35 @@ public class MongoDBStorageProvider implements StorageProvider {
 
     @Override
     public com.skyblockexp.ezeconomy.dto.EconomyPlayer getPlayer(UUID uuid) {
+        com.skyblockexp.ezeconomy.lock.LockManager lm = plugin.getLockManager();
+        if (lm != null) {
+            String token = null;
+            try {
+                token = lm.acquire(uuid, plugin.getConfig().getLong("redis.ttl-ms", 5000), plugin.getConfig().getLong("redis.retry-ms", 50), plugin.getConfig().getInt("redis.max-attempts", 100));
+                if (token != null) {
+                    try {
+                        if (balances != null) {
+                            Document doc = balances.find(new Document("uuid", uuid.toString())).first();
+                            if (doc != null) {
+                                String name = doc.getString("name");
+                                String display = doc.getString("displayName");
+                                if (name == null) name = uuid.toString();
+                                if (display == null) display = name;
+                                return new com.skyblockexp.ezeconomy.dto.EconomyPlayer(uuid, name, display);
+                            }
+                        }
+                    } catch (Exception ignored) {}
+                    org.bukkit.OfflinePlayer of = org.bukkit.Bukkit.getOfflinePlayer(uuid);
+                    String name = of != null && of.getName() != null ? of.getName() : uuid.toString();
+                    String display = (of instanceof org.bukkit.entity.Player) ? ((org.bukkit.entity.Player) of).getDisplayName() : name;
+                    return new com.skyblockexp.ezeconomy.dto.EconomyPlayer(uuid, name, display);
+                }
+            } catch (InterruptedException ex) {
+                Thread.currentThread().interrupt();
+            } finally {
+                if (token != null) lm.release(uuid, token);
+            }
+        }
         synchronized (lock) {
             try {
                 if (balances != null) {
@@ -224,6 +274,32 @@ public class MongoDBStorageProvider implements StorageProvider {
 
     @Override
     public void setBalance(UUID uuid, String currency, double amount) {
+        com.skyblockexp.ezeconomy.lock.LockManager lm = plugin.getLockManager();
+        if (lm != null) {
+            String token = null;
+            try {
+                token = lm.acquire(uuid, plugin.getConfig().getLong("redis.ttl-ms", 5000), plugin.getConfig().getLong("redis.retry-ms", 50), plugin.getConfig().getInt("redis.max-attempts", 100));
+                if (token != null) {
+                    try {
+                        org.bukkit.OfflinePlayer of = org.bukkit.Bukkit.getOfflinePlayer(uuid);
+                        String name = of != null && of.getName() != null ? of.getName() : uuid.toString();
+                        String display = (of instanceof org.bukkit.entity.Player) ? ((org.bukkit.entity.Player) of).getDisplayName() : name;
+                        Document query = new Document("uuid", uuid.toString()).append("currency", currency);
+                        Document setDoc = new Document("balance", amount).append("name", name).append("displayName", display);
+                        Document update = new Document("$set", setDoc);
+                        balances.updateOne(query, update, new UpdateOptions().upsert(true));
+                        return;
+                    } catch (Exception e) {
+                        plugin.getLogger().severe("[EzEconomy] Mongo setBalance failed for " + uuid + " (" + currency + "): " + e.getMessage());
+                        return;
+                    }
+                }
+            } catch (InterruptedException ex) {
+                Thread.currentThread().interrupt();
+            } finally {
+                if (token != null) lm.release(uuid, token);
+            }
+        }
         synchronized (lock) {
             org.bukkit.OfflinePlayer of = org.bukkit.Bukkit.getOfflinePlayer(uuid);
             String name = of != null && of.getName() != null ? of.getName() : uuid.toString();
@@ -237,6 +313,30 @@ public class MongoDBStorageProvider implements StorageProvider {
 
     @Override
     public boolean tryWithdraw(UUID uuid, String currency, double amount) {
+        com.skyblockexp.ezeconomy.lock.LockManager lm = plugin.getLockManager();
+        if (lm != null) {
+            String token = null;
+            try {
+                token = lm.acquire(uuid, plugin.getConfig().getLong("redis.ttl-ms", 5000), plugin.getConfig().getLong("redis.retry-ms", 50), plugin.getConfig().getInt("redis.max-attempts", 100));
+                if (token != null) {
+                    try {
+                        Document query = new Document("uuid", uuid.toString())
+                            .append("currency", currency)
+                            .append("balance", new Document("$gte", amount));
+                        Document update = new Document("$inc", new Document("balance", -amount));
+                        Document updated = balances.findOneAndUpdate(query, update);
+                        return updated != null;
+                    } catch (Exception e) {
+                        plugin.getLogger().severe("[EzEconomy] Mongo tryWithdraw failed for " + uuid + " (" + currency + "): " + e.getMessage());
+                        return false;
+                    }
+                }
+            } catch (InterruptedException ex) {
+                Thread.currentThread().interrupt();
+            } finally {
+                if (token != null) lm.release(uuid, token);
+            }
+        }
         synchronized (lock) {
             Document query = new Document("uuid", uuid.toString())
                 .append("currency", currency)
@@ -249,6 +349,31 @@ public class MongoDBStorageProvider implements StorageProvider {
 
     @Override
     public void deposit(UUID uuid, String currency, double amount) {
+        com.skyblockexp.ezeconomy.lock.LockManager lm = plugin.getLockManager();
+        if (lm != null) {
+            String token = null;
+            try {
+                token = lm.acquire(uuid, plugin.getConfig().getLong("redis.ttl-ms", 5000), plugin.getConfig().getLong("redis.retry-ms", 50), plugin.getConfig().getInt("redis.max-attempts", 100));
+                if (token != null) {
+                    try {
+                        org.bukkit.OfflinePlayer of = org.bukkit.Bukkit.getOfflinePlayer(uuid);
+                        String name = of != null && of.getName() != null ? of.getName() : uuid.toString();
+                        String display = (of instanceof org.bukkit.entity.Player) ? ((org.bukkit.entity.Player) of).getDisplayName() : name;
+                        Document query = new Document("uuid", uuid.toString()).append("currency", currency);
+                        Document update = new Document("$inc", new Document("balance", amount)).append("$set", new Document("name", name).append("displayName", display));
+                        balances.updateOne(query, update, new UpdateOptions().upsert(true));
+                        return;
+                    } catch (Exception e) {
+                        plugin.getLogger().severe("[EzEconomy] Mongo deposit failed for " + uuid + " (" + currency + "): " + e.getMessage());
+                        return;
+                    }
+                }
+            } catch (InterruptedException ex) {
+                Thread.currentThread().interrupt();
+            } finally {
+                if (token != null) lm.release(uuid, token);
+            }
+        }
         synchronized (lock) {
             org.bukkit.OfflinePlayer of = org.bukkit.Bukkit.getOfflinePlayer(uuid);
             String name = of != null && of.getName() != null ? of.getName() : uuid.toString();
@@ -261,6 +386,26 @@ public class MongoDBStorageProvider implements StorageProvider {
 
     @Override
     public boolean playerExists(UUID uuid) {
+        com.skyblockexp.ezeconomy.lock.LockManager lm = plugin.getLockManager();
+        if (lm != null) {
+            String token = null;
+            try {
+                token = lm.acquire(uuid, plugin.getConfig().getLong("redis.ttl-ms", 5000), plugin.getConfig().getLong("redis.retry-ms", 50), plugin.getConfig().getInt("redis.max-attempts", 100));
+                if (token != null) {
+                    try {
+                        Document doc = balances.find(new Document("uuid", uuid.toString())).first();
+                        return doc != null;
+                    } catch (Exception e) {
+                        plugin.getLogger().severe("[EzEconomy] MongoDB playerExists failed for " + uuid + ": " + e.getMessage());
+                        return false;
+                    }
+                }
+            } catch (InterruptedException ex) {
+                Thread.currentThread().interrupt();
+            } finally {
+                if (token != null) lm.release(uuid, token);
+            }
+        }
         synchronized (lock) {
             try {
                 Document doc = balances.find(new Document("uuid", uuid.toString())).first();
@@ -275,6 +420,10 @@ public class MongoDBStorageProvider implements StorageProvider {
     @Override
     public Map<UUID, Double> getAllBalances(String currency) {
         Map<UUID, Double> map = new HashMap<>();
+        com.skyblockexp.ezeconomy.lock.LockManager lm = plugin.getLockManager();
+        if (lm != null) {
+            // global read; acquire is per-UUID so we won't lock all UUIDs — fall back to synchronized for full scan
+        }
         synchronized (lock) {
             for (Document doc : balances.find(new Document("currency", currency))) {
                 map.put(UUID.fromString(doc.getString("uuid")), doc.getDouble("balance"));
@@ -285,39 +434,101 @@ public class MongoDBStorageProvider implements StorageProvider {
 
     @Override
     public com.skyblockexp.ezeconomy.storage.TransferResult transfer(UUID fromUuid, UUID toUuid, String currency, double debitAmount, double creditAmount) {
-        double fromBefore = getBalance(fromUuid, currency);
-        double toBefore = getBalance(toUuid, currency);
+        com.skyblockexp.ezeconomy.lock.LockManager lm = plugin.getLockManager();
+        if (lm == null) {
+            double fromBefore = getBalance(fromUuid, currency);
+            double toBefore = getBalance(toUuid, currency);
+            com.skyblockexp.ezeconomy.api.events.PreTransactionEvent pre = new com.skyblockexp.ezeconomy.api.events.PreTransactionEvent(fromUuid, toUuid, java.math.BigDecimal.valueOf(debitAmount), com.skyblockexp.ezeconomy.api.events.TransactionType.TRANSFER);
+            try {
+                plugin.getServer().getScheduler().callSyncMethod(plugin, () -> {
+                    plugin.getServer().getPluginManager().callEvent(pre);
+                    return null;
+                }).get();
+            } catch (Exception e) {
+                plugin.getLogger().warning("[EzEconomy] Failed to fire PreTransactionEvent: " + e.getMessage());
+            }
+            if (pre.isCancelled()) return com.skyblockexp.ezeconomy.storage.TransferResult.failure(fromBefore, toBefore);
+            com.skyblockexp.ezeconomy.storage.TransferResult result = StorageProvider.super.transfer(fromUuid, toUuid, currency, debitAmount, creditAmount);
+            com.skyblockexp.ezeconomy.api.events.PostTransactionEvent post = new com.skyblockexp.ezeconomy.api.events.PostTransactionEvent(
+                fromUuid, toUuid, java.math.BigDecimal.valueOf(debitAmount), com.skyblockexp.ezeconomy.api.events.TransactionType.TRANSFER,
+                result.isSuccess(), java.math.BigDecimal.valueOf(fromBefore), java.math.BigDecimal.valueOf(result.getFromBalance()),
+                java.math.BigDecimal.valueOf(toBefore), java.math.BigDecimal.valueOf(result.getToBalance())
+            );
+            try {
+                plugin.getServer().getScheduler().callSyncMethod(plugin, () -> {
+                    plugin.getServer().getPluginManager().callEvent(post);
+                    return null;
+                }).get();
+            } catch (Exception e) {
+                plugin.getLogger().warning("[EzEconomy] Failed to fire PostTransactionEvent: " + e.getMessage());
+            }
+            return result;
+        }
 
-        com.skyblockexp.ezeconomy.api.events.PreTransactionEvent pre = new com.skyblockexp.ezeconomy.api.events.PreTransactionEvent(fromUuid, toUuid, java.math.BigDecimal.valueOf(debitAmount), com.skyblockexp.ezeconomy.api.events.TransactionType.TRANSFER);
+        UUID[] ordered = new UUID[]{fromUuid, toUuid};
+        if (fromUuid.compareTo(toUuid) > 0) ordered = new UUID[]{toUuid, fromUuid};
+        String[] tokens = null;
         try {
-            plugin.getServer().getScheduler().callSyncMethod(plugin, () -> {
-                plugin.getServer().getPluginManager().callEvent(pre);
-                return null;
-            }).get();
-        } catch (Exception e) {
-            plugin.getLogger().warning("[EzEconomy] Failed to fire PreTransactionEvent: " + e.getMessage());
+            tokens = lm.acquireOrdered(ordered, plugin.getConfig().getLong("redis.ttl-ms", 5000), plugin.getConfig().getLong("redis.retry-ms", 50), plugin.getConfig().getInt("redis.max-attempts", 100));
+        } catch (InterruptedException ex) {
+            Thread.currentThread().interrupt();
         }
-        if (pre.isCancelled()) {
-            return com.skyblockexp.ezeconomy.storage.TransferResult.failure(fromBefore, toBefore);
+        if (tokens == null) {
+            return StorageProvider.super.transfer(fromUuid, toUuid, currency, debitAmount, creditAmount);
         }
 
-        com.skyblockexp.ezeconomy.storage.TransferResult result = StorageProvider.super.transfer(fromUuid, toUuid, currency, debitAmount, creditAmount);
-
-        com.skyblockexp.ezeconomy.api.events.PostTransactionEvent post = new com.skyblockexp.ezeconomy.api.events.PostTransactionEvent(
-            fromUuid, toUuid, java.math.BigDecimal.valueOf(debitAmount), com.skyblockexp.ezeconomy.api.events.TransactionType.TRANSFER,
-            result.isSuccess(), java.math.BigDecimal.valueOf(fromBefore), java.math.BigDecimal.valueOf(result.getFromBalance()),
-            java.math.BigDecimal.valueOf(toBefore), java.math.BigDecimal.valueOf(result.getToBalance())
-        );
         try {
-            plugin.getServer().getScheduler().callSyncMethod(plugin, () -> {
-                plugin.getServer().getPluginManager().callEvent(post);
-                return null;
-            }).get();
-        } catch (Exception e) {
-            plugin.getLogger().warning("[EzEconomy] Failed to fire PostTransactionEvent: " + e.getMessage());
-        }
+            double fromBefore = getBalance(fromUuid, currency);
+            double toBefore = getBalance(toUuid, currency);
 
-        return result;
+            com.skyblockexp.ezeconomy.api.events.PreTransactionEvent pre = new com.skyblockexp.ezeconomy.api.events.PreTransactionEvent(fromUuid, toUuid, java.math.BigDecimal.valueOf(debitAmount), com.skyblockexp.ezeconomy.api.events.TransactionType.TRANSFER);
+            try {
+                plugin.getServer().getScheduler().callSyncMethod(plugin, () -> {
+                    plugin.getServer().getPluginManager().callEvent(pre);
+                    return null;
+                }).get();
+            } catch (Exception e) {
+                plugin.getLogger().warning("[EzEconomy] Failed to fire PreTransactionEvent: " + e.getMessage());
+            }
+            if (pre.isCancelled()) return com.skyblockexp.ezeconomy.storage.TransferResult.failure(fromBefore, toBefore);
+
+            // Attempt atomic withdraw using query with $gte
+            Document query = new Document("uuid", fromUuid.toString()).append("currency", currency).append("balance", new Document("$gte", debitAmount));
+            Document update = new Document("$inc", new Document("balance", -debitAmount));
+            Document updated = balances.findOneAndUpdate(query, update);
+            if (updated == null) {
+                double refreshedFrom = getBalance(fromUuid, currency);
+                double refreshedTo = getBalance(toUuid, currency);
+                return com.skyblockexp.ezeconomy.storage.TransferResult.failure(refreshedFrom, refreshedTo);
+            }
+            if (creditAmount > 0) {
+                org.bson.Document q2 = new org.bson.Document("uuid", toUuid.toString()).append("currency", currency);
+                org.bson.Document u2 = new org.bson.Document("$inc", new org.bson.Document("balance", creditAmount)).append("$set", new org.bson.Document("name", plugin.getServer().getOfflinePlayer(toUuid).getName()).append("displayName", plugin.getServer().getOfflinePlayer(toUuid).getName()));
+                balances.updateOne(q2, u2, new UpdateOptions().upsert(true));
+            }
+
+            double updatedFrom = getBalance(fromUuid, currency);
+            double updatedTo = getBalance(toUuid, currency);
+            com.skyblockexp.ezeconomy.storage.TransferResult tr = com.skyblockexp.ezeconomy.storage.TransferResult.success(updatedFrom, updatedTo);
+
+            com.skyblockexp.ezeconomy.api.events.PostTransactionEvent post = new com.skyblockexp.ezeconomy.api.events.PostTransactionEvent(
+                fromUuid, toUuid, java.math.BigDecimal.valueOf(debitAmount), com.skyblockexp.ezeconomy.api.events.TransactionType.TRANSFER,
+                tr.isSuccess(), java.math.BigDecimal.valueOf(fromBefore), java.math.BigDecimal.valueOf(tr.getFromBalance()),
+                java.math.BigDecimal.valueOf(toBefore), java.math.BigDecimal.valueOf(tr.getToBalance())
+            );
+            try {
+                plugin.getServer().getScheduler().callSyncMethod(plugin, () -> {
+                    plugin.getServer().getPluginManager().callEvent(post);
+                    return null;
+                }).get();
+            } catch (Exception e) {
+                plugin.getLogger().warning("[EzEconomy] Failed to fire PostTransactionEvent: " + e.getMessage());
+            }
+
+            return tr;
+        } finally {
+            lm.releaseOrdered(ordered, tokens);
+        }
     }
 
     // --- Bank Methods ---
