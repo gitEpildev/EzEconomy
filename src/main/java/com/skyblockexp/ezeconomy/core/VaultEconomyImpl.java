@@ -70,7 +70,8 @@ public class VaultEconomyImpl implements Economy {
 
     @Override
     public boolean hasBankSupport() {
-        return getStorageProvider() != null;
+        boolean bankingEnabled = plugin.getConfig().getBoolean("banking.enabled", true);
+        return bankingEnabled && getStorageProvider() != null;
     }
 
     @Override
@@ -179,6 +180,8 @@ public class VaultEconomyImpl implements Economy {
 
     @Override
     public EconomyResponse createBank(String name, OfflinePlayer player) {
+        boolean bankingEnabled = plugin.getConfig().getBoolean("banking.enabled", true);
+        if (!bankingEnabled) return notSupported();
         StorageProvider storage = getStorageProvider();
         if (storage == null) {
             return notSupported();
@@ -195,6 +198,8 @@ public class VaultEconomyImpl implements Economy {
 
     @Override
     public EconomyResponse deleteBank(String name) {
+        boolean bankingEnabled = plugin.getConfig().getBoolean("banking.enabled", true);
+        if (!bankingEnabled) return notSupported();
         StorageProvider storage = getStorageProvider();
         if (storage == null) {
             return notSupported();
@@ -211,6 +216,8 @@ public class VaultEconomyImpl implements Economy {
 
     @Override
     public EconomyResponse bankBalance(String name) {
+        boolean bankingEnabled = plugin.getConfig().getBoolean("banking.enabled", true);
+        if (!bankingEnabled) return notSupported();
         StorageProvider storage = getStorageProvider();
         if (storage == null) {
             return notSupported();
@@ -224,6 +231,8 @@ public class VaultEconomyImpl implements Economy {
 
     @Override
     public EconomyResponse bankHas(String name, double amount) {
+        boolean bankingEnabled = plugin.getConfig().getBoolean("banking.enabled", true);
+        if (!bankingEnabled) return notSupported();
         StorageProvider storage = getStorageProvider();
         if (storage == null) {
             return notSupported();
@@ -241,6 +250,8 @@ public class VaultEconomyImpl implements Economy {
 
     @Override
     public EconomyResponse bankWithdraw(String name, double amount) {
+        boolean bankingEnabled = plugin.getConfig().getBoolean("banking.enabled", true);
+        if (!bankingEnabled) return notSupported();
         StorageProvider storage = getStorageProvider();
         if (storage == null) {
             return notSupported();
@@ -259,6 +270,8 @@ public class VaultEconomyImpl implements Economy {
 
     @Override
     public EconomyResponse bankDeposit(String name, double amount) {
+        boolean bankingEnabled = plugin.getConfig().getBoolean("banking.enabled", true);
+        if (!bankingEnabled) return notSupported();
         StorageProvider storage = getStorageProvider();
         if (storage == null) {
             return notSupported();
@@ -280,6 +293,8 @@ public class VaultEconomyImpl implements Economy {
 
     @Override
     public EconomyResponse isBankOwner(String name, OfflinePlayer player) {
+        boolean bankingEnabled = plugin.getConfig().getBoolean("banking.enabled", true);
+        if (!bankingEnabled) return notSupported();
         StorageProvider storage = getStorageProvider();
         if (storage == null) {
             return notSupported();
@@ -302,6 +317,8 @@ public class VaultEconomyImpl implements Economy {
 
     @Override
     public EconomyResponse isBankMember(String name, OfflinePlayer player) {
+        boolean bankingEnabled = plugin.getConfig().getBoolean("banking.enabled", true);
+        if (!bankingEnabled) return notSupported();
         StorageProvider storage = getStorageProvider();
         if (storage == null) {
             return notSupported();
@@ -318,10 +335,10 @@ public class VaultEconomyImpl implements Economy {
 
     @Override
     public List<String> getBanks() {
+        boolean bankingEnabled = plugin.getConfig().getBoolean("banking.enabled", true);
+        if (!bankingEnabled) return Collections.emptyList();
         StorageProvider storage = getStorageProvider();
-        if (storage == null) {
-            return Collections.emptyList();
-        }
+        if (storage == null) return Collections.emptyList();
         return new ArrayList<>(storage.getBanks());
     }
 

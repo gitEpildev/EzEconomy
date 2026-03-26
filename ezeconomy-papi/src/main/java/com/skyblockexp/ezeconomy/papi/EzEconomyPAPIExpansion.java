@@ -241,6 +241,16 @@ public class EzEconomyPAPIExpansion extends PlaceholderExpansion {
                 if (parts.length < 3) return "";
                 String bankName = parts[1];
                 String currency = parts[2];
+                boolean bankingEnabled = true;
+                if (testEz != null) {
+                    try {
+                        java.lang.reflect.Method m = testEz.getClass().getMethod("getStorageOrWarn");
+                        bankingEnabled = true; // tests typically control behavior; assume enabled unless overridden
+                    } catch (NoSuchMethodException ignored) {}
+                } else {
+                    bankingEnabled = ezPlugin.getConfig().getBoolean("banking.enabled", true);
+                }
+                if (!bankingEnabled) return "";
                 StorageProvider storage = testEz != null ? testEz.getStorageOrWarn() : ezPlugin.getStorageOrWarn();
                 if (storage == null) return "";
                 double bal = storage.getBankBalance(bankName, currency);

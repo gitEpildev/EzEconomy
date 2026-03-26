@@ -89,6 +89,8 @@ public class EzEconomyPlaceholderExpansion extends PlaceholderExpansion {
                 return "?";
             }
             if (split.length >= 2 && split[0].equals("bank")) {
+                boolean bankingEnabled = config.getBoolean("banking.enabled", true);
+                if (!bankingEnabled) return null;
                 if (player == null || storage == null) {
                     return null;
                 }
