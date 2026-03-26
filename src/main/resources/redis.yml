@@ -1,0 +1,32 @@
+# Redis configuration for distributed locking (Lettuce client)
+# Enable and configure connection details used by RedisLockManager
+
+enabled: false
+
+# Redis connection
+host: localhost
+port: 6379
+password: ""  # leave empty for no auth
+database: 0
+
+# Lock behavior
+# Time-to-live for acquired locks (milliseconds)
+ttl-ms: 5000
+
+# Milliseconds to wait between retry attempts when acquiring a lock
+retry-ms: 50
+
+# Maximum number of attempts to acquire a lock before giving up
+max-attempts: 100
+
+# Prefix for lock keys to avoid collisions
+lock-prefix: "ezeconomy:lock:"
+
+# Optional client settings
+client-read-timeout-ms: 2000
+client-connect-timeout-ms: 2000
+
+# Notes:
+# - When `enabled` is false the plugin will fall back to LOCAL locking.
+# - Secure passwords should be provided via environment variables or
+#   external config management in production setups.

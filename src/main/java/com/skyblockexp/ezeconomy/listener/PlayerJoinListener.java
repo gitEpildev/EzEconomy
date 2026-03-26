@@ -35,7 +35,33 @@ public class PlayerJoinListener implements Listener {
         try {
             UUID uuid = event.getPlayer().getUniqueId();
             if (!storage.playerExists(uuid)) {
-                storage.setBalance(uuid, currency, 0.0);
+                com.skyblockexp.ezeconomy.lock.LockManager lm = plugin.getLockManager();
+                if (lm != null) {
+                    String token = null;
+                    try {
+                        token = lm.acquire(uuid, 5000L, 50L, 100);
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                        token = null;
+                    }
+                    if (token != null) {
+                        try {
+                            storage.setBalance(uuid, currency, 0.0);
+                        } finally {
+                            lm.release(uuid, token);
+                        }
+                    } else {
+                        java.util.concurrent.locks.ReentrantLock l = com.skyblockexp.ezeconomy.storage.TransferLockManager.getLock(uuid);
+                        l.lock();
+                        try {
+                            storage.setBalance(uuid, currency, 0.0);
+                        } finally {
+                            l.unlock();
+                        }
+                    }
+                } else {
+                    storage.setBalance(uuid, currency, 0.0);
+                }
                 plugin.getLogger().info("Stored player " + event.getPlayer().getName() + " on join");
             }
         } catch (Exception e) {

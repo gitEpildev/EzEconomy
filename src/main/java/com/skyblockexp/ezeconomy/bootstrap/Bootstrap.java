@@ -24,6 +24,7 @@ public class Bootstrap {
         this.plugin = plugin;
         // build components in startup order
         components.add(new ConfigComponent(plugin));
+        components.add(new com.skyblockexp.ezeconomy.bootstrap.component.LockingComponent(plugin));
         components.add(new StorageComponent(plugin));
         components.add(new ManagersComponent(plugin));
         // Metrics component should be initialized after managers

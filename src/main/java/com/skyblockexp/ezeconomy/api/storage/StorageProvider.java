@@ -143,37 +143,56 @@ public interface StorageProvider {
         if (debitAmount < 0 || creditAmount < 0) {
             return TransferResult.failure(getBalance(fromUuid, currency), getBalance(toUuid, currency));
         }
-        // Lock both sender and recipient in UUID order to avoid deadlocks
-        UUID first = fromUuid.compareTo(toUuid) <= 0 ? fromUuid : toUuid;
-        UUID second = fromUuid.compareTo(toUuid) <= 0 ? toUuid : fromUuid;
-        ReentrantLock firstLock = TransferLockManager.getLock(first);
-        ReentrantLock secondLock = (first.equals(second)) ? firstLock : TransferLockManager.getLock(second);
-        firstLock.lock();
-        if (!first.equals(second)) {
-            secondLock.lock();
+        // Prefer plugin-provided LockManager for distributed locking if available
+        com.skyblockexp.ezeconomy.core.EzEconomyPlugin inst = com.skyblockexp.ezeconomy.core.EzEconomyPlugin.getInstance();
+        com.skyblockexp.ezeconomy.lock.LockManager lm = inst == null ? null : inst.getLockManager();
+        if (lm == null) {
+            // Fallback to local in-JVM TransferLockManager
+            UUID first = fromUuid.compareTo(toUuid) <= 0 ? fromUuid : toUuid;
+            UUID second = fromUuid.compareTo(toUuid) <= 0 ? toUuid : fromUuid;
+            ReentrantLock firstLock = TransferLockManager.getLock(first);
+            ReentrantLock secondLock = (first.equals(second)) ? firstLock : TransferLockManager.getLock(second);
+            firstLock.lock();
+            if (!first.equals(second)) secondLock.lock();
+            try {
+                double fromBalance = getBalance(fromUuid, currency);
+                if (fromBalance < debitAmount) return TransferResult.failure(fromBalance, getBalance(toUuid, currency));
+                if (!tryWithdraw(fromUuid, currency, debitAmount)) {
+                    return TransferResult.failure(getBalance(fromUuid, currency), getBalance(toUuid, currency));
+                }
+                if (creditAmount > 0) deposit(toUuid, currency, creditAmount);
+                return TransferResult.success(getBalance(fromUuid, currency), getBalance(toUuid, currency));
+            } finally {
+                if (!first.equals(second)) secondLock.unlock();
+                firstLock.unlock();
+            }
         }
+
+        // Acquire distributed locks in canonical order
+        UUID[] ordered = new UUID[]{fromUuid, toUuid};
+        if (fromUuid.compareTo(toUuid) > 0) ordered = new UUID[]{toUuid, fromUuid};
+        String[] tokens = null;
+        try {
+            tokens = lm.acquireOrdered(ordered, inst.getConfig().getLong("redis.ttl-ms", 5000), inst.getConfig().getLong("redis.retry-ms", 50), inst.getConfig().getInt("redis.max-attempts", 100));
+        } catch (InterruptedException ex) {
+            Thread.currentThread().interrupt();
+        }
+        if (tokens == null) {
+            // Couldn't acquire distributed locks; fall back to local
+            return transfer(fromUuid, toUuid, currency, debitAmount, creditAmount);
+        }
+
         try {
             double fromBalance = getBalance(fromUuid, currency);
-            if (fromBalance < debitAmount) {
-                double toBalance = getBalance(toUuid, currency);
-                return TransferResult.failure(fromBalance, toBalance);
-            }
+            double toBalance = getBalance(toUuid, currency);
+            if (fromBalance < debitAmount) return TransferResult.failure(fromBalance, toBalance);
             if (!tryWithdraw(fromUuid, currency, debitAmount)) {
-                double refreshedFrom = getBalance(fromUuid, currency);
-                double toBalance = getBalance(toUuid, currency);
-                return TransferResult.failure(refreshedFrom, toBalance);
+                return TransferResult.failure(getBalance(fromUuid, currency), getBalance(toUuid, currency));
             }
-            if (creditAmount > 0) {
-                deposit(toUuid, currency, creditAmount);
-            }
-            double updatedFrom = getBalance(fromUuid, currency);
-            double updatedTo = getBalance(toUuid, currency);
-            return TransferResult.success(updatedFrom, updatedTo);
+            if (creditAmount > 0) deposit(toUuid, currency, creditAmount);
+            return TransferResult.success(getBalance(fromUuid, currency), getBalance(toUuid, currency));
         } finally {
-            if (!first.equals(second)) {
-                secondLock.unlock();
-            }
-            firstLock.unlock();
+            lm.releaseOrdered(ordered, tokens);
         }
     }
 

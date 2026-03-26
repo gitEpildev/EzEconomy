@@ -61,3 +61,7 @@ multi-currency:
     gem:
       dollar: 100
       euro: 80
+
+# Locking strategy used for balance updates. Options: LOCAL, REDIS
+# LOCAL: plugin uses in-process locks only. REDIS: uses a distributed Redis lock.
+locking-strategy: LOCAL

@@ -1,0 +1,46 @@
+name: Redis Integration Tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  redis-integration:
+    name: Redis integration (Testcontainers)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Cache Maven local repository
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+
+      - name: Verify Docker available
+        run: docker --version
+
+      - name: Build project and extension
+        run: mvn -B -V package
+
+      - name: Install ezeconomy-redis into test plugins folder
+        run: |
+          mkdir -p test-plugins/plugins/EzEconomy/libs
+          cp ezeconomy-redis/target/*ezeconomy-redis*.jar test-plugins/plugins/EzEconomy/libs/ || true
+
+      - name: Run Redis integration tests
+        env:
+          # Testcontainers will manage containers on the runner via Docker
+          TESTCONTAINERS_RYUK_DISABLED: 'false'
+          EZECONOMY_TEST_PLUGINS: test-plugins
+        run: mvn -B -V -DskipTests=false test

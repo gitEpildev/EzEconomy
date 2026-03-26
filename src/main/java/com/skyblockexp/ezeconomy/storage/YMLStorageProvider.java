@@ -118,6 +118,21 @@ public class YMLStorageProvider implements StorageProvider {
 
     @Override
     public double getBalance(UUID uuid, String currency) {
+        com.skyblockexp.ezeconomy.lock.LockManager lm = plugin.getLockManager();
+        if (lm != null) {
+            String token = null;
+            try {
+                token = lm.acquire(uuid, plugin.getConfig().getLong("redis.ttl-ms", 5000), plugin.getConfig().getLong("redis.retry-ms", 50), plugin.getConfig().getInt("redis.max-attempts", 100));
+                if (token != null) {
+                    YamlConfiguration pdata = loadPlayerData(uuid);
+                    return pdata.getDouble("balances." + currency, 0.0);
+                }
+            } catch (InterruptedException ex) {
+                Thread.currentThread().interrupt();
+            } finally {
+                if (token != null) lm.release(uuid, token);
+            }
+        }
         synchronized (getPlayerLock(uuid)) {
             try {
                 YamlConfiguration pdata = loadPlayerData(uuid);
@@ -131,6 +146,29 @@ public class YMLStorageProvider implements StorageProvider {
 
     @Override
     public com.skyblockexp.ezeconomy.dto.EconomyPlayer getPlayer(UUID uuid) {
+        com.skyblockexp.ezeconomy.lock.LockManager lm = plugin.getLockManager();
+        if (lm != null) {
+            String token = null;
+            try {
+                token = lm.acquire(uuid, plugin.getConfig().getLong("redis.ttl-ms", 5000), plugin.getConfig().getLong("redis.retry-ms", 50), plugin.getConfig().getInt("redis.max-attempts", 100));
+                if (token != null) {
+                    YamlConfiguration pdata = loadPlayerData(uuid);
+                    String name = pdata.getString("name", null);
+                    String display = pdata.getString("displayName", null);
+                    if (name == null) {
+                        org.bukkit.OfflinePlayer of = org.bukkit.Bukkit.getOfflinePlayer(uuid);
+                        name = of != null && of.getName() != null ? of.getName() : uuid.toString();
+                    }
+                    if (display == null) display = name;
+                    return new com.skyblockexp.ezeconomy.dto.EconomyPlayer(uuid, name, display);
+                }
+            } catch (InterruptedException ex) {
+                Thread.currentThread().interrupt();
+            } finally {
+                if (token != null) lm.release(uuid, token);
+            }
+        }
+
         synchronized (getPlayerLock(uuid)) {
             try {
                 YamlConfiguration pdata = loadPlayerData(uuid);
@@ -150,6 +188,32 @@ public class YMLStorageProvider implements StorageProvider {
 
     @Override
     public boolean playerExists(UUID uuid) {
+        com.skyblockexp.ezeconomy.lock.LockManager lm = plugin.getLockManager();
+        if (lm != null) {
+            String token = null;
+            try {
+                token = lm.acquire(uuid, plugin.getConfig().getLong("redis.ttl-ms", 5000), plugin.getConfig().getLong("redis.retry-ms", 50), plugin.getConfig().getInt("redis.max-attempts", 100));
+                if (token != null) {
+                    File file = getPlayerFile(uuid);
+                    if (file.exists()) return true;
+                    File[] files = dataFolder.listFiles((dir, name) -> name.endsWith(".yml"));
+                    if (files == null) return false;
+                    for (File f : files) {
+                        try {
+                            YamlConfiguration pdata = YamlConfiguration.loadConfiguration(f);
+                            String stored = pdata.getString("uuid");
+                            if (stored != null && stored.equalsIgnoreCase(uuid.toString())) return true;
+                        } catch (Exception ignored) {}
+                    }
+                    return false;
+                }
+            } catch (InterruptedException ex) {
+                Thread.currentThread().interrupt();
+            } finally {
+                if (token != null) lm.release(uuid, token);
+            }
+        }
+
         synchronized (getPlayerLock(uuid)) {
             File file = getPlayerFile(uuid);
             if (file.exists()) return true;
@@ -170,6 +234,23 @@ public class YMLStorageProvider implements StorageProvider {
 
     @Override
     public void setBalance(UUID uuid, String currency, double amount) {
+        com.skyblockexp.ezeconomy.lock.LockManager lm = plugin.getLockManager();
+        if (lm != null) {
+            String token = null;
+            try {
+                token = lm.acquire(uuid, plugin.getConfig().getLong("redis.ttl-ms", 5000), plugin.getConfig().getLong("redis.retry-ms", 50), plugin.getConfig().getInt("redis.max-attempts", 100));
+                if (token != null) {
+                    YamlConfiguration pdata = loadPlayerData(uuid);
+                    pdata.set("balances." + currency, amount);
+                    savePlayerData(uuid, pdata);
+                    return;
+                }
+            } catch (InterruptedException ex) {
+                Thread.currentThread().interrupt();
+            } finally {
+                if (token != null) lm.release(uuid, token);
+            }
+        }
         // write immediately to avoid races during tests and to keep behaviour
         // consistent with other storage providers
         synchronized (getPlayerLock(uuid)) {
@@ -185,6 +266,27 @@ public class YMLStorageProvider implements StorageProvider {
 
     @Override
     public boolean tryWithdraw(UUID uuid, String currency, double amount) {
+        com.skyblockexp.ezeconomy.lock.LockManager lm = plugin.getLockManager();
+        if (lm != null) {
+            String token = null;
+            try {
+                token = lm.acquire(uuid, plugin.getConfig().getLong("redis.ttl-ms", 5000), plugin.getConfig().getLong("redis.retry-ms", 50), plugin.getConfig().getInt("redis.max-attempts", 100));
+                if (token != null) {
+                    YamlConfiguration pdata = loadPlayerData(uuid);
+                    double balance = pdata.getDouble("balances." + currency, 0.0);
+                    if (balance < amount) {
+                        return false;
+                    }
+                    pdata.set("balances." + currency, balance - amount);
+                    savePlayerData(uuid, pdata);
+                    return true;
+                }
+            } catch (InterruptedException ex) {
+                Thread.currentThread().interrupt();
+            } finally {
+                if (token != null) lm.release(uuid, token);
+            }
+        }
         synchronized (getPlayerLock(uuid)) {
             try {
                 YamlConfiguration pdata = loadPlayerData(uuid);
@@ -204,6 +306,24 @@ public class YMLStorageProvider implements StorageProvider {
 
     @Override
     public void deposit(UUID uuid, String currency, double amount) {
+        com.skyblockexp.ezeconomy.lock.LockManager lm = plugin.getLockManager();
+        if (lm != null) {
+            String token = null;
+            try {
+                token = lm.acquire(uuid, plugin.getConfig().getLong("redis.ttl-ms", 5000), plugin.getConfig().getLong("redis.retry-ms", 50), plugin.getConfig().getInt("redis.max-attempts", 100));
+                if (token != null) {
+                    YamlConfiguration pdata = loadPlayerData(uuid);
+                    double balance = pdata.getDouble("balances." + currency, 0.0);
+                    pdata.set("balances." + currency, balance + amount);
+                    savePlayerData(uuid, pdata);
+                    return;
+                }
+            } catch (InterruptedException ex) {
+                Thread.currentThread().interrupt();
+            } finally {
+                if (token != null) lm.release(uuid, token);
+            }
+        }
         synchronized (getPlayerLock(uuid)) {
             try {
                 YamlConfiguration pdata = loadPlayerData(uuid);
@@ -346,6 +466,27 @@ public class YMLStorageProvider implements StorageProvider {
 
     @Override
     public boolean createBank(String name, UUID owner) {
+        com.skyblockexp.ezeconomy.lock.LockManager lm = plugin.getLockManager();
+        UUID bankId = UUID.nameUUIDFromBytes(name.getBytes());
+        if (lm != null) {
+            String token = null;
+            try {
+                token = lm.acquire(bankId, plugin.getConfig().getLong("redis.ttl-ms", 5000), plugin.getConfig().getLong("redis.retry-ms", 50), plugin.getConfig().getInt("redis.max-attempts", 100));
+                if (token != null) {
+                    YamlConfiguration pdata = loadPlayerData(owner);
+                    if (pdata.isConfigurationSection("banks." + name)) return false;
+                    pdata.set("banks." + name + ".balances.dollar", 0.0); // default currency
+                    pdata.set("banks." + name + ".owners", java.util.List.of(owner.toString()));
+                    pdata.set("banks." + name + ".members", new java.util.ArrayList<String>());
+                    savePlayerData(owner, pdata);
+                    return true;
+                }
+            } catch (InterruptedException ex) {
+                Thread.currentThread().interrupt();
+            } finally {
+                if (token != null) lm.release(bankId, token);
+            }
+        }
         synchronized (getBankLock(name)) {
             YamlConfiguration pdata = loadPlayerData(owner);
             if (pdata.isConfigurationSection("banks." + name)) return false;
@@ -359,6 +500,30 @@ public class YMLStorageProvider implements StorageProvider {
 
     @Override
     public boolean deleteBank(String name) {
+        com.skyblockexp.ezeconomy.lock.LockManager lm = plugin.getLockManager();
+        UUID bankId = UUID.nameUUIDFromBytes(name.getBytes());
+        if (lm != null) {
+            String token = null;
+            try {
+                token = lm.acquire(bankId, plugin.getConfig().getLong("redis.ttl-ms", 5000), plugin.getConfig().getLong("redis.retry-ms", 50), plugin.getConfig().getInt("redis.max-attempts", 100));
+                if (token != null) {
+                    File file = findBankOwnerFile(name);
+                    if (file == null) return false;
+                    YamlConfiguration pdata = YamlConfiguration.loadConfiguration(file);
+                    if (!pdata.isConfigurationSection("banks." + name)) return false;
+                    pdata.set("banks." + name, null);
+                    try {
+                        pdata.save(file);
+                    } catch (IOException ignored) {
+                    }
+                    return true;
+                }
+            } catch (InterruptedException ex) {
+                Thread.currentThread().interrupt();
+            } finally {
+                if (token != null) lm.release(bankId, token);
+            }
+        }
         synchronized (getBankLock(name)) {
             File file = findBankOwnerFile(name);
             if (file == null) return false;
@@ -375,6 +540,21 @@ public class YMLStorageProvider implements StorageProvider {
 
     @Override
     public boolean bankExists(String name) {
+        com.skyblockexp.ezeconomy.lock.LockManager lm = plugin.getLockManager();
+        UUID bankId = UUID.nameUUIDFromBytes(name.getBytes());
+        if (lm != null) {
+            String token = null;
+            try {
+                token = lm.acquire(bankId, plugin.getConfig().getLong("redis.ttl-ms", 5000), plugin.getConfig().getLong("redis.retry-ms", 50), plugin.getConfig().getInt("redis.max-attempts", 100));
+                if (token != null) {
+                    return findBankOwnerFile(name) != null;
+                }
+            } catch (InterruptedException ex) {
+                Thread.currentThread().interrupt();
+            } finally {
+                if (token != null) lm.release(bankId, token);
+            }
+        }
         synchronized (getBankLock(name)) {
             return findBankOwnerFile(name) != null;
         }
@@ -382,6 +562,23 @@ public class YMLStorageProvider implements StorageProvider {
 
     @Override
     public double getBankBalance(String name, String currency) {
+        com.skyblockexp.ezeconomy.lock.LockManager lm = plugin.getLockManager();
+        UUID bankId = UUID.nameUUIDFromBytes(name.getBytes());
+        if (lm != null) {
+            String token = null;
+            try {
+                token = lm.acquire(bankId, plugin.getConfig().getLong("redis.ttl-ms", 5000), plugin.getConfig().getLong("redis.retry-ms", 50), plugin.getConfig().getInt("redis.max-attempts", 100));
+                if (token != null) {
+                    YamlConfiguration pdata = loadBankData(name);
+                    if (pdata == null) return 0.0;
+                    return pdata.getDouble("banks." + name + ".balances." + currency, 0.0);
+                }
+            } catch (InterruptedException ex) {
+                Thread.currentThread().interrupt();
+            } finally {
+                if (token != null) lm.release(bankId, token);
+            }
+        }
         synchronized (getBankLock(name)) {
             YamlConfiguration pdata = loadBankData(name);
             if (pdata == null) return 0.0;
@@ -391,6 +588,25 @@ public class YMLStorageProvider implements StorageProvider {
 
     @Override
     public void setBankBalance(String name, String currency, double amount) {
+        com.skyblockexp.ezeconomy.lock.LockManager lm = plugin.getLockManager();
+        UUID bankId = UUID.nameUUIDFromBytes(name.getBytes());
+        if (lm != null) {
+            String token = null;
+            try {
+                token = lm.acquire(bankId, plugin.getConfig().getLong("redis.ttl-ms", 5000), plugin.getConfig().getLong("redis.retry-ms", 50), plugin.getConfig().getInt("redis.max-attempts", 100));
+                if (token != null) {
+                    YamlConfiguration pdata = loadBankData(name);
+                    if (pdata == null) return;
+                    pdata.set("banks." + name + ".balances." + currency, amount);
+                    saveBankData(name, pdata);
+                    return;
+                }
+            } catch (InterruptedException ex) {
+                Thread.currentThread().interrupt();
+            } finally {
+                if (token != null) lm.release(bankId, token);
+            }
+        }
         synchronized (getBankLock(name)) {
             YamlConfiguration pdata = loadBankData(name);
             if (pdata == null) return;
@@ -401,6 +617,57 @@ public class YMLStorageProvider implements StorageProvider {
 
     @Override
     public boolean tryWithdrawBank(String name, String currency, double amount) {
+        com.skyblockexp.ezeconomy.lock.LockManager lm = plugin.getLockManager();
+        UUID bankId = UUID.nameUUIDFromBytes(name.getBytes());
+        if (lm != null) {
+            String token = null;
+            try {
+                token = lm.acquire(bankId, plugin.getConfig().getLong("redis.ttl-ms", 5000), plugin.getConfig().getLong("redis.retry-ms", 50), plugin.getConfig().getInt("redis.max-attempts", 100));
+                if (token != null) {
+                    YamlConfiguration pdata = loadBankData(name);
+                    if (pdata == null) return false;
+                    double balance = pdata.getDouble("banks." + name + ".balances." + currency, 0.0);
+
+                    BankPreTransactionEvent pre = new BankPreTransactionEvent(name, null, BigDecimal.valueOf(amount), TransactionType.BANK_WITHDRAW);
+                    if (plugin.getServer().isPrimaryThread()) {
+                        plugin.getServer().getPluginManager().callEvent(pre);
+                    } else {
+                        try {
+                            plugin.getServer().getScheduler().callSyncMethod(plugin, () -> {
+                                plugin.getServer().getPluginManager().callEvent(pre);
+                                return null;
+                            }).get();
+                        } catch (Exception e) {
+                            System.err.println("[EzEconomy] Failed to fire BankPreTransactionEvent: " + e.getMessage());
+                        }
+                    }
+                    if (pre.isCancelled()) return false;
+
+                    if (balance < amount) return false;
+                    pdata.set("banks." + name + ".balances." + currency, balance - amount);
+                    saveBankData(name, pdata);
+
+                    BankPostTransactionEvent post = new BankPostTransactionEvent(name, null, BigDecimal.valueOf(amount), TransactionType.BANK_WITHDRAW, true, BigDecimal.valueOf(balance), BigDecimal.valueOf(balance - amount));
+                    if (plugin.getServer().isPrimaryThread()) {
+                        plugin.getServer().getPluginManager().callEvent(post);
+                    } else {
+                        try {
+                            plugin.getServer().getScheduler().callSyncMethod(plugin, () -> {
+                                plugin.getServer().getPluginManager().callEvent(post);
+                                return null;
+                            }).get();
+                        } catch (Exception e) {
+                            System.err.println("[EzEconomy] Failed to fire BankPostTransactionEvent: " + e.getMessage());
+                        }
+                    }
+                    return true;
+                }
+            } catch (InterruptedException ex) {
+                Thread.currentThread().interrupt();
+            } finally {
+                if (token != null) lm.release(bankId, token);
+            }
+        }
         synchronized (getBankLock(name)) {
             YamlConfiguration pdata = loadBankData(name);
             if (pdata == null) return false;
@@ -449,6 +716,56 @@ public class YMLStorageProvider implements StorageProvider {
 
     @Override
     public void depositBank(String name, String currency, double amount) {
+        com.skyblockexp.ezeconomy.lock.LockManager lm = plugin.getLockManager();
+        UUID bankId = UUID.nameUUIDFromBytes(name.getBytes());
+        if (lm != null) {
+            String token = null;
+            try {
+                token = lm.acquire(bankId, plugin.getConfig().getLong("redis.ttl-ms", 5000), plugin.getConfig().getLong("redis.retry-ms", 50), plugin.getConfig().getInt("redis.max-attempts", 100));
+                if (token != null) {
+                    YamlConfiguration pdata = loadBankData(name);
+                    if (pdata == null) return;
+                    double balance = pdata.getDouble("banks." + name + ".balances." + currency, 0.0);
+
+                    BankPreTransactionEvent pre = new BankPreTransactionEvent(name, null, BigDecimal.valueOf(amount), TransactionType.BANK_DEPOSIT);
+                    if (plugin.getServer().isPrimaryThread()) {
+                        plugin.getServer().getPluginManager().callEvent(pre);
+                    } else {
+                        try {
+                            plugin.getServer().getScheduler().callSyncMethod(plugin, () -> {
+                                plugin.getServer().getPluginManager().callEvent(pre);
+                                return null;
+                            }).get();
+                        } catch (Exception e) {
+                            System.err.println("[EzEconomy] Failed to fire BankPreTransactionEvent: " + e.getMessage());
+                        }
+                    }
+                    if (pre.isCancelled()) return;
+
+                    pdata.set("banks." + name + ".balances." + currency, balance + amount);
+                    saveBankData(name, pdata);
+
+                    BankPostTransactionEvent post = new BankPostTransactionEvent(name, null, BigDecimal.valueOf(amount), TransactionType.BANK_DEPOSIT, true, BigDecimal.valueOf(balance), BigDecimal.valueOf(balance + amount));
+                    if (plugin.getServer().isPrimaryThread()) {
+                        plugin.getServer().getPluginManager().callEvent(post);
+                    } else {
+                        try {
+                            plugin.getServer().getScheduler().callSyncMethod(plugin, () -> {
+                                plugin.getServer().getPluginManager().callEvent(post);
+                                return null;
+                            }).get();
+                        } catch (Exception e) {
+                            System.err.println("[EzEconomy] Failed to fire BankPostTransactionEvent: " + e.getMessage());
+                        }
+                    }
+                    return;
+                }
+            } catch (InterruptedException ex) {
+                Thread.currentThread().interrupt();
+            } finally {
+                if (token != null) lm.release(bankId, token);
+            }
+        }
         synchronized (getBankLock(name)) {
             YamlConfiguration pdata = loadBankData(name);
             if (pdata == null) return;
@@ -510,6 +827,24 @@ public class YMLStorageProvider implements StorageProvider {
 
     @Override
     public boolean isBankOwner(String name, UUID uuid) {
+        com.skyblockexp.ezeconomy.lock.LockManager lm = plugin.getLockManager();
+        UUID bankId = UUID.nameUUIDFromBytes(name.getBytes());
+        if (lm != null) {
+            String token = null;
+            try {
+                token = lm.acquire(bankId, plugin.getConfig().getLong("redis.ttl-ms", 5000), plugin.getConfig().getLong("redis.retry-ms", 50), plugin.getConfig().getInt("redis.max-attempts", 100));
+                if (token != null) {
+                    YamlConfiguration pdata = loadBankData(name);
+                    if (pdata == null) return false;
+                    java.util.List<String> owners = pdata.getStringList("banks." + name + ".owners");
+                    return owners.contains(uuid.toString());
+                }
+            } catch (InterruptedException ex) {
+                Thread.currentThread().interrupt();
+            } finally {
+                if (token != null) lm.release(bankId, token);
+            }
+        }
         synchronized (getBankLock(name)) {
             YamlConfiguration pdata = loadBankData(name);
             if (pdata == null) return false;
@@ -520,6 +855,24 @@ public class YMLStorageProvider implements StorageProvider {
 
     @Override
     public boolean isBankMember(String name, UUID uuid) {
+        com.skyblockexp.ezeconomy.lock.LockManager lm = plugin.getLockManager();
+        UUID bankId = UUID.nameUUIDFromBytes(name.getBytes());
+        if (lm != null) {
+            String token = null;
+            try {
+                token = lm.acquire(bankId, plugin.getConfig().getLong("redis.ttl-ms", 5000), plugin.getConfig().getLong("redis.retry-ms", 50), plugin.getConfig().getInt("redis.max-attempts", 100));
+                if (token != null) {
+                    YamlConfiguration pdata = loadBankData(name);
+                    if (pdata == null) return false;
+                    java.util.List<String> members = pdata.getStringList("banks." + name + ".members");
+                    return members.contains(uuid.toString());
+                }
+            } catch (InterruptedException ex) {
+                Thread.currentThread().interrupt();
+            } finally {
+                if (token != null) lm.release(bankId, token);
+            }
+        }
         synchronized (getBankLock(name)) {
             YamlConfiguration pdata = loadBankData(name);
             if (pdata == null) return false;
@@ -530,6 +883,28 @@ public class YMLStorageProvider implements StorageProvider {
 
     @Override
     public boolean addBankMember(String name, UUID uuid) {
+        com.skyblockexp.ezeconomy.lock.LockManager lm = plugin.getLockManager();
+        UUID bankId = UUID.nameUUIDFromBytes(name.getBytes());
+        if (lm != null) {
+            String token = null;
+            try {
+                token = lm.acquire(bankId, plugin.getConfig().getLong("redis.ttl-ms", 5000), plugin.getConfig().getLong("redis.retry-ms", 50), plugin.getConfig().getInt("redis.max-attempts", 100));
+                if (token != null) {
+                    YamlConfiguration pdata = loadBankData(name);
+                    if (pdata == null) return false;
+                    java.util.List<String> members = pdata.getStringList("banks." + name + ".members");
+                    if (members.contains(uuid.toString())) return false;
+                    members.add(uuid.toString());
+                    pdata.set("banks." + name + ".members", members);
+                    saveBankData(name, pdata);
+                    return true;
+                }
+            } catch (InterruptedException ex) {
+                Thread.currentThread().interrupt();
+            } finally {
+                if (token != null) lm.release(bankId, token);
+            }
+        }
         synchronized (getBankLock(name)) {
             YamlConfiguration pdata = loadBankData(name);
             if (pdata == null) return false;
@@ -544,6 +919,28 @@ public class YMLStorageProvider implements StorageProvider {
 
     @Override
     public boolean removeBankMember(String name, UUID uuid) {
+        com.skyblockexp.ezeconomy.lock.LockManager lm = plugin.getLockManager();
+        UUID bankId = UUID.nameUUIDFromBytes(name.getBytes());
+        if (lm != null) {
+            String token = null;
+            try {
+                token = lm.acquire(bankId, plugin.getConfig().getLong("redis.ttl-ms", 5000), plugin.getConfig().getLong("redis.retry-ms", 50), plugin.getConfig().getInt("redis.max-attempts", 100));
+                if (token != null) {
+                    YamlConfiguration pdata = loadBankData(name);
+                    if (pdata == null) return false;
+                    java.util.List<String> members = pdata.getStringList("banks." + name + ".members");
+                    if (!members.contains(uuid.toString())) return false;
+                    members.remove(uuid.toString());
+                    pdata.set("banks." + name + ".members", members);
+                    saveBankData(name, pdata);
+                    return true;
+                }
+            } catch (InterruptedException ex) {
+                Thread.currentThread().interrupt();
+            } finally {
+                if (token != null) lm.release(bankId, token);
+            }
+        }
         synchronized (getBankLock(name)) {
             YamlConfiguration pdata = loadBankData(name);
             if (pdata == null) return false;
@@ -558,6 +955,31 @@ public class YMLStorageProvider implements StorageProvider {
 
     @Override
     public java.util.Set<UUID> getBankMembers(String name) {
+        com.skyblockexp.ezeconomy.lock.LockManager lm = plugin.getLockManager();
+        UUID bankId = UUID.nameUUIDFromBytes(name.getBytes());
+        if (lm != null) {
+            String token = null;
+            try {
+                token = lm.acquire(bankId, plugin.getConfig().getLong("redis.ttl-ms", 5000), plugin.getConfig().getLong("redis.retry-ms", 50), plugin.getConfig().getInt("redis.max-attempts", 100));
+                if (token != null) {
+                    YamlConfiguration pdata = loadBankData(name);
+                    java.util.Set<UUID> set = new java.util.HashSet<>();
+                    if (pdata == null) return set;
+                    java.util.List<String> members = pdata.getStringList("banks." + name + ".members");
+                    for (String s : members) {
+                        try {
+                            set.add(UUID.fromString(s));
+                        } catch (IllegalArgumentException ignored) {
+                        }
+                    }
+                    return set;
+                }
+            } catch (InterruptedException ex) {
+                Thread.currentThread().interrupt();
+            } finally {
+                if (token != null) lm.release(bankId, token);
+            }
+        }
         synchronized (getBankLock(name)) {
             YamlConfiguration pdata = loadBankData(name);
             java.util.Set<UUID> set = new java.util.HashSet<>();
