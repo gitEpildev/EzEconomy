@@ -12,6 +12,8 @@
         <module>ezeconomy-bukkit</module>
         <module>ezeconomy-redis</module>
         <module>ezeconomy-papi</module>
+        <module>ezeconomy-bungeecord</module>
+        <module>ezeconomy-bungeecord-proxy</module>
     </modules>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
