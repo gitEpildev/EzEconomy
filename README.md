@@ -18,10 +18,13 @@
 - [Configuration](docs/configuration.md): All configuration options
 - [Developer API](docs/developer-api.md): API usage for plugin developers
 - [Permissions](docs/permissions.md): Permission nodes and details
-- [Placeholders](docs/placeholders.md): PlaceholderAPI integration
-- [Storage](docs/storage.md): Storage backends and setup
-- [Locking strategy and options](docs/locking-strategy.md): How to choose `LOCAL` vs `REDIS` and what each means.
-- [Redis lock configuration](docs/redis.md): `redis.yml` settings and operational notes for distributed locking.
+- [Placeholders](docs/integration/placeholderapi.md): PlaceholderAPI integration
+- [Storage](docs/storage/storage.md): Storage backends and setup
+- [Features — Multi-currency](docs/feature/multi-currency.md): Configure multiple currencies
+- [Features — Banking](docs/feature/banking.md): In-plugin bank accounts and permissions
+- [Caching strategy](docs/feature/caching-strategy.md): `LOCAL`, `REDIS`, `BUNGEECORD`, `DATABASE` options
+- [Locking strategy and options](docs/feature/locking-strategy.md): How to choose `LOCAL` vs `REDIS` and what each means
+- [Proxy & Redis notes](docs/integration/redis.md): Redis and proxy operational notes
 
 ---
 
