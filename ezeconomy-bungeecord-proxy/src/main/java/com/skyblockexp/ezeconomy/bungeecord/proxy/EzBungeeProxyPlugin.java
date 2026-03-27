@@ -38,8 +38,8 @@ public class EzBungeeProxyPlugin extends Plugin {
             final String secretChart = hasSecret[0] ? "yes" : "no";
             final String cleanupChart = cleanupInterval[0] > 5000L ? "custom" : "default";
             try {
-                metrics.addCustomChart(new org.bstats.bungeecord.SimplePie("has_shared_secret", () -> secretChart));
-                metrics.addCustomChart(new org.bstats.bungeecord.SimplePie("cleanup_interval_type", () -> cleanupChart));
+                metrics.addCustomChart(new org.bstats.charts.SimplePie("has_shared_secret", () -> secretChart));
+                metrics.addCustomChart(new org.bstats.charts.SimplePie("cleanup_interval_type", () -> cleanupChart));
             } catch (Throwable ignored) {}
 
             // Proxy-only charts added above; do not duplicate main-plugin charts here.
