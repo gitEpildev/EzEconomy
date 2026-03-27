@@ -53,43 +53,10 @@ public class BungeeAdapterPlugin {
             Class.forName("net.md_5.bungee.api.ProxyServer");
             // If present, an external build that includes Bungee can provide
             // a concrete adapter that wires events to `proxyLogic`.
-            // Attempt to initialize bStats metrics for the proxy when running
-            // on a real Bungee server. Use reflection so this code remains
-            // safe to compile in environments without the Bungee API.
-            try {
-                Object proxy = Class.forName("net.md_5.bungee.api.ProxyServer").getMethod("getInstance").invoke(null);
-                Object pluginManager = proxy.getClass().getMethod("getPluginManager").invoke(proxy);
-                java.lang.reflect.Method getPlugin = pluginManager.getClass().getMethod("getPlugin", String.class);
-                Object plugin = getPlugin.invoke(pluginManager, "EzEconomy-Bungeecord-Proxy");
-                if (plugin != null) {
-                    // Try the relocated shaded package first, then fall back to original
-                    String[] metricClasses = new String[] {
-                        "com.skyblockexp.ezeconomy.shaded.bstats.Metrics",
-                        "org.bstats.bungeecord.Metrics"
-                    };
-                    for (String clsName : metricClasses) {
-                        try {
-                            Class<?> metricsCls = Class.forName(clsName);
-                            java.lang.reflect.Constructor<?> ctor = metricsCls.getConstructor(plugin.getClass().getInterfaces().length > 0 ? plugin.getClass().getInterfaces()[0] : plugin.getClass(), int.class);
-                            // If constructor lookup via interfaces failed, try (Object, int)
-                            Object metrics;
-                            try {
-                                metrics = ctor.newInstance(plugin, 30431);
-                            } catch (IllegalArgumentException iae) {
-                                metrics = metricsCls.getConstructor(Object.class, int.class).newInstance(plugin, 30431);
-                            }
-                            // metrics instantiated; nothing else needed for basic stats
-                            break;
-                        } catch (ClassNotFoundException cnf) {
-                            // try next
-                        } catch (NoSuchMethodException | ReflectiveOperationException ignored) {
-                            // ignore and try next
-                        }
-                    }
-                }
-            } catch (Throwable t) {
-                // best-effort; don't prevent proxy startup
-            }
+            // Bungee is present; concrete Bungee plugin integration may be
+            // provided by `EzBungeeProxyPlugin` when running on a proxy. This
+            // adapter remains a best-effort bridge for consumers that want to
+            // wire events into `proxyLogic` via reflection.
         } catch (ClassNotFoundException ignored) {
             // Bungee API not available; nothing to do.
         }
