@@ -3,6 +3,13 @@ name: CI
 on:
   pull_request:
     branches: [ main, master ]
+    paths-ignore:
+      - 'ezeconomy-bungeecord/**'
+      - 'ezeconomy-bungeecord-proxy/**'
+  push:
+    paths-ignore:
+      - 'ezeconomy-bungeecord/**'
+      - 'ezeconomy-bungeecord-proxy/**'
 
 jobs:
   unit-tests:
