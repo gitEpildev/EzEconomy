@@ -45,6 +45,22 @@ banking:
 
 Set `banking.enabled` to `false` if you prefer using a different bank plugin or want to disable shared bank accounts.
 
+### Caching strategy
+
+Configure how EzEconomy caches frequently-read values (placeholders, top lists, GUI data).
+
+```yaml
+# Available options: LOCAL, REDIS, BUNGEECORD, DATABASE
+caching-strategy: LOCAL
+```
+
+- `LOCAL`: in-process memory cache only (default)
+- `REDIS`: use the Redis extension for a central cache shared across servers
+- `BUNGEECORD`: proxy-backed cache using plugin messaging to a proxy-side store
+- `DATABASE`: use the configured database as a cache backend (uses `ezeconomy_cache` table)
+
+If `caching-strategy` is not present, the plugin will fallback to the older `locking-strategy` value for backward compatibility.
+
 ### Notes
 
 - `storage` must match one of the supported providers: `yml`, `mysql`, `sqlite`, `mongodb`, or `custom`.
