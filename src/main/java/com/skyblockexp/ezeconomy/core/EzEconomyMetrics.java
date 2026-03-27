@@ -29,6 +29,16 @@ public class EzEconomyMetrics {
                         String v = plugin.getConfig().getString("locking-strategy", "unknown");
                         return v == null ? "unknown" : v;
                     }));
+
+                    // Numeric single-line charts: report whole-unit totals (cents/100)
+                    try {
+                        EzEconomyPlugin ez = (EzEconomyPlugin) plugin;
+                        m.addCustomChart(new Metrics.SingleLineChart("amount_deposited", () -> (int) (ez.getTotalDepositedCents() / 100)));
+                        m.addCustomChart(new Metrics.SingleLineChart("amount_withdrawn", () -> (int) (ez.getTotalWithdrawnCents() / 100)));
+                        m.addCustomChart(new Metrics.SingleLineChart("amount_converted", () -> (int) (ez.getTotalConvertedCents() / 100)));
+                    } catch (Throwable ignoredInner) {
+                        // Ignore if casting or chart creation fails
+                    }
                 } catch (Throwable ignored) {
                     // Non-fatal: chart registration failed
                 }
