@@ -42,34 +42,7 @@ public class EzBungeeProxyPlugin extends Plugin {
                 metrics.addCustomChart(new org.bstats.bungeecord.SimplePie("cleanup_interval_type", () -> cleanupChart));
             } catch (Throwable ignored) {}
 
-            // Attempt to read optional `config.yml` in the proxy data folder to report
-            // configured locking/caching strategy values if present. If not found,
-            // report "unknown".
-            File mainCfg = new File(getDataFolder(), "config.yml");
-            final String[] lockingStrategy = {"unknown"};
-            final String[] cachingStrategy = {"unknown"};
-            if (mainCfg != null && mainCfg.exists()) {
-                try {
-                    java.util.List<String> lines = java.nio.file.Files.readAllLines(mainCfg.toPath());
-                    for (String raw : lines) {
-                        String line = raw.trim();
-                        if (line.startsWith("locking-strategy:")) {
-                            String val = line.substring("locking-strategy:".length()).trim();
-                            if (val.startsWith("\"") && val.endsWith("\"")) val = val.substring(1, val.length()-1);
-                            if (val.length() > 0) lockingStrategy[0] = val;
-                        } else if (line.startsWith("caching-strategy:")) {
-                            String val = line.substring("caching-strategy:".length()).trim();
-                            if (val.startsWith("\"") && val.endsWith("\"")) val = val.substring(1, val.length()-1);
-                            if (val.length() > 0) cachingStrategy[0] = val;
-                        }
-                    }
-                } catch (Exception ignored) {}
-            }
-
-            try {
-                metrics.addCustomChart(new org.bstats.bungeecord.SimplePie("locking_strategy", () -> lockingStrategy[0]));
-                metrics.addCustomChart(new org.bstats.bungeecord.SimplePie("caching_strategy", () -> cachingStrategy[0]));
-            } catch (Throwable ignored) {}
+            // Proxy-only charts added above; do not duplicate main-plugin charts here.
         } catch (Throwable t) {
             // best-effort; don't block startup
         }
