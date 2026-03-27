@@ -6,9 +6,9 @@ import org.junit.jupiter.api.Test;
 import com.skyblockexp.ezeconomy.core.EzEconomyPlugin;
 import com.skyblockexp.ezeconomy.api.storage.StorageProvider;
 
-import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.util.*;
+import com.skyblockexp.ezeconomy.cache.ExpiringCache;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -119,16 +119,9 @@ public class IntegrationEzEconomyPAPIExpansionTest {
         Field cacheField = EzEconomyPAPIExpansion.class.getDeclaredField("topCache");
         cacheField.setAccessible(true);
         @SuppressWarnings("unchecked")
-        Map<String, Object> topCache = (Map<String, Object>) cacheField.get(expansion);
-        // create CacheEntry via reflection
-        Class<?>[] inner = EzEconomyPAPIExpansion.class.getDeclaredClasses();
-        Class<?> cacheEntryClass = null;
-        for (Class<?> c : inner) if (c.getSimpleName().equals("CacheEntry")) cacheEntryClass = c;
-        assertNotNull(cacheEntryClass);
-        Constructor<?> ctor = cacheEntryClass.getDeclaredConstructor(String.class, long.class);
-        ctor.setAccessible(true);
-        Object entry = ctor.newInstance("player - 123.45 dollar", System.currentTimeMillis() + 10000L);
-        topCache.put("top:dollar:1", entry);
+        com.skyblockexp.ezeconomy.cache.CacheProvider<String, String> topCache = (com.skyblockexp.ezeconomy.cache.CacheProvider<String, String>) cacheField.get(expansion);
+        assertNotNull(topCache);
+        topCache.put("top:dollar:1", "player - 123.45 dollar", 10000L);
 
         String top = expansion.onPlaceholderRequest(null, "top_1_dollar");
         assertEquals("player - 123.45 dollar", top);
