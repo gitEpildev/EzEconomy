@@ -1,6 +1,8 @@
 package com.skyblockexp.ezeconomy.core;
 
 import org.bstats.bukkit.Metrics;
+import org.bstats.charts.SimplePie;
+import org.bstats.charts.SingleLineChart;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class EzEconomyMetrics {
@@ -21,7 +23,7 @@ public class EzEconomyMetrics {
             m = new Metrics(plugin, 28470);
             if (m != null) {
                 try {
-                    m.addCustomChart(new Metrics.SimplePie("caching_strategy", () -> {
+                    m.addCustomChart(new SimplePie("caching_strategy", () -> {
                         String v = plugin.getConfig().getString("caching-strategy");
                         if (v == null || v.isBlank()) {
                             v = plugin.getConfig().getString("locking-strategy", "unknown");
@@ -29,7 +31,7 @@ public class EzEconomyMetrics {
                         return v == null ? "unknown" : v;
                     }));
 
-                    m.addCustomChart(new Metrics.SimplePie("locking_strategy", () -> {
+                    m.addCustomChart(new SimplePie("locking_strategy", () -> {
                         String v = plugin.getConfig().getString("locking-strategy", "unknown");
                         return v == null ? "unknown" : v;
                     }));
@@ -38,7 +40,7 @@ public class EzEconomyMetrics {
                     try {
                         EzEconomyPlugin ez = (EzEconomyPlugin) plugin;
                         // Report deltas since last send: compute current - lastSent and return whole-unit value
-                        m.addCustomChart(new Metrics.SingleLineChart("amount_deposited", () -> {
+                        m.addCustomChart(new SingleLineChart("amount_deposited", () -> {
                             long current = ez.getTotalDepositedCents();
                             long last = lastSentDepositedCents.getAndSet(current);
                             long delta = current - last;
@@ -46,7 +48,7 @@ public class EzEconomyMetrics {
                             return (int) (delta / 100);
                         }));
 
-                        m.addCustomChart(new Metrics.SingleLineChart("amount_withdrawn", () -> {
+                        m.addCustomChart(new SingleLineChart("amount_withdrawn", () -> {
                             long current = ez.getTotalWithdrawnCents();
                             long last = lastSentWithdrawnCents.getAndSet(current);
                             long delta = current - last;
@@ -54,7 +56,7 @@ public class EzEconomyMetrics {
                             return (int) (delta / 100);
                         }));
 
-                        m.addCustomChart(new Metrics.SingleLineChart("amount_converted", () -> {
+                        m.addCustomChart(new SingleLineChart("amount_converted", () -> {
                             long current = ez.getTotalConvertedCents();
                             long last = lastSentConvertedCents.getAndSet(current);
                             long delta = current - last;
