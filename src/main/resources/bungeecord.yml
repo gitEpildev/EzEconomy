@@ -1,0 +1,9 @@
+# Default bungeecord locking configuration
+# Enable only if you have the ezeconomy-bungeecord extension and proxy deployed
+enabled: false
+channel: ezeconomy:locks
+ttl-ms: 60000
+retry-ms: 150
+max-attempts: 5
+fallback-to-local: true
+shared-secret: ""
