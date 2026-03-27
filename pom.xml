@@ -13,7 +13,6 @@
         <module>ezeconomy-redis</module>
         <module>ezeconomy-papi</module>
         <module>ezeconomy-bungeecord</module>
-        <module>ezeconomy-bungeecord-api-stub</module>
         <module>ezeconomy-bungeecord-proxy</module>
     </modules>
     <properties>
