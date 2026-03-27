@@ -12,6 +12,8 @@ import java.io.IOException;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import java.io.File;
+import com.skyblockexp.ezeconomy.cache.CacheManager;
+import com.skyblockexp.ezeconomy.cache.CachingStrategy;
 
 public class LockingComponent implements BootstrapComponent {
     private final EzEconomyPlugin plugin;
@@ -24,6 +26,15 @@ public class LockingComponent implements BootstrapComponent {
     @Override
     public void start() {
         FileConfiguration cfg = plugin.getConfig();
+        // Configure cache strategy early from config (backwards-compatible with 'caching-strategy')
+        String caching = cfg.getString("caching-strategy", cfg.getString("locking-strategy", "LOCAL")).toUpperCase();
+        try {
+            CacheManager.setStrategy(CachingStrategy.valueOf(caching));
+            plugin.getLogger().info("Cache strategy set to " + caching);
+        } catch (IllegalArgumentException ia) {
+            CacheManager.setStrategy(CachingStrategy.LOCAL);
+            plugin.getLogger().warning("Unknown caching-strategy '" + caching + "', defaulting to LOCAL");
+        }
         String strategy = cfg.getString("locking-strategy", "LOCAL").toUpperCase();
         // Load redis.yml from data folder (save default resource if missing)
         File redisFile = new File(plugin.getDataFolder(), "redis.yml");
