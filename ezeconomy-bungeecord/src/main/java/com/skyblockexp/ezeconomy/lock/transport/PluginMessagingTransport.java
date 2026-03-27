@@ -26,6 +26,7 @@ public class PluginMessagingTransport implements LockTransport, PluginMessageLis
     private final String channel;
     private final long responseTimeoutMs;
     private final Map<String, CompletableFuture<String>> pending = new ConcurrentHashMap<>();
+    private final Map<String, CompletableFuture<CacheResponse>> pendingCache = new ConcurrentHashMap<>();
     private final String sharedSecret;
 
     public PluginMessagingTransport(Plugin plugin, String channel, long responseTimeoutMs) {
@@ -106,6 +107,62 @@ public class PluginMessagingTransport implements LockTransport, PluginMessageLis
         player.sendPluginMessage(plugin, channel, payload);
     }
 
+    /** Cache response container */
+    public static final class CacheResponse {
+        public final String value;
+        public final long expiresAt;
+        public CacheResponse(String value, long expiresAt) { this.value = value; this.expiresAt = expiresAt; }
+    }
+
+    /**
+     * Request a cache value from the proxy and wait for a response.
+     */
+    public String getCache(String key, long timeoutMs) throws InterruptedException {
+        String requestId = Long.toHexString(System.nanoTime()) + java.util.UUID.randomUUID().toString();
+        CompletableFuture<CacheResponse> fut = new CompletableFuture<>();
+        pendingCache.put(requestId, fut);
+        try {
+            try { sendMessage(buildCacheGetPayload(requestId, key)); } catch (Exception e) { pendingCache.remove(requestId); return null; }
+            try {
+                CacheResponse resp = fut.get(timeoutMs, TimeUnit.MILLISECONDS);
+                return resp == null ? null : resp.value;
+            } catch (Exception ex) {
+                return null;
+            }
+        } finally {
+            pendingCache.remove(requestId);
+        }
+    }
+
+    public void setCache(String key, String value, long ttlMs) {
+        String requestId = Long.toHexString(System.nanoTime()) + java.util.UUID.randomUUID().toString();
+        try { sendMessage(buildCacheSetPayload(requestId, key, value, ttlMs)); } catch (Exception ignored) {}
+    }
+
+    private byte[] buildCacheGetPayload(String requestId, String key) throws Exception {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        DataOutputStream out = new DataOutputStream(baos);
+        out.writeUTF("CACHE_GET");
+        out.writeUTF(sharedSecret == null ? "" : sharedSecret);
+        out.writeUTF(requestId);
+        out.writeUTF(key == null ? "" : key);
+        out.flush();
+        return baos.toByteArray();
+    }
+
+    private byte[] buildCacheSetPayload(String requestId, String key, String value, long ttlMs) throws Exception {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        DataOutputStream out = new DataOutputStream(baos);
+        out.writeUTF("CACHE_SET");
+        out.writeUTF(sharedSecret == null ? "" : sharedSecret);
+        out.writeUTF(requestId);
+        out.writeUTF(key == null ? "" : key);
+        out.writeUTF(value == null ? "" : value);
+        out.writeLong(ttlMs);
+        out.flush();
+        return baos.toByteArray();
+    }
+
     @Override
     public void onPluginMessageReceived(String channel, Player player, byte[] message) {
         if (!this.channel.equals(channel)) return;
@@ -120,6 +177,11 @@ public class PluginMessagingTransport implements LockTransport, PluginMessageLis
                 String token = in.readUTF();
                 CompletableFuture<String> fut = pending.get(requestId);
                 if (fut != null) fut.complete(token.length() == 0 ? null : token);
+            } else if ("CACHE_GET_RESPONSE".equals(action)) {
+                String value = in.readUTF();
+                long expiresAt = in.readLong();
+                CompletableFuture<CacheResponse> fut = pendingCache.get(requestId);
+                if (fut != null) fut.complete(new CacheResponse(value.length() == 0 ? null : value, expiresAt));
             }
         } catch (Exception ignored) {}
     }

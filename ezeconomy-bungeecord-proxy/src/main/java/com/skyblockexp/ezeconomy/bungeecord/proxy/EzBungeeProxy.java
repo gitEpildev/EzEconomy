@@ -23,6 +23,8 @@ import java.util.concurrent.TimeUnit;
  */
 public class EzBungeeProxy implements AutoCloseable {
     private static class Entry { String token; long expiresAt; }
+    private static class CacheEntry { String value; long expiresAt; public CacheEntry(String value, long expiresAt) { this.value = value; this.expiresAt = expiresAt; } }
+    private final Map<String, CacheEntry> cache = new ConcurrentHashMap<>();
     private final Map<UUID, Entry> locks = new ConcurrentHashMap<>();
     private final String expectedSecret;
     private final ScheduledExecutorService cleanupScheduler;
@@ -80,6 +82,23 @@ public class EzBungeeProxy implements AutoCloseable {
                     locks.remove(uuid);
                 }
                 return null;
+            } else if ("CACHE_SET".equals(action)) {
+                String key = in.readUTF();
+                String value = in.readUTF();
+                long ttl = in.readLong();
+                long now = System.currentTimeMillis();
+                cache.put(key, new CacheEntry(value, now + Math.max(0, ttl)));
+                return null;
+            } else if ("CACHE_GET".equals(action)) {
+                String key = in.readUTF();
+                CacheEntry e = cache.get(key);
+                String value = "";
+                long expiresAt = 0L;
+                if (e != null && e.expiresAt > System.currentTimeMillis()) {
+                    value = e.value == null ? "" : e.value;
+                    expiresAt = e.expiresAt;
+                }
+                return buildCacheGetResponse(requestId, value, expiresAt);
             }
         } catch (Exception ex) {
             // swallow - caller should log if desired
@@ -94,6 +113,18 @@ public class EzBungeeProxy implements AutoCloseable {
         out.writeUTF(expectedSecret == null ? "" : expectedSecret);
         out.writeUTF(requestId);
         out.writeUTF(token == null ? "" : token);
+        out.flush();
+        return baos.toByteArray();
+    }
+
+    private byte[] buildCacheGetResponse(String requestId, String value, long expiresAt) throws Exception {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        DataOutputStream out = new DataOutputStream(baos);
+        out.writeUTF("CACHE_GET_RESPONSE");
+        out.writeUTF(expectedSecret == null ? "" : expectedSecret);
+        out.writeUTF(requestId);
+        out.writeUTF(value == null ? "" : value);
+        out.writeLong(expiresAt);
         out.flush();
         return baos.toByteArray();
     }
