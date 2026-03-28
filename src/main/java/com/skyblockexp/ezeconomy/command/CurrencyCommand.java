@@ -118,6 +118,8 @@ public class CurrencyCommand implements CommandExecutor {
 			long now = System.currentTimeMillis();
 			plugin.logTransaction(new com.skyblockexp.ezeconomy.api.storage.models.Transaction(player.getUniqueId(), from, -usedSource.doubleValue(), now));
 			plugin.logTransaction(new com.skyblockexp.ezeconomy.api.storage.models.Transaction(player.getUniqueId(), to, res.converted.doubleValue(), now));
+			// Record conversion metric (converted amount in target currency)
+			try { plugin.recordConversion(res.converted.doubleValue()); } catch (Throwable ignored) {}
 
 			String fromDisplay = plugin.formatPriceForMessage(usedSource.doubleValue(), from);
 			String toDisplay = plugin.formatPriceForMessage(res.converted.doubleValue(), to);

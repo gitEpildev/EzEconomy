@@ -68,6 +68,10 @@ public class EzEconomyPlugin extends JavaPlugin {
     private com.skyblockexp.ezeconomy.bootstrap.Bootstrap bootstrap;
     private com.skyblockexp.ezeconomy.lock.LockManager lockManager;
     private static EzEconomyPlugin INSTANCE;
+    // Metrics counters (stored as cents to avoid floating point drift)
+    private final java.util.concurrent.atomic.AtomicLong totalDepositedCents = new java.util.concurrent.atomic.AtomicLong(0L);
+    private final java.util.concurrent.atomic.AtomicLong totalWithdrawnCents = new java.util.concurrent.atomic.AtomicLong(0L);
+    private final java.util.concurrent.atomic.AtomicLong totalConvertedCents = new java.util.concurrent.atomic.AtomicLong(0L);
 
     public String format(double amount) {
         return format(amount, getDefaultCurrency());
@@ -276,9 +280,33 @@ public class EzEconomyPlugin extends JavaPlugin {
      */
     public void logTransaction(com.skyblockexp.ezeconomy.api.storage.models.Transaction transaction) {
         if (storage != null) {
+            // Update runtime metrics counters before persisting the transaction
+            double amt = transaction.getAmount();
+            try {
+                long cents = Math.round(java.math.BigDecimal.valueOf(amt).movePointRight(2).doubleValue());
+                if (amt > 0) {
+                    totalDepositedCents.addAndGet(cents);
+                } else if (amt < 0) {
+                    totalWithdrawnCents.addAndGet(Math.abs(cents));
+                }
+            } catch (Exception ignored) {}
             storage.logTransaction(transaction);
         }
     }
+
+    /**
+     * Record a conversion amount (target currency amount). Called by conversion flows.
+     */
+    public void recordConversion(double amount) {
+        try {
+            long cents = Math.round(java.math.BigDecimal.valueOf(amount).movePointRight(2).doubleValue());
+            totalConvertedCents.addAndGet(cents);
+        } catch (Exception ignored) {}
+    }
+
+    public long getTotalDepositedCents() { return totalDepositedCents.get(); }
+    public long getTotalWithdrawnCents() { return totalWithdrawnCents.get(); }
+    public long getTotalConvertedCents() { return totalConvertedCents.get(); }
 
     /**
      * Retrieves transaction history for a player and currency.

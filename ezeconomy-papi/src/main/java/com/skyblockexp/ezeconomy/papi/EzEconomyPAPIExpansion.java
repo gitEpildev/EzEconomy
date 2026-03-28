@@ -6,6 +6,10 @@ import me.clip.placeholderapi.expansion.PlaceholderExpansion;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import com.skyblockexp.ezeconomy.dto.EconomyPlayer;
+import com.skyblockexp.ezeconomy.cache.ExpiringCache;
+import com.skyblockexp.ezeconomy.cache.CacheManager;
+import com.skyblockexp.ezeconomy.cache.CacheProvider;
+import com.skyblockexp.ezeconomy.cache.CachingStrategy;
 
 import java.util.Comparator;
 import java.util.List;
@@ -17,18 +21,9 @@ import java.util.stream.Collectors;
 
 public class EzEconomyPAPIExpansion extends PlaceholderExpansion {
     private final EzEconomyPapiPlugin plugin;
-    private final ConcurrentMap<String, CacheEntry> topCache = new ConcurrentHashMap<>();
+    // Use the globally-selected cache provider; default is LOCAL.
+    private final CacheProvider<String, String> topCache = CacheManager.getProvider();
     private static final long TOP_CACHE_TTL_MS = 30_000L; // 30 seconds
-
-    private static final class CacheEntry {
-        final String value;
-        final long expiresAt;
-
-        CacheEntry(String v, long expiresAt) {
-            this.value = v;
-            this.expiresAt = expiresAt;
-        }
-    }
 
     public EzEconomyPAPIExpansion(EzEconomyPapiPlugin plugin) {
         this.plugin = plugin;
@@ -157,7 +152,7 @@ public class EzEconomyPAPIExpansion extends PlaceholderExpansion {
                 String currency = parts[2];
                 String cacheKey = "top:" + currency + ":" + nFinal;
 
-                CacheEntry entry = topCache.get(cacheKey);
+                ExpiringCache.Entry<String> entry = topCache.getEntry(cacheKey);
                 long now = System.currentTimeMillis();
                 if (entry != null && entry.expiresAt > now) {
                     return safe(entry.value);
@@ -173,11 +168,11 @@ public class EzEconomyPAPIExpansion extends PlaceholderExpansion {
                     try {
                         StorageProvider storage = testEz.getStorageOrWarn();
                         if (storage == null) {
-                            topCache.put(cacheKey, new CacheEntry("", now + TOP_CACHE_TTL_MS));
+                            topCache.put(cacheKey, "", TOP_CACHE_TTL_MS);
                         } else {
                             Map<UUID, Double> all = storage.getAllBalances(currency);
                             if (all == null || all.isEmpty()) {
-                                topCache.put(cacheKey, new CacheEntry("", now + TOP_CACHE_TTL_MS));
+                                topCache.put(cacheKey, "", TOP_CACHE_TTL_MS);
                             } else {
                                 List<Map.Entry<UUID, Double>> top = all.entrySet().stream()
                                         .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
@@ -192,7 +187,7 @@ public class EzEconomyPAPIExpansion extends PlaceholderExpansion {
                                     String name = ep == null ? (Bukkit.getOfflinePlayer(e.getKey()).getName() == null ? e.getKey().toString() : Bukkit.getOfflinePlayer(e.getKey()).getName()) : (ep.getDisplayName() == null ? ep.getName() : ep.getDisplayName());
                                     return name + " - " + testEz.format(e.getValue(), currency);
                                 }).collect(Collectors.joining(", "));
-                                topCache.put(cacheKey, new CacheEntry(result, System.currentTimeMillis() + TOP_CACHE_TTL_MS));
+                                topCache.put(cacheKey, result, TOP_CACHE_TTL_MS);
                             }
                         }
                     } catch (Throwable t) {
@@ -204,12 +199,12 @@ public class EzEconomyPAPIExpansion extends PlaceholderExpansion {
                         try {
                             StorageProvider storage = finalEz.getStorageOrWarn();
                             if (storage == null) {
-                                topCache.put(cacheKey, new CacheEntry("", now + TOP_CACHE_TTL_MS));
+                                topCache.put(cacheKey, "", TOP_CACHE_TTL_MS);
                                 return;
                             }
                             Map<UUID, Double> all = storage.getAllBalances(currency);
                             if (all == null || all.isEmpty()) {
-                                topCache.put(cacheKey, new CacheEntry("", now + TOP_CACHE_TTL_MS));
+                                topCache.put(cacheKey, "", TOP_CACHE_TTL_MS);
                                 return;
                             }
                             List<Map.Entry<UUID, Double>> top = all.entrySet().stream()
@@ -225,7 +220,7 @@ public class EzEconomyPAPIExpansion extends PlaceholderExpansion {
                                 String name = ep == null ? (Bukkit.getOfflinePlayer(e.getKey()).getName() == null ? e.getKey().toString() : Bukkit.getOfflinePlayer(e.getKey()).getName()) : (ep.getDisplayName() == null ? ep.getName() : ep.getDisplayName());
                                 return name + " - " + finalEz.format(e.getValue(), currency);
                             }).collect(Collectors.joining(", "));
-                            topCache.put(cacheKey, new CacheEntry(result, System.currentTimeMillis() + TOP_CACHE_TTL_MS));
+                            topCache.put(cacheKey, result, TOP_CACHE_TTL_MS);
                         } catch (Throwable t) {
                             plugin.getLogger().warning("Failed to compute top placeholder for " + cacheKey + ": " + t.getMessage());
                         }

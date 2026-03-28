@@ -6,12 +6,6 @@ storage: yml
 # The plugin loads `languages/<language>.yml` and falls back to `languages/en.yml`.
 language: en
 
-# Database settings have been moved to separate config files:
-#   config-yml.yml, config-mysql.yml, config-sqlite.yml, config-mongodb.yml
-# Only multi-currency and storage type remain here.
-
-bank-interest-interval-ticks: 72000 # How often (in ticks) to pay bank interest (default: 1 hour)
-
 # Daily login reward (optional)
 daily-reward:
   enabled: false
@@ -33,6 +27,8 @@ store-on-join:
 # (commands, GUIs, Vault bank methods, and bank PAPI placeholders).
 banking:
   enabled: true
+
+bank-interest-interval-ticks: 72000 # How often (in ticks) to pay bank interest (default: 1 hour)
 
 # Multi-currency support (optional)
 multi-currency:
@@ -62,6 +58,16 @@ multi-currency:
       dollar: 100
       euro: 80
 
-# Locking strategy used for balance updates. Options: LOCAL, REDIS
-# LOCAL: plugin uses in-process locks only. REDIS: uses a distributed Redis lock.
+# Locking strategy used for balance updates. Options: LOCAL, REDIS, BUNGEECORD
+# LOCAL: plugin uses in-process locks only.
+# REDIS: uses a distributed Redis lock (requires ezeconomy-redis extension and redis.yml).
+# BUNGEECORD: use a proxy-backed lock transport via plugin messaging (requires bungeecord proxy component and bungeecord.yml).
 locking-strategy: LOCAL
+
+# Caching strategy used for in-memory / distributed caching. Options:
+#   LOCAL     - in-process memory cache only (default)
+#   REDIS     - use the Redis extension for a central cache
+#   BUNGEECORD - proxy-backed cache via plugin messaging (requires proxy component)
+#   DATABASE  - use the configured SQL storage as a cache backend
+# If not present, the plugin will fall back to `locking-strategy` for backward compatibility.
+caching-strategy: LOCAL

@@ -2,10 +2,9 @@ package com.skyblockexp.ezeconomy.papi;
 
 import org.junit.jupiter.api.Test;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Map;
+import com.skyblockexp.ezeconomy.cache.ExpiringCache;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -29,37 +28,23 @@ public class EzEconomyPAPIExpansionTest {
         EzEconomyPAPIExpansion expansion = new EzEconomyPAPIExpansion(null);
 
         // access private topCache field
-        Field cacheField = EzEconomyPAPIExpansion.class.getDeclaredField("topCache");
+        java.lang.reflect.Field cacheField = EzEconomyPAPIExpansion.class.getDeclaredField("topCache");
         cacheField.setAccessible(true);
         @SuppressWarnings("unchecked")
-        Map<String, Object> topCache = (Map<String, Object>) cacheField.get(expansion);
+        com.skyblockexp.ezeconomy.cache.CacheProvider<String, String> topCache = (com.skyblockexp.ezeconomy.cache.CacheProvider<String, String>) cacheField.get(expansion);
         assertNotNull(topCache);
 
-        // create a CacheEntry via reflection (private static inner class)
-        Class<?>[] inner = EzEconomyPAPIExpansion.class.getDeclaredClasses();
-        Class<?> cacheEntryClass = null;
-        for (Class<?> c : inner) {
-            if (c.getSimpleName().equals("CacheEntry")) {
-                cacheEntryClass = c;
-                break;
-            }
-        }
-        assertNotNull(cacheEntryClass, "CacheEntry class must exist");
+        // Put a fresh entry and verify it's present
+        topCache.put("key1", "value1", 1000);
+        com.skyblockexp.ezeconomy.cache.ExpiringCache.Entry<String> e = topCache.getEntry("key1");
+        assertNotNull(e);
+        assertEquals("value1", e.value);
 
-        Constructor<?> ctor = cacheEntryClass.getDeclaredConstructor(String.class, long.class);
-        ctor.setAccessible(true);
-        Object entry = ctor.newInstance("value1", System.currentTimeMillis() + 1000);
-
-        topCache.put("key1", entry);
-        assertTrue(topCache.containsKey("key1"));
-
-        // Put an expired entry and verify timestamp is in the past
-        Object expired = ctor.newInstance("old", System.currentTimeMillis() - 1000);
-        topCache.put("key-expired", expired);
-
-        Field expiresAtField = cacheEntryClass.getDeclaredField("expiresAt");
-        expiresAtField.setAccessible(true);
-        long expires = (long) expiresAtField.get(expired);
-        assertTrue(expires < System.currentTimeMillis());
+        // Put an entry with tiny TTL and ensure it expires
+        topCache.put("key-expired", "old", 1);
+        Thread.sleep(10);
+        com.skyblockexp.ezeconomy.cache.ExpiringCache.Entry<String> expired = topCache.getEntry("key-expired");
+        assertNotNull(expired);
+        assertTrue(expired.expiresAt < System.currentTimeMillis());
     }
 }

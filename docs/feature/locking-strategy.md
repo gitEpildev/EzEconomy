@@ -7,7 +7,7 @@
 ## Config key
 - `locking-strategy` (in the main `config.yml`)
   - Type: `string`
-  - Allowed values: `LOCAL`, `REDIS`
+  - Allowed values: `LOCAL`, `REDIS`, `BUNGEECORD`
   - Default: `LOCAL`
 
 ## When to use which

@@ -1,6 +1,4 @@
 # Redis configuration for distributed locking (Lettuce client)
-# Enable and configure connection details used by RedisLockManager
-
 enabled: false
 
 # Redis connection
