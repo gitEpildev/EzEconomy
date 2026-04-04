@@ -68,176 +68,12 @@ public class EzEconomyPlugin extends JavaPlugin {
     private com.skyblockexp.ezeconomy.bootstrap.Bootstrap bootstrap;
     private com.skyblockexp.ezeconomy.lock.LockManager lockManager;
     private static EzEconomyPlugin INSTANCE;
-    // Metrics counters (stored as cents to avoid floating point drift)
-    private final java.util.concurrent.atomic.AtomicLong totalDepositedCents = new java.util.concurrent.atomic.AtomicLong(0L);
-    private final java.util.concurrent.atomic.AtomicLong totalWithdrawnCents = new java.util.concurrent.atomic.AtomicLong(0L);
-    private final java.util.concurrent.atomic.AtomicLong totalConvertedCents = new java.util.concurrent.atomic.AtomicLong(0L);
+    // Extracted services
+    private com.skyblockexp.ezeconomy.service.metrics.TransactionMetricsService transactionMetricsService;
+    private com.skyblockexp.ezeconomy.service.format.CurrencyFormatter currencyFormatter;
+    private com.skyblockexp.ezeconomy.service.storage.StorageConfigLoader storageConfigLoader;
 
-    public String format(double amount) {
-        return format(amount, getDefaultCurrency());
-    }
-
-    /**
-     * Format an amount for a specific currency using configured decimals and symbol.
-     */
-    public String format(double amount, String currency) {
-        if (currency == null) {
-            java.text.NumberFormat nf = java.text.NumberFormat.getNumberInstance(java.util.Locale.getDefault());
-            nf.setGroupingUsed(true);
-            nf.setMinimumFractionDigits(2);
-            nf.setMaximumFractionDigits(2);
-            return nf.format(amount);
-        }
-        var cfg = getConfig();
-        if (cfg.getConfigurationSection("multi-currency.currencies") == null) {
-            java.text.NumberFormat nf = java.text.NumberFormat.getNumberInstance(java.util.Locale.getDefault());
-            nf.setGroupingUsed(true);
-            nf.setMinimumFractionDigits(2);
-            nf.setMaximumFractionDigits(2);
-            return nf.format(amount);
-        }
-        String key = currency.toLowerCase();
-        String symbol = cfg.getString("multi-currency.currencies." + key + ".symbol", "");
-        int decimals = cfg.getInt("multi-currency.currencies." + key + ".decimals", 2);
-
-        // Locale configuration: server-wide override optional
-        String localeCfg = cfg.getString("currency.format.locale", "");
-        java.util.Locale locale = java.util.Locale.getDefault();
-        if (localeCfg != null && !localeCfg.isBlank()) {
-            String[] parts = localeCfg.split("[_-]");
-            if (parts.length == 1) locale = new java.util.Locale(parts[0]);
-            else locale = new java.util.Locale(parts[0], parts[1]);
-        }
-
-        java.text.NumberFormat nf = java.text.NumberFormat.getNumberInstance(locale);
-        nf.setGroupingUsed(true);
-        nf.setMinimumFractionDigits(decimals);
-        nf.setMaximumFractionDigits(decimals);
-        String formatted = nf.format(java.math.BigDecimal.valueOf(amount).setScale(decimals, java.math.RoundingMode.HALF_UP));
-
-        // Symbol placement: optional per-currency setting (prefix/suffix)
-        String placement = cfg.getString("multi-currency.currencies." + key + ".symbol_placement", "suffix").toLowerCase();
-        boolean prefix = placement.equals("prefix") || placement.equals("before");
-        if (symbol == null || symbol.isEmpty()) {
-            return formatted;
-        }
-        return prefix ? (symbol + " " + formatted) : (formatted + " " + symbol);
-    }
-
-    /**
-     * Format only the numeric amount part (no currency symbol or placement).
-     * This preserves locale and decimals but excludes the symbol so message
-     * templates can control placement.
-     */
-    public String formatAmountOnly(double amount, String currency) {
-        if (currency == null) {
-            java.text.NumberFormat nf = java.text.NumberFormat.getNumberInstance(java.util.Locale.getDefault());
-            nf.setGroupingUsed(true);
-            nf.setMinimumFractionDigits(2);
-            nf.setMaximumFractionDigits(2);
-            return nf.format(amount);
-        }
-        var cfg = getConfig();
-        if (cfg.getConfigurationSection("multi-currency.currencies") == null) {
-            java.text.NumberFormat nf = java.text.NumberFormat.getNumberInstance(java.util.Locale.getDefault());
-            nf.setGroupingUsed(true);
-            nf.setMinimumFractionDigits(2);
-            nf.setMaximumFractionDigits(2);
-            return nf.format(amount);
-        }
-        String key = currency.toLowerCase();
-        int decimals = cfg.getInt("multi-currency.currencies." + key + ".decimals", 2);
-
-        // Locale configuration: server-wide override optional
-        String localeCfg = cfg.getString("currency.format.locale", "");
-        java.util.Locale locale = java.util.Locale.getDefault();
-        if (localeCfg != null && !localeCfg.isBlank()) {
-            String[] parts = localeCfg.split("[_-]");
-            if (parts.length == 1) locale = new java.util.Locale(parts[0]);
-            else locale = new java.util.Locale(parts[0], parts[1]);
-        }
-
-        java.text.NumberFormat nf = java.text.NumberFormat.getNumberInstance(locale);
-        nf.setGroupingUsed(true);
-        nf.setMinimumFractionDigits(decimals);
-        nf.setMaximumFractionDigits(decimals);
-        String formatted = nf.format(java.math.BigDecimal.valueOf(amount).setScale(decimals, java.math.RoundingMode.HALF_UP));
-        return formatted;
-    }
-
-    /**
-     * Format an amount using short suffixes (k, m, b, t) while preserving
-     * currency symbol placement according to config. Delegates numeric
-     * shortening to NumberUtil.formatShort.
-     */
-    public String formatShort(double amount, String currency) {
-        var cfg = getConfig();
-        // Determine whether short-formatting is enabled and the numeric threshold.
-        boolean enabled = cfg.getBoolean("currency.format.short.enabled", true);
-        double threshold = cfg.getDouble("currency.format.short.threshold", 1000.0);
-
-        // Allow per-currency overrides for enabled/threshold
-        if (currency != null && cfg.getConfigurationSection("multi-currency.currencies") != null) {
-            String enabledKey = "multi-currency.currencies." + currency.toLowerCase() + ".short.enabled";
-            String thresholdKey = "multi-currency.currencies." + currency.toLowerCase() + ".short.threshold";
-            if (cfg.contains(enabledKey)) {
-                enabled = cfg.getBoolean(enabledKey, enabled);
-            }
-            if (cfg.contains(thresholdKey)) {
-                threshold = cfg.getDouble(thresholdKey, threshold);
-            }
-        }
-
-        // If short-format is disabled or amount below threshold, fall back to full format
-        if (!enabled || Math.abs(amount) < threshold) {
-            return format(amount, currency);
-        }
-
-        // global default decimals (allow per-currency override below)
-        int decimals = cfg.getInt("currency.format.short.decimals", 1);
-        if (currency != null && cfg.getConfigurationSection("multi-currency.currencies") != null) {
-            String perKey = "multi-currency.currencies." + currency.toLowerCase() + ".short.decimals";
-            if (cfg.contains(perKey)) {
-                decimals = cfg.getInt(perKey, decimals);
-            }
-        }
-
-        String numeric = com.skyblockexp.ezeconomy.util.NumberUtil.formatShort(java.math.BigDecimal.valueOf(amount), decimals);
-        if (currency == null) return numeric;
-        if (cfg.getConfigurationSection("multi-currency.currencies") == null) {
-            return numeric;
-        }
-        String key = currency.toLowerCase();
-        String symbol = cfg.getString("multi-currency.currencies." + key + ".symbol", "");
-        String placement = cfg.getString("multi-currency.currencies." + key + ".symbol_placement", "suffix").toLowerCase();
-        boolean prefix = placement.equals("prefix") || placement.equals("before");
-        if (symbol == null || symbol.isEmpty()) {
-            return numeric;
-        }
-        return prefix ? (symbol + " " + numeric) : (numeric + " " + symbol);
-    }
-
-    /**
-     * Get the raw currency symbol for a currency key (no surrounding whitespace).
-     */
-    public String getCurrencySymbol(String currency) {
-        if (currency == null) return "";
-        var cfg = getConfig();
-        String key = currency.toLowerCase();
-        return cfg.getString("multi-currency.currencies." + key + ".symbol", "");
-    }
-
-    /**
-     * Format a price string suitable for messages. Uses the loaded MessageProvider's
-     * `price_message_format` template when available; otherwise falls back to the
-     * existing combined `format(...)` behavior.
-     */
-    public String formatPriceForMessage(double amount, String currency) {
-        if (this.messageProvider != null) {
-            return this.messageProvider.formatPrice(this, amount, currency);
-        }
-        return format(amount, currency);
-    }
+    
 
     public VaultEconomyImpl getEconomy() {
         return vaultEconomy;
@@ -249,6 +85,10 @@ public class EzEconomyPlugin extends JavaPlugin {
         this.bootstrap = new com.skyblockexp.ezeconomy.bootstrap.Bootstrap(this);
         try {
             this.bootstrap.start();
+            // Initialize extracted services after bootstrap so components/config/storage exist
+            this.storageConfigLoader = new com.skyblockexp.ezeconomy.service.storage.StorageConfigLoader(this);
+            this.currencyFormatter = new com.skyblockexp.ezeconomy.service.format.CurrencyFormatter(this);
+            this.transactionMetricsService = new com.skyblockexp.ezeconomy.service.metrics.TransactionMetricsService(this);
             new SpigotUpdateChecker(this, SPIGOT_RESOURCE_ID).checkForUpdates();
             getLogger().info("EzEconomy enabled and registered as Vault provider.");
         } catch (RuntimeException ex) {
@@ -327,38 +167,7 @@ public class EzEconomyPlugin extends JavaPlugin {
         return currencyPreferenceManager;
     }
 
-    /**
-     * Logs a transaction using the storage provider.
-     */
-    public void logTransaction(com.skyblockexp.ezeconomy.api.storage.models.Transaction transaction) {
-        if (storage != null) {
-            // Update runtime metrics counters before persisting the transaction
-            double amt = transaction.getAmount();
-            try {
-                long cents = Math.round(java.math.BigDecimal.valueOf(amt).movePointRight(2).doubleValue());
-                if (amt > 0) {
-                    totalDepositedCents.addAndGet(cents);
-                } else if (amt < 0) {
-                    totalWithdrawnCents.addAndGet(Math.abs(cents));
-                }
-            } catch (Exception ignored) {}
-            storage.logTransaction(transaction);
-        }
-    }
-
-    /**
-     * Record a conversion amount (target currency amount). Called by conversion flows.
-     */
-    public void recordConversion(double amount) {
-        try {
-            long cents = Math.round(java.math.BigDecimal.valueOf(amount).movePointRight(2).doubleValue());
-            totalConvertedCents.addAndGet(cents);
-        } catch (Exception ignored) {}
-    }
-
-    public long getTotalDepositedCents() { return totalDepositedCents.get(); }
-    public long getTotalWithdrawnCents() { return totalWithdrawnCents.get(); }
-    public long getTotalConvertedCents() { return totalConvertedCents.get(); }
+    
 
     /**
      * Retrieves transaction history for a player and currency.
@@ -394,10 +203,7 @@ public class EzEconomyPlugin extends JavaPlugin {
         return storage != null;
     }
 
-    public YamlConfiguration loadStorageConfig(String fileName) {
-        File file = new File(getDataFolder(), fileName);
-        return YamlConfiguration.loadConfiguration(file);
-    }
+    
 
     public void setStorage(StorageProvider provider) {
         this.storage = provider;
@@ -491,5 +297,29 @@ public class EzEconomyPlugin extends JavaPlugin {
     public void registerPlaceholderExpansion() {
         // Placeholder registration moved to PlaceholderComponent during bootstrap.
         new com.skyblockexp.ezeconomy.bootstrap.component.PlaceholderComponent(this).start();
+    }
+
+    /**
+     * Accessor for the CurrencyFormatter service.
+     */
+    public com.skyblockexp.ezeconomy.service.format.CurrencyFormatter getCurrencyFormatter() {
+        if (currencyFormatter == null) currencyFormatter = new com.skyblockexp.ezeconomy.service.format.CurrencyFormatter(this);
+        return currencyFormatter;
+    }
+
+    /**
+     * Accessor for the TransactionMetricsService.
+     */
+    public com.skyblockexp.ezeconomy.service.metrics.TransactionMetricsService getTransactionMetricsService() {
+        if (transactionMetricsService == null) transactionMetricsService = new com.skyblockexp.ezeconomy.service.metrics.TransactionMetricsService(this);
+        return transactionMetricsService;
+    }
+
+    /**
+     * Accessor for the StorageConfigLoader.
+     */
+    public com.skyblockexp.ezeconomy.service.storage.StorageConfigLoader getStorageConfigLoader() {
+        if (storageConfigLoader == null) storageConfigLoader = new com.skyblockexp.ezeconomy.service.storage.StorageConfigLoader(this);
+        return storageConfigLoader;
     }
 }

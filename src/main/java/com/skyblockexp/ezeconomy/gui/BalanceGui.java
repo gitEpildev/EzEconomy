@@ -21,7 +21,7 @@ public class BalanceGui {
             ItemStack item = new ItemStack(Material.GOLD_INGOT);
             ItemMeta meta = item.getItemMeta();
             // Use plugin short-formatting (k/m/b/t) for GUI display
-            String formatted = plugin.formatShort(entry.getValue(), entry.getKey());
+            String formatted = plugin.getCurrencyFormatter().formatShort(entry.getValue(), entry.getKey());
             meta.setDisplayName("\u00A7e" + entry.getKey() + ": \u00A76" + formatted);
             item.setItemMeta(meta);
             inv.setItem(slot++, item);
@@ -29,7 +29,7 @@ public class BalanceGui {
         for (Map.Entry<String, Double> entry : banks.entrySet()) {
             ItemStack item = new ItemStack(Material.ENDER_CHEST);
             ItemMeta meta = item.getItemMeta();
-            String formatted = plugin.formatShort(entry.getValue(), entry.getKey());
+            String formatted = plugin.getCurrencyFormatter().formatShort(entry.getValue(), entry.getKey());
             meta.setDisplayName("\u00A7bBank: " + entry.getKey() + "\u00A7f - \u00A7a" + formatted);
             item.setItemMeta(meta);
             inv.setItem(slot++, item);

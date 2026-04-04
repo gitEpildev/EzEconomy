@@ -41,7 +41,7 @@ public class EzEconomyMetrics {
                         EzEconomyPlugin ez = (EzEconomyPlugin) plugin;
                         // Report deltas since last send: compute current - lastSent and return whole-unit value
                         m.addCustomChart(new SingleLineChart("amount_deposited", () -> {
-                            long current = ez.getTotalDepositedCents();
+                            long current = ez.getTransactionMetricsService().getTotalDepositedCents();
                             long last = lastSentDepositedCents.getAndSet(current);
                             long delta = current - last;
                             if (delta < 0) delta = 0;
@@ -49,7 +49,7 @@ public class EzEconomyMetrics {
                         }));
 
                         m.addCustomChart(new SingleLineChart("amount_withdrawn", () -> {
-                            long current = ez.getTotalWithdrawnCents();
+                            long current = ez.getTransactionMetricsService().getTotalWithdrawnCents();
                             long last = lastSentWithdrawnCents.getAndSet(current);
                             long delta = current - last;
                             if (delta < 0) delta = 0;
@@ -57,7 +57,7 @@ public class EzEconomyMetrics {
                         }));
 
                         m.addCustomChart(new SingleLineChart("amount_converted", () -> {
-                            long current = ez.getTotalConvertedCents();
+                            long current = ez.getTransactionMetricsService().getTotalConvertedCents();
                             long last = lastSentConvertedCents.getAndSet(current);
                             long delta = current - last;
                             if (delta < 0) delta = 0;

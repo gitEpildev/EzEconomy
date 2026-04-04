@@ -116,13 +116,13 @@ public class CurrencyCommand implements CommandExecutor {
 
 			// Log both sides of the conversion as transactions
 			long now = System.currentTimeMillis();
-			plugin.logTransaction(new com.skyblockexp.ezeconomy.api.storage.models.Transaction(player.getUniqueId(), from, -usedSource.doubleValue(), now));
-			plugin.logTransaction(new com.skyblockexp.ezeconomy.api.storage.models.Transaction(player.getUniqueId(), to, res.converted.doubleValue(), now));
+			plugin.getTransactionMetricsService().logTransaction(new com.skyblockexp.ezeconomy.api.storage.models.Transaction(player.getUniqueId(), from, -usedSource.doubleValue(), now));
+			plugin.getTransactionMetricsService().logTransaction(new com.skyblockexp.ezeconomy.api.storage.models.Transaction(player.getUniqueId(), to, res.converted.doubleValue(), now));
 			// Record conversion metric (converted amount in target currency)
-			try { plugin.recordConversion(res.converted.doubleValue()); } catch (Throwable ignored) {}
+			try { plugin.getTransactionMetricsService().recordConversion(res.converted.doubleValue()); } catch (Throwable ignored) {}
 
-			String fromDisplay = plugin.formatPriceForMessage(usedSource.doubleValue(), from);
-			String toDisplay = plugin.formatPriceForMessage(res.converted.doubleValue(), to);
+			String fromDisplay = plugin.getCurrencyFormatter().formatPriceForMessage(usedSource.doubleValue(), from);
+			String toDisplay = plugin.getCurrencyFormatter().formatPriceForMessage(res.converted.doubleValue(), to);
 			sender.sendMessage(plugin.getMessageProvider().color("&eConversion: " + fromDisplay + " → " + toDisplay));
 			sender.sendMessage(plugin.getMessageProvider().color("&aConversion successful."));
 			return true;
