@@ -7,6 +7,7 @@ on:
       - 'ezeconomy-bungeecord/**'
       - 'ezeconomy-bungeecord-proxy/**'
   push:
+    branches: [ main, master ]
     paths-ignore:
       - 'ezeconomy-bungeecord/**'
       - 'ezeconomy-bungeecord-proxy/**'
@@ -39,8 +40,8 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-m2-${{ matrix.paper-version }}-
 
-      - name: Run unit tests
-        run: mvn -B -Dpaper.version=${{ matrix.paper-version }} -Dmockbukkit.artifactId=${{ matrix.mockbukkit-artifactId }} -Dmockbukkit.version=${{ matrix.mockbukkit-version }} test
+      - name: Run unit tests (exclude feature tests)
+        run: mvn -B -Dpaper.version=${{ matrix.paper-version }} -Dmockbukkit.artifactId=${{ matrix.mockbukkit-artifactId }} -Dmockbukkit.version=${{ matrix.mockbukkit-version }} -Dtest='!*FeatureTest' -Dsurefire.failIfNoSpecifiedTests=false test
 
   feature-tests:
     runs-on: ubuntu-latest
