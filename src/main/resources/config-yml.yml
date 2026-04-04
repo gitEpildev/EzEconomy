@@ -5,3 +5,23 @@ yml:
   per-player-file-naming: uuid
   # Data folder for per-player files
   data-folder: data
+
+# Currency formatting options
+currency:
+  format:
+    # Enable short suffix formatting (k/m/b/t) globally
+    short:
+      enabled: true
+      # Threshold (inclusive) at which to switch to short formatting
+      threshold: 1000
+      # Number of decimal places to display in short suffixes
+      decimals: 1
+
+# Per-currency short-format examples (optional)
+# multi-currency:
+#   currencies:
+#     dollar:
+#       short:
+#         enabled: true
+#         threshold: 500
+#         decimals: 2
