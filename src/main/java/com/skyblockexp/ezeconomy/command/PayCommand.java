@@ -105,7 +105,7 @@ public class PayCommand implements CommandExecutor {
             // Store pending transfer via PayFlowManager and instruct user to confirm
             long expiresAt = System.currentTimeMillis() + (timeoutSeconds * 1000L);
             plugin.getPayFlowManager().createPendingTransfer(from.getUniqueId(), to == null ? null : to.getUniqueId(), args[0], money, currency, expiresAt);
-            MessageUtils.send(sender, plugin, "payment_confirm_required", java.util.Map.of("amount", plugin.formatPriceForMessage(amountDecimal.doubleValue(), currency), "timeout", String.valueOf(timeoutSeconds)));
+            MessageUtils.send(sender, plugin, "payment_confirm_required", java.util.Map.of("amount", plugin.getCurrencyFormatter().formatPriceForMessage(amountDecimal.doubleValue(), currency), "timeout", String.valueOf(timeoutSeconds)));
             // Schedule cleanup
             Bukkit.getScheduler().runTaskLater(plugin, () -> plugin.getPayFlowManager().removeIfExpired(from.getUniqueId()), timeoutSeconds * 20L);
             return true;

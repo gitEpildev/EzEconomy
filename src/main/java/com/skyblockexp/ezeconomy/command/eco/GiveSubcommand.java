@@ -37,7 +37,7 @@ public class GiveSubcommand implements Subcommand {
 
         if (args.length == 2) {
             plugin.getEconomy().depositPlayer(target, amount);
-            MessageUtils.send(sender, plugin, "paid", Map.of("player", target.getName(), "amount", plugin.formatPriceForMessage(amount, plugin.getDefaultCurrency())));
+            MessageUtils.send(sender, plugin, "paid", Map.of("player", target.getName(), "amount", plugin.getCurrencyFormatter().formatPriceForMessage(amount, plugin.getDefaultCurrency())));
             return true;
         }
 
@@ -58,7 +58,7 @@ public class GiveSubcommand implements Subcommand {
         }
 
         storage.deposit(target.getUniqueId(), currency, amount);
-        String amountWithSymbol = plugin.formatPriceForMessage(amount, currency);
+        String amountWithSymbol = plugin.getCurrencyFormatter().formatPriceForMessage(amount, currency);
         MessageUtils.send(sender, plugin, "paid", Map.of("player", target.getName(), "amount", amountWithSymbol));
         return true;
     }

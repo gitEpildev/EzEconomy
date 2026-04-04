@@ -110,13 +110,13 @@ public class PaymentExecutor {
                         plugin.getLogger().info("PaymentExecutor: depositing " + creditAmount + " " + recipientCurrency + " to " + toOffline.getUniqueId());
                         storage.deposit(toOffline.getUniqueId(), recipientCurrency, creditAmount);
 
-                        String payerDisplay = plugin.formatPriceForMessage(netAmount, currency);
-                        String receiverDisplay = plugin.formatPriceForMessage(creditAmount, recipientCurrency);
+                        String payerDisplay = plugin.getCurrencyFormatter().formatPriceForMessage(netAmount, currency);
+                        String receiverDisplay = plugin.getCurrencyFormatter().formatPriceForMessage(creditAmount, recipientCurrency);
                         String defaultCur = plugin.getDefaultCurrency();
                         if (!currency.equalsIgnoreCase(defaultCur)) {
                             double equiv = CurrencyUtil.convert(plugin, netAmount, currency, defaultCur);
                             if (!Double.isNaN(equiv)) {
-                                String equivDisplay = plugin.formatPriceForMessage(equiv, defaultCur);
+                                String equivDisplay = plugin.getCurrencyFormatter().formatPriceForMessage(equiv, defaultCur);
                                 MessageUtils.send(from, plugin, "paid_other_currency", java.util.Map.of("player", toOffline.getName(), "amount", payerDisplay, "amount_default", equivDisplay));
                             } else {
                                 MessageUtils.send(from, plugin, "paid", java.util.Map.of("player", toOffline.getName(), "amount", payerDisplay));
@@ -176,13 +176,13 @@ public class PaymentExecutor {
                 plugin.getLogger().info("PaymentExecutor: depositing " + creditAmount + " " + recipientCurrency + " to " + toOffline.getUniqueId());
                 storage.deposit(toOffline.getUniqueId(), recipientCurrency, creditAmount);
 
-                String payerDisplay = plugin.formatPriceForMessage(netAmount, currency);
-                String receiverDisplay = plugin.formatPriceForMessage(creditAmount, recipientCurrency);
+                String payerDisplay = plugin.getCurrencyFormatter().formatPriceForMessage(netAmount, currency);
+                String receiverDisplay = plugin.getCurrencyFormatter().formatPriceForMessage(creditAmount, recipientCurrency);
                 String defaultCur = plugin.getDefaultCurrency();
                 if (!currency.equalsIgnoreCase(defaultCur)) {
                     double equiv = CurrencyUtil.convert(plugin, netAmount, currency, defaultCur);
                     if (!Double.isNaN(equiv)) {
-                        String equivDisplay = plugin.formatPriceForMessage(equiv, defaultCur);
+                        String equivDisplay = plugin.getCurrencyFormatter().formatPriceForMessage(equiv, defaultCur);
                         MessageUtils.send(from, plugin, "paid_other_currency", java.util.Map.of("player", toOffline.getName(), "amount", payerDisplay, "amount_default", equivDisplay));
                     } else {
                         MessageUtils.send(from, plugin, "paid", java.util.Map.of("player", toOffline.getName(), "amount", payerDisplay));
@@ -194,7 +194,7 @@ public class PaymentExecutor {
                     if (!currency.equalsIgnoreCase(defaultCur)) {
                         double equiv = CurrencyUtil.convert(plugin, creditAmount, recipientCurrency, defaultCur);
                         if (!Double.isNaN(equiv)) {
-                            String equivDisplay = plugin.formatPriceForMessage(equiv, defaultCur);
+                            String equivDisplay = plugin.getCurrencyFormatter().formatPriceForMessage(equiv, defaultCur);
                             MessageUtils.send(toOffline.getPlayer(), plugin, "received_other_currency", java.util.Map.of("player", from.getName(), "amount", receiverDisplay, "amount_default", equivDisplay));
                         } else {
                             MessageUtils.send(toOffline.getPlayer(), plugin, "received", java.util.Map.of("player", from.getName(), "amount", receiverDisplay));
@@ -220,12 +220,12 @@ public class PaymentExecutor {
             return true;
         }
 
-        String amountWithSymbol = plugin.formatPriceForMessage(netAmount, currency);
+        String amountWithSymbol = plugin.getCurrencyFormatter().formatPriceForMessage(netAmount, currency);
         String defaultCur = plugin.getDefaultCurrency();
         if (!currency.equalsIgnoreCase(defaultCur)) {
             double equiv = CurrencyUtil.convert(plugin, netAmount, currency, defaultCur);
             if (!Double.isNaN(equiv)) {
-                String equivDisplay = plugin.formatPriceForMessage(equiv, defaultCur);
+                String equivDisplay = plugin.getCurrencyFormatter().formatPriceForMessage(equiv, defaultCur);
                 MessageUtils.send(from, plugin, "paid_other_currency", java.util.Map.of("player", toOffline.getName(), "amount", amountWithSymbol, "amount_default", equivDisplay));
             } else {
                 MessageUtils.send(from, plugin, "paid", java.util.Map.of("player", toOffline.getName(), "amount", amountWithSymbol));
