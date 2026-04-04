@@ -1,39 +1,16 @@
 package com.skyblockexp.ezeconomy.core;
 
 import com.skyblockexp.ezeconomy.api.storage.StorageProvider;
-import com.skyblockexp.ezeconomy.command.BalanceCommand;
-import com.skyblockexp.ezeconomy.command.BaltopCommand;
-import com.skyblockexp.ezeconomy.command.BankCommand;
-import com.skyblockexp.ezeconomy.command.CurrencyCommand;
-import com.skyblockexp.ezeconomy.command.EcoCommand;
-import com.skyblockexp.ezeconomy.command.EzEconomyCommand;
-import com.skyblockexp.ezeconomy.command.PayCommand;
-import com.skyblockexp.ezeconomy.gui.GuiListener;
 import com.skyblockexp.ezeconomy.manager.BankInterestManager;
 import com.skyblockexp.ezeconomy.manager.CurrencyManager;
 import com.skyblockexp.ezeconomy.manager.CurrencyPreferenceManager;
 import com.skyblockexp.ezeconomy.manager.DailyRewardManager;
-import com.skyblockexp.ezeconomy.storage.MongoDBStorageProvider;
-import com.skyblockexp.ezeconomy.storage.MySQLStorageProvider;
-import com.skyblockexp.ezeconomy.storage.SQLiteStorageProvider;
-import com.skyblockexp.ezeconomy.storage.YMLStorageProvider;
-import com.skyblockexp.ezeconomy.tabcomplete.BankTabCompleter;
-import com.skyblockexp.ezeconomy.tabcomplete.CurrencyTabCompleter;
-import com.skyblockexp.ezeconomy.tabcomplete.EcoTabCompleter;
-import com.skyblockexp.ezeconomy.tabcomplete.EzEconomyCommandTabCompleter;
-import com.skyblockexp.ezeconomy.tabcomplete.PayTabCompleter;
 import com.skyblockexp.ezeconomy.update.SpigotUpdateChecker;
-import com.skyblockexp.ezeconomy.placeholder.EzEconomyPlaceholderExpansion;
 import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.util.Collections;
 import java.util.List;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
 import net.milkbowl.vault.economy.Economy;
 
@@ -167,8 +144,6 @@ public class EzEconomyPlugin extends JavaPlugin {
         return currencyPreferenceManager;
     }
 
-    
-
     /**
      * Retrieves transaction history for a player and currency.
      */
@@ -179,16 +154,6 @@ public class EzEconomyPlugin extends JavaPlugin {
         return java.util.Collections.emptyList();
     }
 
-    public void ensureDefaultConfigs() {
-        // Default config/resource creation moved to ConfigComponent during bootstrap.
-        // Retained for compatibility; no-op here.
-    }
-
-    public void loadMessages() {
-        // Message provider initialization moved to ConfigComponent during bootstrap.
-        // This method remains for runtime reloads and is intentionally a no-op here.
-    }
-
     public void setMessagesConfig(FileConfiguration messagesConfig) {
         this.messagesConfig = messagesConfig;
     }
@@ -197,21 +162,10 @@ public class EzEconomyPlugin extends JavaPlugin {
         this.messageProvider = provider;
     }
 
-    public boolean initializeStorage() {
-        // Storage initialization moved to StorageComponent during bootstrap.
-        // Keep method for compatibility; actual initialization is no-op here.
-        return storage != null;
-    }
-
     
 
     public void setStorage(StorageProvider provider) {
         this.storage = provider;
-    }
-
-    public void initializeManagers() {
-        // Manager initialization moved to ManagersComponent during bootstrap.
-        new com.skyblockexp.ezeconomy.bootstrap.component.ManagersComponent(this).start();
     }
 
     public void setCurrencyPreferenceManager(CurrencyPreferenceManager m) {
@@ -246,29 +200,17 @@ public class EzEconomyPlugin extends JavaPlugin {
         this.metrics = metrics;
     }
 
-    public void registerEconomy() {
-        // Economy registration moved to EconomyComponent during bootstrap.
-        new com.skyblockexp.ezeconomy.bootstrap.component.EconomyComponent(this).start();
-    }
-
     public void setVaultEconomy(VaultEconomyImpl impl) {
         this.vaultEconomy = impl;
     }
 
-    public void registerCommands() {
-        // Command registration moved to CommandsComponent during bootstrap.
-        new com.skyblockexp.ezeconomy.bootstrap.component.CommandsComponent(this).start();
-    }
-
-    public void registerListeners() {
-        // Listener registration moved to ListenersComponent during bootstrap.
-        new com.skyblockexp.ezeconomy.bootstrap.component.ListenersComponent(this).start();
-    }
-
-    public void loadUserGuiConfig() {
-        // Gui loading moved to GuiComponent during bootstrap.
-        // Delegate runtime reload to GuiComponent implementation.
-        new com.skyblockexp.ezeconomy.bootstrap.component.GuiComponent(this).start();
+    /**
+     * @deprecated Economy registration is handled by the EconomyComponent during bootstrap.
+     * This transitional shim delegates to the EconomyComponent to preserve test compatibility.
+     */
+    @Deprecated
+    public void registerEconomy() {
+        new com.skyblockexp.ezeconomy.bootstrap.component.EconomyComponent(this).start();
     }
 
     public FileConfiguration getUserGuiConfig() {
@@ -292,11 +234,6 @@ public class EzEconomyPlugin extends JavaPlugin {
      */
     public static EzEconomyPlugin getInstance() {
         return INSTANCE;
-    }
-
-    public void registerPlaceholderExpansion() {
-        // Placeholder registration moved to PlaceholderComponent during bootstrap.
-        new com.skyblockexp.ezeconomy.bootstrap.component.PlaceholderComponent(this).start();
     }
 
     /**
