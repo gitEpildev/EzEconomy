@@ -172,26 +172,11 @@ public class EzEconomyPlugin extends JavaPlugin {
      */
     public String formatShort(double amount, String currency) {
         var cfg = getConfig();
+        // Determine whether short-formatting is enabled and the numeric threshold.
         boolean enabled = cfg.getBoolean("currency.format.short.enabled", true);
         double threshold = cfg.getDouble("currency.format.short.threshold", 1000.0);
-        // If short-format is disabled or amount below threshold, fall back to full format
-        if (!enabled || Math.abs(amount) < threshold) {
-            return format(amount, currency);
-        }
 
-        // global default decimals
-        int decimals = cfg.getInt("currency.format.short.decimals", 1);
-        // prefer per-currency override if present
-        if (currency != null && cfg.getConfigurationSection("multi-currency.currencies") != null) {
-            String perKey = "multi-currency.currencies." + currency.toLowerCase() + ".short.decimals";
-            if (cfg.contains(perKey)) {
-                decimals = cfg.getInt(perKey, decimals);
-            }
-        }
-
-        // short.enabled and short.threshold may be configured per-currency; evaluate them
-        boolean enabled = cfg.getBoolean("currency.format.short.enabled", true);
-        double threshold = cfg.getDouble("currency.format.short.threshold", 1000.0);
+        // Allow per-currency overrides for enabled/threshold
         if (currency != null && cfg.getConfigurationSection("multi-currency.currencies") != null) {
             String enabledKey = "multi-currency.currencies." + currency.toLowerCase() + ".short.enabled";
             String thresholdKey = "multi-currency.currencies." + currency.toLowerCase() + ".short.threshold";
@@ -206,6 +191,15 @@ public class EzEconomyPlugin extends JavaPlugin {
         // If short-format is disabled or amount below threshold, fall back to full format
         if (!enabled || Math.abs(amount) < threshold) {
             return format(amount, currency);
+        }
+
+        // global default decimals (allow per-currency override below)
+        int decimals = cfg.getInt("currency.format.short.decimals", 1);
+        if (currency != null && cfg.getConfigurationSection("multi-currency.currencies") != null) {
+            String perKey = "multi-currency.currencies." + currency.toLowerCase() + ".short.decimals";
+            if (cfg.contains(perKey)) {
+                decimals = cfg.getInt(perKey, decimals);
+            }
         }
 
         String numeric = com.skyblockexp.ezeconomy.util.NumberUtil.formatShort(java.math.BigDecimal.valueOf(amount), decimals);
