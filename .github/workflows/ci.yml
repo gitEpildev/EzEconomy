@@ -40,8 +40,32 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-m2-${{ matrix.paper-version }}-
 
-      - name: Run unit tests (exclude feature tests)
-        run: mvn -B -Dpaper.version=${{ matrix.paper-version }} -Dmockbukkit.artifactId=${{ matrix.mockbukkit-artifactId }} -Dmockbukkit.version=${{ matrix.mockbukkit-version }} -Dtest='!*FeatureTest' -Dsurefire.failIfNoSpecifiedTests=false test
+      - name: Run unit tests (exclude feature tests) and generate JaCoCo report
+        run: mvn -B -Dpaper.version=${{ matrix.paper-version }} -Dmockbukkit.artifactId=${{ matrix.mockbukkit-artifactId }} -Dmockbukkit.version=${{ matrix.mockbukkit-version }} -Dtest='!*FeatureTest' -Dsurefire.failIfNoSpecifiedTests=false test jacoco:report
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: '**/target/site/jacoco/jacoco.xml'
+          fail_ci_if_error: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Compute coverage summary
+        run: |
+          python3 .github/scripts/coverage_summary.py --metric LINE --output coverage-summary.md
+
+      - name: Post coverage summary comment
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          issue-number: ${{ github.event.pull_request.number }}
+          body-file: coverage-summary.md
+          edit-mode: replace
 
   feature-tests:
     runs-on: ubuntu-latest
