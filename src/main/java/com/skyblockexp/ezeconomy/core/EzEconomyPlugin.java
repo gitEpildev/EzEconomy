@@ -1,39 +1,16 @@
 package com.skyblockexp.ezeconomy.core;
 
 import com.skyblockexp.ezeconomy.api.storage.StorageProvider;
-import com.skyblockexp.ezeconomy.command.BalanceCommand;
-import com.skyblockexp.ezeconomy.command.BaltopCommand;
-import com.skyblockexp.ezeconomy.command.BankCommand;
-import com.skyblockexp.ezeconomy.command.CurrencyCommand;
-import com.skyblockexp.ezeconomy.command.EcoCommand;
-import com.skyblockexp.ezeconomy.command.EzEconomyCommand;
-import com.skyblockexp.ezeconomy.command.PayCommand;
-import com.skyblockexp.ezeconomy.gui.GuiListener;
 import com.skyblockexp.ezeconomy.manager.BankInterestManager;
 import com.skyblockexp.ezeconomy.manager.CurrencyManager;
 import com.skyblockexp.ezeconomy.manager.CurrencyPreferenceManager;
 import com.skyblockexp.ezeconomy.manager.DailyRewardManager;
-import com.skyblockexp.ezeconomy.storage.MongoDBStorageProvider;
-import com.skyblockexp.ezeconomy.storage.MySQLStorageProvider;
-import com.skyblockexp.ezeconomy.storage.SQLiteStorageProvider;
-import com.skyblockexp.ezeconomy.storage.YMLStorageProvider;
-import com.skyblockexp.ezeconomy.tabcomplete.BankTabCompleter;
-import com.skyblockexp.ezeconomy.tabcomplete.CurrencyTabCompleter;
-import com.skyblockexp.ezeconomy.tabcomplete.EcoTabCompleter;
-import com.skyblockexp.ezeconomy.tabcomplete.EzEconomyCommandTabCompleter;
-import com.skyblockexp.ezeconomy.tabcomplete.PayTabCompleter;
 import com.skyblockexp.ezeconomy.update.SpigotUpdateChecker;
-import com.skyblockexp.ezeconomy.placeholder.EzEconomyPlaceholderExpansion;
 import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.util.Collections;
 import java.util.List;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
 import net.milkbowl.vault.economy.Economy;
 
@@ -68,124 +45,12 @@ public class EzEconomyPlugin extends JavaPlugin {
     private com.skyblockexp.ezeconomy.bootstrap.Bootstrap bootstrap;
     private com.skyblockexp.ezeconomy.lock.LockManager lockManager;
     private static EzEconomyPlugin INSTANCE;
-    // Metrics counters (stored as cents to avoid floating point drift)
-    private final java.util.concurrent.atomic.AtomicLong totalDepositedCents = new java.util.concurrent.atomic.AtomicLong(0L);
-    private final java.util.concurrent.atomic.AtomicLong totalWithdrawnCents = new java.util.concurrent.atomic.AtomicLong(0L);
-    private final java.util.concurrent.atomic.AtomicLong totalConvertedCents = new java.util.concurrent.atomic.AtomicLong(0L);
+    // Extracted services
+    private com.skyblockexp.ezeconomy.service.metrics.TransactionMetricsService transactionMetricsService;
+    private com.skyblockexp.ezeconomy.service.format.CurrencyFormatter currencyFormatter;
+    private com.skyblockexp.ezeconomy.service.storage.StorageConfigLoader storageConfigLoader;
 
-    public String format(double amount) {
-        return format(amount, getDefaultCurrency());
-    }
-
-    /**
-     * Format an amount for a specific currency using configured decimals and symbol.
-     */
-    public String format(double amount, String currency) {
-        if (currency == null) {
-            java.text.NumberFormat nf = java.text.NumberFormat.getNumberInstance(java.util.Locale.getDefault());
-            nf.setGroupingUsed(true);
-            nf.setMinimumFractionDigits(2);
-            nf.setMaximumFractionDigits(2);
-            return nf.format(amount);
-        }
-        var cfg = getConfig();
-        if (cfg.getConfigurationSection("multi-currency.currencies") == null) {
-            java.text.NumberFormat nf = java.text.NumberFormat.getNumberInstance(java.util.Locale.getDefault());
-            nf.setGroupingUsed(true);
-            nf.setMinimumFractionDigits(2);
-            nf.setMaximumFractionDigits(2);
-            return nf.format(amount);
-        }
-        String key = currency.toLowerCase();
-        String symbol = cfg.getString("multi-currency.currencies." + key + ".symbol", "");
-        int decimals = cfg.getInt("multi-currency.currencies." + key + ".decimals", 2);
-
-        // Locale configuration: server-wide override optional
-        String localeCfg = cfg.getString("currency.format.locale", "");
-        java.util.Locale locale = java.util.Locale.getDefault();
-        if (localeCfg != null && !localeCfg.isBlank()) {
-            String[] parts = localeCfg.split("[_-]");
-            if (parts.length == 1) locale = new java.util.Locale(parts[0]);
-            else locale = new java.util.Locale(parts[0], parts[1]);
-        }
-
-        java.text.NumberFormat nf = java.text.NumberFormat.getNumberInstance(locale);
-        nf.setGroupingUsed(true);
-        nf.setMinimumFractionDigits(decimals);
-        nf.setMaximumFractionDigits(decimals);
-        String formatted = nf.format(java.math.BigDecimal.valueOf(amount).setScale(decimals, java.math.RoundingMode.HALF_UP));
-
-        // Symbol placement: optional per-currency setting (prefix/suffix)
-        String placement = cfg.getString("multi-currency.currencies." + key + ".symbol_placement", "suffix").toLowerCase();
-        boolean prefix = placement.equals("prefix") || placement.equals("before");
-        if (symbol == null || symbol.isEmpty()) {
-            return formatted;
-        }
-        return prefix ? (symbol + " " + formatted) : (formatted + " " + symbol);
-    }
-
-    /**
-     * Format only the numeric amount part (no currency symbol or placement).
-     * This preserves locale and decimals but excludes the symbol so message
-     * templates can control placement.
-     */
-    public String formatAmountOnly(double amount, String currency) {
-        if (currency == null) {
-            java.text.NumberFormat nf = java.text.NumberFormat.getNumberInstance(java.util.Locale.getDefault());
-            nf.setGroupingUsed(true);
-            nf.setMinimumFractionDigits(2);
-            nf.setMaximumFractionDigits(2);
-            return nf.format(amount);
-        }
-        var cfg = getConfig();
-        if (cfg.getConfigurationSection("multi-currency.currencies") == null) {
-            java.text.NumberFormat nf = java.text.NumberFormat.getNumberInstance(java.util.Locale.getDefault());
-            nf.setGroupingUsed(true);
-            nf.setMinimumFractionDigits(2);
-            nf.setMaximumFractionDigits(2);
-            return nf.format(amount);
-        }
-        String key = currency.toLowerCase();
-        int decimals = cfg.getInt("multi-currency.currencies." + key + ".decimals", 2);
-
-        // Locale configuration: server-wide override optional
-        String localeCfg = cfg.getString("currency.format.locale", "");
-        java.util.Locale locale = java.util.Locale.getDefault();
-        if (localeCfg != null && !localeCfg.isBlank()) {
-            String[] parts = localeCfg.split("[_-]");
-            if (parts.length == 1) locale = new java.util.Locale(parts[0]);
-            else locale = new java.util.Locale(parts[0], parts[1]);
-        }
-
-        java.text.NumberFormat nf = java.text.NumberFormat.getNumberInstance(locale);
-        nf.setGroupingUsed(true);
-        nf.setMinimumFractionDigits(decimals);
-        nf.setMaximumFractionDigits(decimals);
-        String formatted = nf.format(java.math.BigDecimal.valueOf(amount).setScale(decimals, java.math.RoundingMode.HALF_UP));
-        return formatted;
-    }
-
-    /**
-     * Get the raw currency symbol for a currency key (no surrounding whitespace).
-     */
-    public String getCurrencySymbol(String currency) {
-        if (currency == null) return "";
-        var cfg = getConfig();
-        String key = currency.toLowerCase();
-        return cfg.getString("multi-currency.currencies." + key + ".symbol", "");
-    }
-
-    /**
-     * Format a price string suitable for messages. Uses the loaded MessageProvider's
-     * `price_message_format` template when available; otherwise falls back to the
-     * existing combined `format(...)` behavior.
-     */
-    public String formatPriceForMessage(double amount, String currency) {
-        if (this.messageProvider != null) {
-            return this.messageProvider.formatPrice(this, amount, currency);
-        }
-        return format(amount, currency);
-    }
+    
 
     public VaultEconomyImpl getEconomy() {
         return vaultEconomy;
@@ -197,6 +62,10 @@ public class EzEconomyPlugin extends JavaPlugin {
         this.bootstrap = new com.skyblockexp.ezeconomy.bootstrap.Bootstrap(this);
         try {
             this.bootstrap.start();
+            // Initialize extracted services after bootstrap so components/config/storage exist
+            this.storageConfigLoader = new com.skyblockexp.ezeconomy.service.storage.StorageConfigLoader(this);
+            this.currencyFormatter = new com.skyblockexp.ezeconomy.service.format.CurrencyFormatter(this);
+            this.transactionMetricsService = new com.skyblockexp.ezeconomy.service.metrics.TransactionMetricsService(this);
             new SpigotUpdateChecker(this, SPIGOT_RESOURCE_ID).checkForUpdates();
             getLogger().info("EzEconomy enabled and registered as Vault provider.");
         } catch (RuntimeException ex) {
@@ -276,39 +145,6 @@ public class EzEconomyPlugin extends JavaPlugin {
     }
 
     /**
-     * Logs a transaction using the storage provider.
-     */
-    public void logTransaction(com.skyblockexp.ezeconomy.api.storage.models.Transaction transaction) {
-        if (storage != null) {
-            // Update runtime metrics counters before persisting the transaction
-            double amt = transaction.getAmount();
-            try {
-                long cents = Math.round(java.math.BigDecimal.valueOf(amt).movePointRight(2).doubleValue());
-                if (amt > 0) {
-                    totalDepositedCents.addAndGet(cents);
-                } else if (amt < 0) {
-                    totalWithdrawnCents.addAndGet(Math.abs(cents));
-                }
-            } catch (Exception ignored) {}
-            storage.logTransaction(transaction);
-        }
-    }
-
-    /**
-     * Record a conversion amount (target currency amount). Called by conversion flows.
-     */
-    public void recordConversion(double amount) {
-        try {
-            long cents = Math.round(java.math.BigDecimal.valueOf(amount).movePointRight(2).doubleValue());
-            totalConvertedCents.addAndGet(cents);
-        } catch (Exception ignored) {}
-    }
-
-    public long getTotalDepositedCents() { return totalDepositedCents.get(); }
-    public long getTotalWithdrawnCents() { return totalWithdrawnCents.get(); }
-    public long getTotalConvertedCents() { return totalConvertedCents.get(); }
-
-    /**
      * Retrieves transaction history for a player and currency.
      */
     public java.util.List<com.skyblockexp.ezeconomy.api.storage.models.Transaction> getTransactions(java.util.UUID uuid, String currency) {
@@ -316,16 +152,6 @@ public class EzEconomyPlugin extends JavaPlugin {
             return storage.getTransactions(uuid, currency);
         }
         return java.util.Collections.emptyList();
-    }
-
-    public void ensureDefaultConfigs() {
-        // Default config/resource creation moved to ConfigComponent during bootstrap.
-        // Retained for compatibility; no-op here.
-    }
-
-    public void loadMessages() {
-        // Message provider initialization moved to ConfigComponent during bootstrap.
-        // This method remains for runtime reloads and is intentionally a no-op here.
     }
 
     public void setMessagesConfig(FileConfiguration messagesConfig) {
@@ -336,24 +162,10 @@ public class EzEconomyPlugin extends JavaPlugin {
         this.messageProvider = provider;
     }
 
-    public boolean initializeStorage() {
-        // Storage initialization moved to StorageComponent during bootstrap.
-        // Keep method for compatibility; actual initialization is no-op here.
-        return storage != null;
-    }
-
-    public YamlConfiguration loadStorageConfig(String fileName) {
-        File file = new File(getDataFolder(), fileName);
-        return YamlConfiguration.loadConfiguration(file);
-    }
+    
 
     public void setStorage(StorageProvider provider) {
         this.storage = provider;
-    }
-
-    public void initializeManagers() {
-        // Manager initialization moved to ManagersComponent during bootstrap.
-        new com.skyblockexp.ezeconomy.bootstrap.component.ManagersComponent(this).start();
     }
 
     public void setCurrencyPreferenceManager(CurrencyPreferenceManager m) {
@@ -388,29 +200,17 @@ public class EzEconomyPlugin extends JavaPlugin {
         this.metrics = metrics;
     }
 
-    public void registerEconomy() {
-        // Economy registration moved to EconomyComponent during bootstrap.
-        new com.skyblockexp.ezeconomy.bootstrap.component.EconomyComponent(this).start();
-    }
-
     public void setVaultEconomy(VaultEconomyImpl impl) {
         this.vaultEconomy = impl;
     }
 
-    public void registerCommands() {
-        // Command registration moved to CommandsComponent during bootstrap.
-        new com.skyblockexp.ezeconomy.bootstrap.component.CommandsComponent(this).start();
-    }
-
-    public void registerListeners() {
-        // Listener registration moved to ListenersComponent during bootstrap.
-        new com.skyblockexp.ezeconomy.bootstrap.component.ListenersComponent(this).start();
-    }
-
-    public void loadUserGuiConfig() {
-        // Gui loading moved to GuiComponent during bootstrap.
-        // Delegate runtime reload to GuiComponent implementation.
-        new com.skyblockexp.ezeconomy.bootstrap.component.GuiComponent(this).start();
+    /**
+     * @deprecated Economy registration is handled by the EconomyComponent during bootstrap.
+     * This transitional shim delegates to the EconomyComponent to preserve test compatibility.
+     */
+    @Deprecated
+    public void registerEconomy() {
+        new com.skyblockexp.ezeconomy.bootstrap.component.EconomyComponent(this).start();
     }
 
     public FileConfiguration getUserGuiConfig() {
@@ -436,8 +236,27 @@ public class EzEconomyPlugin extends JavaPlugin {
         return INSTANCE;
     }
 
-    public void registerPlaceholderExpansion() {
-        // Placeholder registration moved to PlaceholderComponent during bootstrap.
-        new com.skyblockexp.ezeconomy.bootstrap.component.PlaceholderComponent(this).start();
+    /**
+     * Accessor for the CurrencyFormatter service.
+     */
+    public com.skyblockexp.ezeconomy.service.format.CurrencyFormatter getCurrencyFormatter() {
+        if (currencyFormatter == null) currencyFormatter = new com.skyblockexp.ezeconomy.service.format.CurrencyFormatter(this);
+        return currencyFormatter;
+    }
+
+    /**
+     * Accessor for the TransactionMetricsService.
+     */
+    public com.skyblockexp.ezeconomy.service.metrics.TransactionMetricsService getTransactionMetricsService() {
+        if (transactionMetricsService == null) transactionMetricsService = new com.skyblockexp.ezeconomy.service.metrics.TransactionMetricsService(this);
+        return transactionMetricsService;
+    }
+
+    /**
+     * Accessor for the StorageConfigLoader.
+     */
+    public com.skyblockexp.ezeconomy.service.storage.StorageConfigLoader getStorageConfigLoader() {
+        if (storageConfigLoader == null) storageConfigLoader = new com.skyblockexp.ezeconomy.service.storage.StorageConfigLoader(this);
+        return storageConfigLoader;
     }
 }

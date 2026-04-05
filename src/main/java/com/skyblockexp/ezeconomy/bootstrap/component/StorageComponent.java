@@ -8,6 +8,7 @@ import com.skyblockexp.ezeconomy.storage.MySQLStorageProvider;
 import com.skyblockexp.ezeconomy.storage.SQLiteStorageProvider;
 import com.skyblockexp.ezeconomy.storage.MongoDBStorageProvider;
 import org.bukkit.configuration.file.YamlConfiguration;
+import com.skyblockexp.ezeconomy.service.storage.StorageConfigLoader;
 
 public class StorageComponent implements BootstrapComponent {
     private final EzEconomyPlugin plugin;
@@ -30,22 +31,22 @@ public class StorageComponent implements BootstrapComponent {
         try {
             switch (type) {
                 case "mysql":
-                    YamlConfiguration mysqlCfg = plugin.loadStorageConfig("config-mysql.yml");
+                    YamlConfiguration mysqlCfg = new StorageConfigLoader(plugin).load("config-mysql.yml");
                     provider = new MySQLStorageProvider(plugin, mysqlCfg);
                     break;
                 case "sqlite":
                 case "sqlite3":
-                    YamlConfiguration sqliteCfg = plugin.loadStorageConfig("config-sqlite.yml");
+                    YamlConfiguration sqliteCfg = new StorageConfigLoader(plugin).load("config-sqlite.yml");
                     provider = new SQLiteStorageProvider(plugin, sqliteCfg);
                     break;
                 case "mongodb":
                 case "mongo":
-                    YamlConfiguration mongoCfg = plugin.loadStorageConfig("config-mongodb.yml");
+                    YamlConfiguration mongoCfg = new StorageConfigLoader(plugin).load("config-mongodb.yml");
                     provider = new MongoDBStorageProvider(plugin, mongoCfg);
                     break;
                 case "yml":
                 default:
-                    YamlConfiguration ymlCfg = plugin.loadStorageConfig("config-yml.yml");
+                    YamlConfiguration ymlCfg = new StorageConfigLoader(plugin).load("config-yml.yml");
                     provider = new YMLStorageProvider(plugin, ymlCfg);
                     break;
             }

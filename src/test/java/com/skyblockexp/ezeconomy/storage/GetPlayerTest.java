@@ -18,14 +18,14 @@ public class GetPlayerTest {
 
     @BeforeEach
     public void setup() {
-        server = MockBukkit.mock();
-        plugin = MockBukkit.load(EzEconomyPlugin.class);
+        server = TestSupport.setupMockServer();
+        plugin = TestSupport.loadPlugin(server);
     }
 
     @AfterEach
     public void teardown() {
-        TestSupport.cleanupTestDataFolder(plugin, "test-data");
-        MockBukkit.unmock();
+        if (plugin != null) TestSupport.cleanupTestDataFolder(plugin, "test-data");
+        TestSupport.tearDown();
     }
 
     @Test

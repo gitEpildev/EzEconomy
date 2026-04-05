@@ -39,7 +39,7 @@ public class DepositSubcommand implements Subcommand {
         if (handleEconomyFailure(sender, depositResponse)) {
             return true;
         }
-        String formattedAmount = plugin.formatPriceForMessage(amount, currency);
+        String formattedAmount = plugin.getCurrencyFormatter().formatPriceForMessage(amount, currency);
         java.util.HashMap<String, String> placeholders = new java.util.HashMap<>();
         placeholders.put("name", String.valueOf(args[0]));
         placeholders.put("amount", String.valueOf(formattedAmount));

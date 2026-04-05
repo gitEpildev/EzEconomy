@@ -81,7 +81,7 @@ public class EzEconomyPAPIExpansion extends PlaceholderExpansion {
                 if (offlinePlayer == null) return "0";
                 UUID uuid = offlinePlayer.getUniqueId();
                 String pref;
-                if (testEz != null) {
+                    if (testEz != null) {
                     pref = testEz.getCurrencyPreferenceManager() == null ? testEz.getDefaultCurrency() : testEz.getCurrencyPreferenceManager().getPreferredCurrency(uuid);
                     String currency = pref == null ? testEz.getDefaultCurrency() : pref;
                     StorageProvider storage = testEz.getStorageOrWarn();
@@ -92,9 +92,9 @@ public class EzEconomyPAPIExpansion extends PlaceholderExpansion {
                     pref = ezPlugin.getCurrencyPreferenceManager() == null ? ezPlugin.getDefaultCurrency() : ezPlugin.getCurrencyPreferenceManager().getPreferredCurrency(uuid);
                     String currency = pref == null ? ezPlugin.getDefaultCurrency() : pref;
                     StorageProvider storage = ezPlugin.getStorageOrWarn();
-                    if (storage == null) return safe(ezPlugin.format(0d, currency));
+                    if (storage == null) return safe(ezPlugin.getCurrencyFormatter().format(0d, currency));
                     double bal = storage.getBalance(uuid, currency);
-                    return safe(ezPlugin.format(bal, currency));
+                    return safe(ezPlugin.getCurrencyFormatter().format(bal, currency));
                 }
             }
 
@@ -102,16 +102,16 @@ public class EzEconomyPAPIExpansion extends PlaceholderExpansion {
                 if (offlinePlayer == null) return "0";
                 String currency = identifier.substring("balance_".length());
                 UUID uuid = offlinePlayer.getUniqueId();
-                if (testEz != null) {
+                    if (testEz != null) {
                     StorageProvider storage = testEz.getStorageOrWarn();
                     if (storage == null) return safe(testEz.format(0d, currency));
                     double bal = storage.getBalance(uuid, currency);
                     return safe(testEz.format(bal, currency));
                 } else {
                     StorageProvider storage = ezPlugin.getStorageOrWarn();
-                    if (storage == null) return safe(ezPlugin.format(0d, currency));
+                    if (storage == null) return safe(ezPlugin.getCurrencyFormatter().format(0d, currency));
                     double bal = storage.getBalance(uuid, currency);
-                    return safe(ezPlugin.format(bal, currency));
+                    return safe(ezPlugin.getCurrencyFormatter().format(bal, currency));
                 }
             }
 
@@ -131,7 +131,7 @@ public class EzEconomyPAPIExpansion extends PlaceholderExpansion {
                     }
                 } else {
                     try {
-                        out = ezPlugin.getCurrencySymbol(currency);
+                        out = ezPlugin.getCurrencyFormatter().getCurrencySymbol(currency);
                     } catch (Throwable t) {
                         if (plugin != null) plugin.getLogger().warning("Failed to get currency symbol: " + t.getMessage());
                         else System.out.println("Failed to get currency symbol: " + t.getMessage());
@@ -218,7 +218,7 @@ public class EzEconomyPAPIExpansion extends PlaceholderExpansion {
                                     ep = sp == null ? null : sp.getPlayer(e.getKey());
                                 } catch (Throwable ignored) {}
                                 String name = ep == null ? (Bukkit.getOfflinePlayer(e.getKey()).getName() == null ? e.getKey().toString() : Bukkit.getOfflinePlayer(e.getKey()).getName()) : (ep.getDisplayName() == null ? ep.getName() : ep.getDisplayName());
-                                return name + " - " + finalEz.format(e.getValue(), currency);
+                                return name + " - " + finalEz.getCurrencyFormatter().format(e.getValue(), currency);
                             }).collect(Collectors.joining(", "));
                             topCache.put(cacheKey, result, TOP_CACHE_TTL_MS);
                         } catch (Throwable t) {
@@ -249,7 +249,7 @@ public class EzEconomyPAPIExpansion extends PlaceholderExpansion {
                 StorageProvider storage = testEz != null ? testEz.getStorageOrWarn() : ezPlugin.getStorageOrWarn();
                 if (storage == null) return "";
                 double bal = storage.getBankBalance(bankName, currency);
-                return safe(testEz != null ? testEz.format(bal, currency) : ezPlugin.format(bal, currency));
+                return safe(testEz != null ? testEz.format(bal, currency) : ezPlugin.getCurrencyFormatter().format(bal, currency));
             }
         } catch (Throwable t) {
             if (plugin != null) {

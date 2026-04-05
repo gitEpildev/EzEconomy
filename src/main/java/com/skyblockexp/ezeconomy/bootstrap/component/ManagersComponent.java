@@ -12,6 +12,23 @@ public class ManagersComponent implements BootstrapComponent {
 
     @Override
     public void start() {
+        initManagers();
+    }
+
+    @Override
+    public void stop() {
+        if (plugin.getBankInterestManager() != null) {
+            try { plugin.getBankInterestManager().stop(); } catch (Exception ignored) {}
+        }
+    }
+
+    @Override
+    public void reload() {
+        // Re-initialize managers in-place; keep lifecycle inside this component
+        initManagers();
+    }
+
+    private void initManagers() {
         // Initialize managers previously owned by the main plugin class
         com.skyblockexp.ezeconomy.manager.CurrencyPreferenceManager pref = new com.skyblockexp.ezeconomy.manager.CurrencyPreferenceManager(plugin);
         com.skyblockexp.ezeconomy.manager.CurrencyManager cm = new com.skyblockexp.ezeconomy.manager.CurrencyManager(plugin);
@@ -30,18 +47,5 @@ public class ManagersComponent implements BootstrapComponent {
         plugin.setBankInterestManager(bank);
         plugin.setDailyRewardManager(drm);
         plugin.setPayFlowManager(pfm);
-    }
-
-    @Override
-    public void stop() {
-        if (plugin.getBankInterestManager() != null) {
-            try { plugin.getBankInterestManager().stop(); } catch (Exception ignored) {}
-        }
-    }
-
-    @Override
-    public void reload() {
-        // re-initialize managers if required
-        plugin.initializeManagers();
     }
 }

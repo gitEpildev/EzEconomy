@@ -96,7 +96,7 @@ public class BaltopCommand implements CommandExecutor {
                 MessageUtils.send(sender, plugin, "rank_balance", java.util.Map.of(
                     "rank", String.valueOf(rank),
                     "player", player.getName(),
-                    "balance", plugin.formatPriceForMessage(entry.getValue(), currency)
+                    "balance", plugin.getCurrencyFormatter().formatPriceForMessage(entry.getValue(), currency)
                 ));
                 rank++;
             }
@@ -117,7 +117,7 @@ public class BaltopCommand implements CommandExecutor {
             MessageUtils.send(sender, plugin, "rank_balance", java.util.Map.of(
                 "rank", String.valueOf(rank),
                 "player", playerName,
-                "balance", plugin.formatPriceForMessage(entry.getValue(), currency)
+                "balance", plugin.getCurrencyFormatter().formatPriceForMessage(entry.getValue(), currency)
             ));
             rank++;
         }

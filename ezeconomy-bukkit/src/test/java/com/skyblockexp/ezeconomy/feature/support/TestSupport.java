@@ -18,7 +18,12 @@ public final class TestSupport {
     private TestSupport() {}
 
     public static Object setupMockServer() {
-        return MockBukkit.mock();
+        try {
+            return MockBukkit.mock();
+        } catch (IllegalStateException e) {
+            try { MockBukkit.unmock(); } catch (Exception ignored) {}
+            return MockBukkit.mock();
+        }
     }
 
     public static EzEconomyPlugin loadPlugin(Object server) {

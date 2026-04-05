@@ -84,6 +84,14 @@ public class NumberUtil {
      * Examples: 1500 -> "1.5k", 1000 -> "1k", 2500000 -> "2.5m"
      */
     public static String formatShort(java.math.BigDecimal value) {
+        return formatShort(value, 1);
+    }
+
+    /**
+     * Format short with configurable decimal precision for the suffix value.
+     * Example: decimals=2 -> 1500 -> "1.50k"
+     */
+    public static String formatShort(java.math.BigDecimal value, int decimals) {
         if (value == null) return "0";
         java.math.BigDecimal abs = value.abs();
         java.math.BigDecimal thousand = new java.math.BigDecimal("1000");
@@ -94,23 +102,23 @@ public class NumberUtil {
         String suffix = "";
         java.math.BigDecimal display;
         if (abs.compareTo(trillion) >= 0) {
-            display = value.divide(trillion, 1, RoundingMode.HALF_UP);
+            display = value.divide(trillion, decimals, RoundingMode.HALF_UP);
             suffix = "t";
         } else if (abs.compareTo(billion) >= 0) {
-            display = value.divide(billion, 1, RoundingMode.HALF_UP);
+            display = value.divide(billion, decimals, RoundingMode.HALF_UP);
             suffix = "b";
         } else if (abs.compareTo(million) >= 0) {
-            display = value.divide(million, 1, RoundingMode.HALF_UP);
+            display = value.divide(million, decimals, RoundingMode.HALF_UP);
             suffix = "m";
         } else if (abs.compareTo(thousand) >= 0) {
-            display = value.divide(thousand, 1, RoundingMode.HALF_UP);
+            display = value.divide(thousand, decimals, RoundingMode.HALF_UP);
             suffix = "k";
         } else {
             // small values: return plain integer/decimal string without suffix
             java.math.BigDecimal stripped = value.stripTrailingZeros();
             return stripped.scale() <= 0 ? stripped.toPlainString() : stripped.toPlainString();
         }
-        // strip trailing .0 (e.g. 1.0 -> 1)
+        // strip trailing zeros beyond decimal point (e.g. 1.00 -> 1)
         java.math.BigDecimal stripped = display.stripTrailingZeros();
         return stripped.toPlainString() + suffix;
     }

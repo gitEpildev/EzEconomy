@@ -81,7 +81,7 @@ public class VaultEconomyImpl implements Economy {
 
     @Override
     public String format(double amount) {
-        return plugin.format(amount);
+        return plugin.getCurrencyFormatter().format(amount);
     }
 
     @Override
