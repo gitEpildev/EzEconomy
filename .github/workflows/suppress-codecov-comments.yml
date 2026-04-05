@@ -1,0 +1,33 @@
+name: Suppress Codecov Comments
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  issues: write
+
+jobs:
+  remove-codecov-comment:
+    runs-on: ubuntu-latest
+    # only run when the comment author matches known Codecov bot accounts
+    if: >-
+      contains('codecov,codecov-io,codecov-commenter', github.event.comment.user.login)
+    steps:
+      - name: Delete Codecov comment
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const login = context.payload.comment.user.login;
+            const id = context.payload.comment.id;
+            const bots = ['codecov', 'codecov-io', 'codecov-commenter'];
+            if (bots.includes(login)) {
+              await github.rest.issues.deleteComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: id
+              });
+              core.info(`Deleted Codecov comment (${id}) by ${login}`);
+            } else {
+              core.info(`Comment author ${login} not in bot list; skipping.`);
+            }
