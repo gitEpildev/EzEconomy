@@ -128,7 +128,7 @@ public class PaymentExecutor {
                             if (!currency.equalsIgnoreCase(defaultCur)) {
                                 double equiv = CurrencyUtil.convert(plugin, creditAmount, recipientCurrency, defaultCur);
                                 if (!Double.isNaN(equiv)) {
-                                    String equivDisplay = plugin.formatPriceForMessage(equiv, defaultCur);
+                                    String equivDisplay = plugin.getCurrencyFormatter().formatPriceForMessage(equiv, defaultCur);
                                     MessageUtils.send(toOffline.getPlayer(), plugin, "received_other_currency", java.util.Map.of("player", from.getName(), "amount", receiverDisplay, "amount_default", equivDisplay));
                                 } else {
                                     MessageUtils.send(toOffline.getPlayer(), plugin, "received", java.util.Map.of("player", from.getName(), "amount", receiverDisplay));
