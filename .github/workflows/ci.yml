@@ -59,14 +59,12 @@ jobs:
         run: |
           python3 .github/scripts/coverage_summary.py --metric LINE --output coverage-summary.md
 
-      - name: Post coverage summary comment
+      - name: Upload coverage summary artifact
         if: ${{ github.event_name == 'pull_request' }}
-        uses: peter-evans/create-or-update-comment@v4
+        uses: actions/upload-artifact@v4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          issue-number: ${{ github.event.pull_request.number }}
-          body-file: coverage-summary.md
-          edit-mode: replace
+          name: coverage-summary
+          path: coverage-summary.md
 
   feature-tests:
     runs-on: ubuntu-latest
