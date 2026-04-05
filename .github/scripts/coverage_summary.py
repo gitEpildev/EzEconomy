@@ -23,7 +23,17 @@ def parse_files(files, metric='LINE'):
                     covered += int(counter.get('covered', '0'))
             total_missed += missed
             total_covered += covered
-            per_module.append((str(f.parent.parent), missed, covered))
+            # Derive a clean module name by taking the path segment before 'target'
+            try:
+                parts = f.parts
+                if 'target' in parts:
+                    idx = parts.index('target')
+                    module = parts[idx-1] if idx > 0 else str(f.parent.parent)
+                else:
+                    module = str(f.parent.parent.name)
+            except Exception:
+                module = str(f.parent.parent)
+            per_module.append((module, missed, covered))
         except Exception:
             continue
     return total_missed, total_covered, per_module
