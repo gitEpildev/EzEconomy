@@ -15,13 +15,6 @@ on:
 jobs:
   bungeecord-tests:
     runs-on: ubuntu-latest
-    # Prevent duplicate runs: only run push builds for main/release branches.
-    if: |
-      github.event_name == 'pull_request' || (
-        github.event_name == 'push' && (
-          startsWith(github.ref, 'refs/heads/main') || startsWith(github.ref, 'refs/heads/release/')
-        )
-      )
     strategy:
       matrix:
         include:

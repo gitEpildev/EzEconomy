@@ -71,3 +71,30 @@ locking-strategy: LOCAL
 #   DATABASE  - use the configured SQL storage as a cache backend
 # If not present, the plugin will fall back to `locking-strategy` for backward compatibility.
 caching-strategy: LOCAL
+
+# Presentation settings for money formatting. These settings affect only
+# how amounts are shown to players and in integrations (placeholders, GUIs,
+# chat). Monetary storage and arithmetic remain unchanged.
+money-format:
+  pattern: "#,##0.00"          # DecimalFormat pattern used for formatting
+  locale: "en_US"             # Locale used for separators and currency symbol
+  currencySymbol: ""         # Symbol to use (overrides locale symbol if provided). Empty to use locale.
+  symbolPlacement: "prefix"   # prefix|suffix
+  showTrailingZeros: true       # always show two decimals (1.50 vs 1.5)
+  roundingMode: "HALF_UP"     # HALF_UP, HALF_EVEN, DOWN, etc.
+  negativeFormat: "-amount"   # "-amount" or "(amount)"
+  useCompact: true             # show 1.2K style in some UIs (compact representation)
+  compact:
+    thresholds:
+      thousand: 1000
+      million: 1000000
+      billion: 1000000000
+    suffixes:
+      thousand: "K"
+      million: "M"
+      billion: "B"
+    precision: 1
+  colors:
+    useColors: true
+    positive: "&a"             # legacy color code prefix for positive values
+    negative: "&c"             # legacy color code prefix for negative values

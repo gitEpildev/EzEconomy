@@ -68,6 +68,9 @@ public class IntegrationEzEconomyPAPIExpansionTest {
         public String format(double amount, String currency) { return String.format("%.2f %s", amount, currency); }
 
         @Override
+        public String formatShort(double amount, String currency) { return String.format("%.1f %s", amount, currency); }
+
+        @Override
         public String getCurrencySymbol(String currency) { return "$"; }
 
         @Override
@@ -110,6 +113,24 @@ public class IntegrationEzEconomyPAPIExpansionTest {
         String balance = expansion.onPlaceholderRequest(fakePlayer, "balance");
         assertNotNull(balance);
         assertTrue(balance.contains("123.45"));
+
+        // formatted balance (no currency suffix)
+        String formatted = expansion.onPlaceholderRequest(fakePlayer, "balance_formatted");
+        assertNotNull(formatted);
+        assertTrue(formatted.contains("123.45") || formatted.contains("123.5"));
+
+        // formatted balance with explicit currency
+        String formattedDollar = expansion.onPlaceholderRequest(fakePlayer, "balance_formatted_dollar");
+        assertNotNull(formattedDollar);
+        assertTrue(formattedDollar.contains("123.45") || formattedDollar.contains("123.5"));
+
+        // short / compact placeholders
+        String shortVal = expansion.onPlaceholderRequest(fakePlayer, "balance_short");
+        assertNotNull(shortVal);
+        assertTrue(shortVal.length() > 0);
+        String shortDollar = expansion.onPlaceholderRequest(fakePlayer, "balance_short_dollar");
+        assertNotNull(shortDollar);
+        assertTrue(shortDollar.length() > 0);
 
         // symbol
         String symbol = expansion.onPlaceholderRequest(null, "symbol_dollar");

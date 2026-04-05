@@ -71,6 +71,18 @@ public class EzEconomyPlaceholderExpansion extends PlaceholderExpansion {
                 double bal = storage.getBalance(player.getUniqueId(), preferredCurrency);
                 return eco.format(bal);
             }
+            // %ezeconomy_balance_formatted% or %ezeconomy_balance_short% (optional currency suffix)
+            if (split.length >= 2 && split[0].equals("balance") && (split[1].equals("formatted") || split[1].equals("short"))) {
+                if (player == null || storage == null) return null;
+                String currency = (split.length >= 3) ? split[2] : preferredCurrency;
+                double bal = storage.getBalance(player.getUniqueId(), currency);
+                if (split[1].equals("formatted")) {
+                    return plugin.getCurrencyFormatter().formatPriceForMessage(bal, currency);
+                } else {
+                    return plugin.getCurrencyFormatter().formatShort(bal, currency);
+                }
+            }
+
             if (split.length == 2 && split[0].equals("balance")) {
                 if (player == null || storage == null) {
                     return null;
