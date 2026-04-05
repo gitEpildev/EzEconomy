@@ -171,4 +171,18 @@ public class BalanceCommandFeatureTest {
         String msg = ((PlayerMock) sender).nextMessage();
         assertTrue(msg.contains("Meessem") && msg.contains("21") && msg.toLowerCase().contains("hh"));
     }
+
+    @Test
+    public void testBalanceCommand_nonexistentPlayer_returnsNotFound() throws Exception {
+        Object senderObj = server.getClass().getMethod("addPlayer", String.class).invoke(server, "ghostPlayer");
+        org.bukkit.entity.Player sender = (org.bukkit.entity.Player) senderObj;
+
+        TestSupport.MockStorage storage = new TestSupport.MockStorage();
+        TestSupport.injectField(plugin, "storage", storage);
+
+        boolean result = sender.performCommand("balance someNonexistentPlayer");
+        assertTrue(result);
+        String msg = ((PlayerMock) sender).nextMessage();
+        assertTrue(msg != null && msg.contains("Player not found"));
+    }
 }

@@ -130,7 +130,7 @@ public class DailyRewardManager {
 
     private void sendMessage(Player player, double amount, String currency) {
         String messageKey = plugin.getConfig().getString("daily-reward.message-key", "daily_reward_success");
-        String formattedAmount = plugin.getEconomy().format(amount);
+        String formattedAmount = plugin.getCurrencyFormatter().formatShort(amount, null);
         String displayCurrency = resolveCurrencyDisplay(currency);
         MessageUtils.send(player, plugin, messageKey, Map.of("amount", formattedAmount, "currency", displayCurrency));
     }

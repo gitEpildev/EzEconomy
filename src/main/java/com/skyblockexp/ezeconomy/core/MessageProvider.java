@@ -134,7 +134,7 @@ public class MessageProvider {
         if (template == null) {
             template = fallbackConfig.getString("price_message_format", "{amount} {symbol}");
         }
-        String amountStr = plugin.getCurrencyFormatter().formatAmountOnly(amount, currency);
+        String amountStr = plugin.getCurrencyFormatter().formatShort(amount, null);
         String symbol = plugin.getCurrencyFormatter().getCurrencySymbol(currency);
         java.util.Map<String, String> placeholders = java.util.Map.of("amount", amountStr, "symbol", symbol == null ? "" : symbol);
         return format(template, placeholders);

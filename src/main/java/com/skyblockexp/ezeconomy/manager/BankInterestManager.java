@@ -99,7 +99,8 @@ public class BankInterestManager {
                             storage.setBalance(uuid, currency, storage.getBalance(uuid, currency) + perMemberInterest);
                         }
                         if (player.isOnline()) {
-                            player.getPlayer().sendMessage("You received " + plugin.getEconomy().format(perMemberInterest) + " " + currency + " interest from bank '" + bank + "'");
+                            String compact = plugin.getCurrencyFormatter().formatShort(perMemberInterest, null);
+                            player.getPlayer().sendMessage("You received " + compact + " " + currency + " interest from bank '" + bank + "'");
                         }
                     }
                 }
