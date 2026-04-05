@@ -1,0 +1,52 @@
+name: Post Coverage Comment
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  post-comment:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ensure jq is installed
+        run: sudo apt-get update && sudo apt-get install -y jq
+      - name: Determine PR number
+        id: get_pr
+        run: |
+          PR=$(jq -r '.workflow_run.pull_requests[0].number // empty' "$GITHUB_EVENT_PATH") || PR=""
+          echo "pr=$PR" >> "$GITHUB_OUTPUT"
+
+      - name: Download coverage summary artifact
+        if: steps.get_pr.outputs.pr != ''
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-summary
+
+      - name: Prepare comment body (add CI status)
+        if: steps.get_pr.outputs.pr != ''
+        run: |
+          CONCLUSION=$(jq -r '.workflow_run.conclusion // "unknown"' "$GITHUB_EVENT_PATH")
+          echo "### CI result: $CONCLUSION" > comment.md
+          echo "" >> comment.md
+          if [ -f coverage-summary.md ]; then
+            cat coverage-summary.md >> comment.md
+          else
+            echo "(coverage summary artifact not found)" >> comment.md
+          fi
+
+      - name: Post coverage summary comment
+        if: steps.get_pr.outputs.pr != ''
+        # Use repository-level permissions from workflow_run to post comment
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          # workflow_run payload contains the pull requests array; use the first PR
+          issue-number: ${{ steps.get_pr.outputs.pr }}
+          body-file: comment.md
+          edit-mode: replace
