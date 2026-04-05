@@ -25,6 +25,14 @@ jobs:
           COMMENT_USER: ${{ github.event.comment.user.login }}
           COMMENT_URL: ${{ github.event.comment.html_url }}
         run: |
+          # When the event is an issue comment, skip notifications from known bot accounts
+          if [[ "$EVENT_NAME" != "issues" ]]; then
+            if [[ "$COMMENT_USER" == "codecov" || "$COMMENT_USER" == "codecov-io" || "$COMMENT_USER" == "codecov-commenter" ]]; then
+              echo "Skipping notification for bot user: $COMMENT_USER"
+              exit 0
+            fi
+          fi
+
           if [[ "$EVENT_NAME" == "issues" ]]; then
             jq -n \
               --arg role "<@&$DEVELOPER_ROLE_ID>" \
