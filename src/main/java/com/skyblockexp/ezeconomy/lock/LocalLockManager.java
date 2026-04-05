@@ -5,18 +5,28 @@ import com.skyblockexp.ezeconomy.storage.TransferLockManager;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class LocalLockManager implements LockManager {
     private final Map<UUID, String> tokens = new ConcurrentHashMap<>();
 
     @Override
-    public String acquire(UUID uuid, long ttlMs, long retryMs, int maxAttempts) {
+    public String acquire(UUID uuid, long ttlMs, long retryMs, int maxAttempts) throws InterruptedException {
         ReentrantLock lock = TransferLockManager.getLock(uuid);
-        lock.lock();
-        String token = "local-" + UUID.randomUUID();
-        tokens.put(uuid, token);
-        return token;
+        int attempts = 0;
+        while (maxAttempts <= 0 || attempts < maxAttempts) {
+            // try immediate acquisition
+            if (lock.tryLock()) {
+                String token = "local-" + UUID.randomUUID();
+                tokens.put(uuid, token);
+                return token;
+            }
+            attempts++;
+            if (retryMs > 0) Thread.sleep(retryMs);
+            // if maxAttempts <= 0 we treat as infinite attempts (but still yield between tries)
+        }
+        return null;
     }
 
     @Override
