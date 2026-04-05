@@ -38,4 +38,25 @@ public class BungeeLockManagerTest {
 
         assertTrue(mgr1.release(id, t1));
     }
+
+    @Test
+    public void acquireEventuallySucceedsAfterRelease() throws InterruptedException {
+        MockTransport transport = new MockTransport();
+        BungeeLockManager mgr = new BungeeLockManager(transport, 5000, 50, 20);
+
+        UUID id = UUID.randomUUID();
+        String t = transport.acquire(id, 200);
+        assertNotNull(t);
+
+        Thread releaser = new Thread(() -> {
+            try { Thread.sleep(150); } catch (InterruptedException ignored) {}
+            transport.release(id, t);
+        });
+        releaser.start();
+
+        String token = mgr.acquire(id, 1000, 50, 20);
+        assertNotNull(token);
+        assertTrue(mgr.release(id, token));
+        releaser.join();
+    }
 }
