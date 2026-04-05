@@ -60,7 +60,6 @@ jobs:
           python3 .github/scripts/coverage_summary.py --metric LINE --output coverage-summary.md
 
       - name: Upload coverage summary artifact
-        if: ${{ github.event_name == 'pull_request' }}
         uses: actions/upload-artifact@v7
         with:
           name: coverage-summary
