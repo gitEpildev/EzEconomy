@@ -42,7 +42,7 @@ public class InfoSubcommand implements Subcommand {
         double balance = balanceResponse.balance;
         com.skyblockexp.ezeconomy.util.MessageUtils.send(sender, plugin, "bank_info", Map.of(
             "name", args[0],
-            "balance", plugin.getEconomy().format(balance),
+            "balance", plugin.getCurrencyFormatter().formatShort(balance, null),
             "currency", currency,
             "members", String.valueOf(storage.getBankMembers(args[0]).size())
         ));

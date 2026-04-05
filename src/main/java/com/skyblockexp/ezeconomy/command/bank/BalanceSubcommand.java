@@ -34,7 +34,7 @@ public class BalanceSubcommand implements Subcommand {
             return true;
         }
         double bal = balanceResponse.balance;
-        com.skyblockexp.ezeconomy.util.MessageUtils.send(sender, plugin, "bank_balance", Map.of("name", args[0], "balance", plugin.getEconomy().format(bal), "currency", currency));
+        com.skyblockexp.ezeconomy.util.MessageUtils.send(sender, plugin, "bank_balance", Map.of("name", args[0], "balance", plugin.getCurrencyFormatter().formatShort(bal, null), "currency", currency));
         return true;
     }
     private boolean handleEconomyFailure(CommandSender sender, EconomyResponse response) {

@@ -56,18 +56,8 @@ public class BalanceCommand implements CommandExecutor {
             }
 
             // Otherwise treat as a player name. Check online players first to avoid Mojang lookups.
-            Player online = Bukkit.getPlayerExact(args[0]);
-            OfflinePlayer target = null;
-            if (online != null) {
-                target = online;
-            } else {
-                try {
-                    target = Bukkit.getOfflinePlayer(args[0]);
-                } catch (Exception ex) {
-                    MessageUtils.send(sender, plugin, "player_not_found");
-                    return true;
-                }
-            }
+            var maybe = com.skyblockexp.ezeconomy.util.PlayerLookup.findByName(args[0]);
+            OfflinePlayer target = maybe.orElse(null);
 
             if (target == null || (!target.hasPlayedBefore() && !target.isOnline())) {
                 MessageUtils.send(sender, plugin, "player_not_found");
@@ -89,7 +79,13 @@ public class BalanceCommand implements CommandExecutor {
                 MessageUtils.send(sender, plugin, "no_permission_others_balance");
                 return true;
             }
-            OfflinePlayer target = Bukkit.getOfflinePlayer(args[0]);
+            // Use PlayerLookup to avoid expensive or blocking lookups.
+            var maybe2 = com.skyblockexp.ezeconomy.util.PlayerLookup.findByName(args[0]);
+            OfflinePlayer target = maybe2.orElse(null);
+            if (target == null) {
+                MessageUtils.send(sender, plugin, "player_not_found");
+                return true;
+            }
             String currency = args[1].toLowerCase();
             if (!currencies.containsKey(currency)) {
                 MessageUtils.send(sender, plugin, "unknown_currency", java.util.Map.of("currency", currency));

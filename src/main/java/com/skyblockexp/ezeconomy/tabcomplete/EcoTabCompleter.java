@@ -27,11 +27,7 @@ public class EcoTabCompleter implements TabCompleter {
                     .collect(Collectors.toList());
         }
         if (args.length == 2) {
-            return Bukkit.getOfflinePlayers().length > 0 ?
-                    Arrays.stream(Bukkit.getOfflinePlayers())
-                            .map(OfflinePlayer::getName)
-                            .filter(name -> name != null && name.toLowerCase().startsWith(args[1].toLowerCase()))
-                            .collect(Collectors.toList()) : new ArrayList<>();
+            return com.skyblockexp.ezeconomy.util.PlayerLookup.namesStartingWith(args[1]);
         }
         // suggest currency at position 4: /eco give <player> <amount> [currency]
         if (args.length == 4) {

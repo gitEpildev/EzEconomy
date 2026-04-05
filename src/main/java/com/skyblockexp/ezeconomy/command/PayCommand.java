@@ -119,9 +119,10 @@ public class PayCommand implements CommandExecutor {
         if (online != null) {
             knownOffline = true;
         } else {
-            OfflinePlayer sample = Bukkit.getOfflinePlayer(args[0]);
-            if (sample != null) {
-                // Consider known if has played before or if storage already contains a balance entry for this UUID
+            // Use PlayerLookup to avoid expensive or blocking lookups.
+            var maybe = com.skyblockexp.ezeconomy.util.PlayerLookup.findByName(args[0]);
+            if (maybe.isPresent()) {
+                OfflinePlayer sample = maybe.get();
                 if (sample.hasPlayedBefore()) {
                     knownOffline = true;
                 } else {
@@ -134,15 +135,7 @@ public class PayCommand implements CommandExecutor {
                             }
                         }
                     } catch (Exception ignored) {
-                        // If storage lookup fails, fall back to scanning Bukkit.getOfflinePlayers()
-                    }
-                }
-            }
-            if (!knownOffline) {
-                for (OfflinePlayer op : Bukkit.getOfflinePlayers()) {
-                    if (op.getName() != null && op.getName().equalsIgnoreCase(args[0])) {
-                        knownOffline = true;
-                        break;
+                        // swallow and treat as unknown
                     }
                 }
             }
