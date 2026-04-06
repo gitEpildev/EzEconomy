@@ -1,4 +1,4 @@
-package com.skyblockexp.ezeconomy.papi;
+package com.skyblockexp.ezeconomy.papi.placeholders;
 
 import org.bukkit.OfflinePlayer;
 
@@ -6,12 +6,12 @@ import java.util.UUID;
 
 public class DebugPlaceholderHarness {
     public static void main(String[] args) throws Exception {
-        IntegrationEzEconomyPAPIExpansionTest.StubEzEconomy stub = new IntegrationEzEconomyPAPIExpansionTest.StubEzEconomy();
-        EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = stub;
+        com.skyblockexp.ezeconomy.papi.placeholders.IntegrationEzEconomyPAPIExpansionTest.StubEzEconomy stub = new com.skyblockexp.ezeconomy.papi.placeholders.IntegrationEzEconomyPAPIExpansionTest.StubEzEconomy();
+        com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = stub;
         UUID u = UUID.randomUUID();
         stub.getStorageOrWarn().setBalance(u, "dollar", 123.45);
 
-        EzEconomyPAPIExpansion expansion = new EzEconomyPAPIExpansion(null);
+        com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion expansion = new com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion(null);
 
         OfflinePlayer fake = (OfflinePlayer) java.lang.reflect.Proxy.newProxyInstance(
                 OfflinePlayer.class.getClassLoader(), new Class[]{OfflinePlayer.class}, (proxy, method, a) -> {

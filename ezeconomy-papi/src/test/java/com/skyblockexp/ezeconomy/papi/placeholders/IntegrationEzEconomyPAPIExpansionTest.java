@@ -1,4 +1,4 @@
-package com.skyblockexp.ezeconomy.papi;
+package com.skyblockexp.ezeconomy.papi.placeholders;
 
 import org.bukkit.OfflinePlayer;
 import org.junit.jupiter.api.Test;
@@ -13,8 +13,6 @@ import com.skyblockexp.ezeconomy.cache.ExpiringCache;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class IntegrationEzEconomyPAPIExpansionTest {
-
-    // No setup/teardown required for these tests
 
     static class StubStorage implements StorageProvider {
         private final Map<UUID, Double> balances = new HashMap<>();
@@ -55,7 +53,7 @@ public class IntegrationEzEconomyPAPIExpansionTest {
         }
     }
 
-    static class StubEzEconomy implements EzEconomyPAPIExpansion.TestEzEconomy {
+    static class StubEzEconomy implements com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion.TestEzEconomy {
         private final StubStorage storage = new StubStorage();
 
         @Override
@@ -79,16 +77,13 @@ public class IntegrationEzEconomyPAPIExpansionTest {
 
     @Test
     public void integrationPlaceholderResponsesWithoutBukkit() throws Exception {
-        // Use test hook to inject EzEconomy instance into expansion
         StubEzEconomy stub = new StubEzEconomy();
-        EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = stub;
+        com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = stub;
 
-        // prepare storage data
         UUID u = UUID.randomUUID();
         stub.getStorageOrWarn().setBalance(u, "dollar", 123.45);
         stub.getStorageOrWarn().setBalance(UUID.randomUUID(), "dollar", 10.0);
 
-        // create a simple OfflinePlayer proxy for the test (avoids implementing all methods)
         OfflinePlayer fakePlayer = (OfflinePlayer) java.lang.reflect.Proxy.newProxyInstance(
                 OfflinePlayer.class.getClassLoader(),
                 new Class[]{OfflinePlayer.class},
@@ -107,24 +102,20 @@ public class IntegrationEzEconomyPAPIExpansionTest {
                 }
         );
 
-        EzEconomyPAPIExpansion expansion = new EzEconomyPAPIExpansion(null);
+        com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion expansion = new com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion(null);
 
-        // balance for player via injected EzEconomy
         String balance = expansion.onPlaceholderRequest(fakePlayer, "balance");
         assertNotNull(balance);
         assertTrue(balance.contains("123.45"));
 
-        // formatted balance (no currency suffix)
         String formatted = expansion.onPlaceholderRequest(fakePlayer, "balance_formatted");
         assertNotNull(formatted);
         assertTrue(formatted.contains("123.45") || formatted.contains("123.5"));
 
-        // formatted balance with explicit currency
         String formattedDollar = expansion.onPlaceholderRequest(fakePlayer, "balance_formatted_dollar");
         assertNotNull(formattedDollar);
         assertTrue(formattedDollar.contains("123.45") || formattedDollar.contains("123.5"));
 
-        // short / compact placeholders
         String shortVal = expansion.onPlaceholderRequest(fakePlayer, "balance_short");
         assertNotNull(shortVal);
         assertTrue(shortVal.length() > 0);
@@ -132,12 +123,10 @@ public class IntegrationEzEconomyPAPIExpansionTest {
         assertNotNull(shortDollar);
         assertTrue(shortDollar.length() > 0);
 
-        // symbol
         String symbol = expansion.onPlaceholderRequest(null, "symbol_dollar");
         assertNotNull(symbol);
 
-        // put a cached top value and verify it's returned without scheduling
-        Field cacheField = EzEconomyPAPIExpansion.class.getDeclaredField("topCache");
+        Field cacheField = com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion.class.getDeclaredField("topCache");
         cacheField.setAccessible(true);
         @SuppressWarnings("unchecked")
         com.skyblockexp.ezeconomy.cache.CacheProvider<String, String> topCache = (com.skyblockexp.ezeconomy.cache.CacheProvider<String, String>) cacheField.get(expansion);
@@ -147,11 +136,9 @@ public class IntegrationEzEconomyPAPIExpansionTest {
         String top = expansion.onPlaceholderRequest(null, "top_1_dollar");
         assertEquals("player - 123.45 dollar", top);
 
-        // bank (storage returns 0)
         String bank = expansion.onPlaceholderRequest(null, "bank_test_dollar");
         assertNotNull(bank);
 
-        // clear test hook
-        EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = null;
+        com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = null;
     }
 }
