@@ -1,7 +1,9 @@
-package com.skyblockexp.ezeconomy.papi;
+package com.skyblockexp.ezeconomy.papi.lambda;
 
 import com.skyblockexp.ezeconomy.api.storage.StorageProvider;
-import org.bukkit.OfflinePlayer;
+import com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion;
+import com.skyblockexp.ezeconomy.papi.EzEconomyPapiPlugin;
+import com.skyblockexp.ezeconomy.papi.TestBase;
 import org.junit.jupiter.api.Test;
 import org.mockbukkit.mockbukkit.MockBukkit;
 
@@ -51,18 +53,16 @@ public class LambdaFocusedTests extends TestBase {
     @Test
     public void invoke_lambda1_with_and_without_storage() throws Exception {
         MockBukkit.mock();
-        com.skyblockexp.ezeconomy.core.EzEconomyPlugin core = (com.skyblockexp.ezeconomy.core.EzEconomyPlugin) MockBukkit.load(EzPluginPathCoverageTest.SimpleEz.class);
+        com.skyblockexp.ezeconomy.core.EzEconomyPlugin core = (com.skyblockexp.ezeconomy.core.EzEconomyPlugin) MockBukkit.load(com.skyblockexp.ezeconomy.papi.EzPluginPathCoverageTest.SimpleEz.class);
         EzEconomyPapiPlugin papi = (EzEconomyPapiPlugin) MockBukkit.load(EzEconomyPapiPlugin.class);
         EzEconomyPAPIExpansion expansion = new EzEconomyPAPIExpansion(papi);
 
         Method m = EzEconomyPAPIExpansion.class.getDeclaredMethod("lambda$1", com.skyblockexp.ezeconomy.core.EzEconomyPlugin.class, String.class, String.class, int.class);
         m.setAccessible(true);
 
-        // Case 1: storage null -> should not throw
         core.setStorage(null);
         m.invoke(expansion, core, "top", "usd", 1);
 
-        // Case 2: storage present -> ensure it runs with a simple storage
         SimpleStorage ss = new SimpleStorage();
         core.setStorage(ss);
         m.invoke(expansion, core, "top", "usd", 1);
@@ -71,22 +71,19 @@ public class LambdaFocusedTests extends TestBase {
     @Test
     public void invoke_lambda2_name_fallbacks() throws Exception {
         MockBukkit.mock();
-        com.skyblockexp.ezeconomy.core.EzEconomyPlugin core = (com.skyblockexp.ezeconomy.core.EzEconomyPlugin) MockBukkit.load(EzPluginPathCoverageTest.SimpleEz.class);
+        com.skyblockexp.ezeconomy.core.EzEconomyPlugin core = (com.skyblockexp.ezeconomy.core.EzEconomyPlugin) MockBukkit.load(com.skyblockexp.ezeconomy.papi.EzPluginPathCoverageTest.SimpleEz.class);
         EzEconomyPapiPlugin papi = (EzEconomyPapiPlugin) MockBukkit.load(EzEconomyPapiPlugin.class);
         EzEconomyPAPIExpansion expansion = new EzEconomyPAPIExpansion(papi);
 
         Method m2 = EzEconomyPAPIExpansion.class.getDeclaredMethod("lambda$2", com.skyblockexp.ezeconomy.core.EzEconomyPlugin.class, String.class, Map.Entry.class);
         m2.setAccessible(true);
 
-        // entry with UUID key (simulating top entry)
         AbstractMap.SimpleEntry<java.util.UUID, Double> entry = new AbstractMap.SimpleEntry<>(java.util.UUID.randomUUID(), 42.0);
 
-        // storage null path
         core.setStorage(null);
         Object res1 = m2.invoke(expansion, core, "usd", entry);
         assertNotNull(res1);
 
-        // storage with player mapping
         SimpleStorage ss = new SimpleStorage();
         core.setStorage(ss);
         Object res2 = m2.invoke(expansion, core, "usd", entry);

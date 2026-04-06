@@ -1,8 +1,10 @@
-package com.skyblockexp.ezeconomy.papi;
+package com.skyblockexp.ezeconomy.papi.lambda;
 
 import com.skyblockexp.ezeconomy.api.storage.StorageProvider;
 import com.skyblockexp.ezeconomy.cache.CacheManager;
-import org.junit.jupiter.api.AfterEach;
+import com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion;
+import com.skyblockexp.ezeconomy.papi.EzEconomyPapiPlugin;
+import com.skyblockexp.ezeconomy.papi.TestBase;
 import org.junit.jupiter.api.Test;
 import org.mockbukkit.mockbukkit.MockBukkit;
 
@@ -53,14 +55,13 @@ public class Lambda2NullPlayerTest extends TestBase {
     public void invoke_lambda2_with_null_player_path() throws Exception {
         MockBukkit.mock();
         EzEconomyPapiPlugin papi = (EzEconomyPapiPlugin) MockBukkit.load(EzEconomyPapiPlugin.class);
-        com.skyblockexp.ezeconomy.core.EzEconomyPlugin core = (com.skyblockexp.ezeconomy.core.EzEconomyPlugin) MockBukkit.load(EzPluginPathCoverageTest.SimpleEz.class);
+        com.skyblockexp.ezeconomy.core.EzEconomyPlugin core = (com.skyblockexp.ezeconomy.core.EzEconomyPlugin) MockBukkit.load(com.skyblockexp.ezeconomy.papi.EzPluginPathCoverageTest.SimpleEz.class);
 
         MapStorageNullPlayer ms = new MapStorageNullPlayer();
         UUID a = UUID.randomUUID();
         ms.put(a, 12345.0);
         core.setStorage(ms);
 
-        // Ensure plugin manager mapping
         org.bukkit.plugin.PluginManager pm = org.bukkit.Bukkit.getPluginManager();
         java.lang.reflect.Field[] fields = pm.getClass().getDeclaredFields();
         for (java.lang.reflect.Field f : fields) {
@@ -77,7 +78,6 @@ public class Lambda2NullPlayerTest extends TestBase {
 
         EzEconomyPAPIExpansion expansion = new EzEconomyPAPIExpansion(papi);
 
-        // Find lambda$2 and invoke with a map entry where getPlayer() returns null
         Method lambda2 = null;
         for (Method m : EzEconomyPAPIExpansion.class.getDeclaredMethods()) {
             if (m.getName().contains("lambda$2")) { lambda2 = m; break; }
@@ -92,10 +92,8 @@ public class Lambda2NullPlayerTest extends TestBase {
         String s = mapped.toString();
         assertTrue(s.contains("12345") || s.length() > 0);
 
-        // Also assert cache was populated when invoked via lambda2 indirectly
         String cacheKey = "top:dollar:1";
         var entry = CacheManager.getProvider().getEntry(cacheKey);
-        // lambda2 itself doesn't write the cache; ensure mapping produced a non-empty value
         assertNotNull(mapped);
     }
 }

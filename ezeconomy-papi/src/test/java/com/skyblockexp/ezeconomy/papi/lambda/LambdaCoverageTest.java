@@ -1,8 +1,10 @@
-package com.skyblockexp.ezeconomy.papi;
+package com.skyblockexp.ezeconomy.papi.lambda;
 
 import com.skyblockexp.ezeconomy.api.storage.StorageProvider;
 import com.skyblockexp.ezeconomy.cache.CacheManager;
-import org.junit.jupiter.api.AfterEach;
+import com.skyblockexp.ezeconomy.papi.EzEconomyPapiPlugin;
+import com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion;
+import com.skyblockexp.ezeconomy.papi.TestBase;
 import org.junit.jupiter.api.Test;
 import org.mockbukkit.mockbukkit.MockBukkit;
 
@@ -53,31 +55,15 @@ public class LambdaCoverageTest extends TestBase {
     public void invoke_lambda_methods_directly_to_cover_async_codepaths() throws Exception {
         MockBukkit.mock();
         EzEconomyPapiPlugin papi = (EzEconomyPapiPlugin) MockBukkit.load(EzEconomyPapiPlugin.class);
-        com.skyblockexp.ezeconomy.core.EzEconomyPlugin core = (com.skyblockexp.ezeconomy.core.EzEconomyPlugin) MockBukkit.load(EzPluginPathCoverageTest.SimpleEz.class);
+        com.skyblockexp.ezeconomy.core.EzEconomyPlugin core = (com.skyblockexp.ezeconomy.core.EzEconomyPlugin) MockBukkit.load(com.skyblockexp.ezeconomy.papi.EzPluginPathCoverageTest.SimpleEz.class);
 
         MapStorage ms = new MapStorage();
         UUID a = UUID.randomUUID();
         ms.put(a, 9000.0);
         core.setStorage(ms);
 
-        // Ensure plugin manager mapping
-        org.bukkit.plugin.PluginManager pm = org.bukkit.Bukkit.getPluginManager();
-        java.lang.reflect.Field[] fields = pm.getClass().getDeclaredFields();
-        for (java.lang.reflect.Field f : fields) {
-            if (Map.class.isAssignableFrom(f.getType())) {
-                f.setAccessible(true);
-                Object map = f.get(pm);
-                try {
-                    @SuppressWarnings("unchecked")
-                    Map<String, org.bukkit.plugin.Plugin> m = (Map<String, org.bukkit.plugin.Plugin>) map;
-                    m.put("EzEconomy", core);
-                } catch (ClassCastException ignored) {}
-            }
-        }
-
         EzEconomyPAPIExpansion expansion = new EzEconomyPAPIExpansion(papi);
 
-        // Find and invoke lambda$1 (the async runnable body) directly
         Method lambda1 = null;
         for (Method m : EzEconomyPAPIExpansion.class.getDeclaredMethods()) {
             if (m.getName().contains("lambda$1")) { lambda1 = m; break; }
@@ -87,14 +73,12 @@ public class LambdaCoverageTest extends TestBase {
 
         String currency = "dollar";
         String cacheKey = "top:dollar:1";
-        // invoke: handle static vs instance synthetic methods
         Object target1 = java.lang.reflect.Modifier.isStatic(lambda1.getModifiers()) ? null : expansion;
         lambda1.invoke(target1, core, currency, cacheKey, Integer.valueOf(1));
 
         var entry = CacheManager.getProvider().getEntry(cacheKey);
         assertNotNull(entry, "Expected entry after invoking lambda1");
 
-        // Find and invoke lambda$2 (the mapping function) directly
         Method lambda2 = null;
         for (Method m : EzEconomyPAPIExpansion.class.getDeclaredMethods()) {
             if (m.getName().contains("lambda$2")) { lambda2 = m; break; }
