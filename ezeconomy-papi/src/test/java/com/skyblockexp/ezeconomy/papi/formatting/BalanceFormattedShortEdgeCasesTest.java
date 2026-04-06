@@ -1,4 +1,4 @@
-package com.skyblockexp.ezeconomy.papi;
+package com.skyblockexp.ezeconomy.papi.formatting;
 
 import org.bukkit.OfflinePlayer;
 import org.junit.jupiter.api.Test;
@@ -43,7 +43,7 @@ public class BalanceFormattedShortEdgeCasesTest {
         @Override public com.skyblockexp.ezeconomy.storage.TransferResult transfer(UUID fromUuid, UUID toUuid, String currency, double amount) { return com.skyblockexp.ezeconomy.storage.TransferResult.failure(0,0); }
     }
 
-    static class StubEz implements EzEconomyPAPIExpansion.TestEzEconomy {
+    static class StubEz implements com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion.TestEzEconomy {
         final StubStorage s = new StubStorage();
         @Override public com.skyblockexp.ezeconomy.api.storage.StorageProvider getStorageOrWarn() { return s; }
         @Override public String getDefaultCurrency() { return "euro"; }
@@ -72,20 +72,18 @@ public class BalanceFormattedShortEdgeCasesTest {
     public void balanceFormatted_and_short_edge_cases_useDefaultWhenBlankOrMissing() {
         StubEz stub = new StubEz();
         stub.s.set(50.0);
-        EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = stub;
+        com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = stub;
 
         UUID u = UUID.randomUUID();
         OfflinePlayer p = offlinePlayer(u);
-        EzEconomyPAPIExpansion exp = new EzEconomyPAPIExpansion(null);
+        com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion exp = new com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion(null);
 
-        // no explicit currency -> use default euro
         String f1 = exp.onPlaceholderRequest(p, "balance_formatted");
         assertTrue(f1.contains("50.00") && f1.contains("euro") || f1.contains("50.00"));
 
         String s1 = exp.onPlaceholderRequest(p, "balance_short");
         assertNotNull(s1);
 
-        // explicit currency
         stub.s.set(123.45);
         String f2 = exp.onPlaceholderRequest(p, "balance_formatted_dollar");
         assertTrue(f2.contains("123.45") || f2.contains("123.5"));
@@ -93,7 +91,6 @@ public class BalanceFormattedShortEdgeCasesTest {
         String s2 = exp.onPlaceholderRequest(p, "balance_short_dollar");
         assertNotNull(s2);
 
-        // trailing underscore should resolve to default
         stub.s.set(7.0);
         String f3 = exp.onPlaceholderRequest(p, "balance_formatted_");
         assertTrue(f3.contains("7.00") || f3.contains("7.0"));
@@ -101,18 +98,18 @@ public class BalanceFormattedShortEdgeCasesTest {
         String s3 = exp.onPlaceholderRequest(p, "balance_short_");
         assertNotNull(s3);
 
-        EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = null;
+        com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = null;
     }
 
     @Test
     public void balanceFormatted_and_short_returnZeroWhenPlayerNull() {
         StubEz stub = new StubEz();
-        EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = stub;
-        EzEconomyPAPIExpansion exp = new EzEconomyPAPIExpansion(null);
+        com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = stub;
+        com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion exp = new com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion(null);
 
         assertEquals("0", exp.onPlaceholderRequest(null, "balance_formatted"));
         assertEquals("0", exp.onPlaceholderRequest(null, "balance_short"));
 
-        EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = null;
+        com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = null;
     }
 }

@@ -1,4 +1,4 @@
-package com.skyblockexp.ezeconomy.papi;
+package com.skyblockexp.ezeconomy.papi.formatting;
 
 import com.skyblockexp.ezeconomy.papi.testhelpers.TestEzEconomyStubs;
 import org.junit.jupiter.api.AfterEach;
@@ -14,24 +14,22 @@ public class FormattedBalanceShortTest {
     @AfterEach
     public void tearDown() {
         try { MockBukkit.unmock(); } catch (Exception ignored) {}
-        EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = null;
+        com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = null;
     }
 
     @Test
     public void balance_formatted_and_short_with_null_storage_returns_zero_formats() throws Exception {
         MockBukkit.mock();
-        EzEconomyPapiPlugin papi = (EzEconomyPapiPlugin) MockBukkit.load(EzEconomyPapiPlugin.class);
+        com.skyblockexp.ezeconomy.papi.EzEconomyPapiPlugin papi = (com.skyblockexp.ezeconomy.papi.EzEconomyPapiPlugin) MockBukkit.load(com.skyblockexp.ezeconomy.papi.EzEconomyPapiPlugin.class);
 
-        // TestEz with null storage should trigger the storage==null branches
         TestEzEconomyStubs.SimpleTestEz stub = new TestEzEconomyStubs.SimpleTestEz(null, "dollar") {
             @Override public String format(double amount, String currency) { return "FMT:" + amount + ":" + currency; }
             @Override public String formatShort(double amount, String currency) { return "SRT:" + amount + ":" + currency; }
         };
 
-        EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = stub;
-        EzEconomyPAPIExpansion expansion = new EzEconomyPAPIExpansion(papi);
+        com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = stub;
+        com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion expansion = new com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion(papi);
 
-        // offline player proxy with an arbitrary UUID
         java.util.UUID u = UUID.randomUUID();
         org.bukkit.OfflinePlayer fake = (org.bukkit.OfflinePlayer) java.lang.reflect.Proxy.newProxyInstance(
                 org.bukkit.OfflinePlayer.class.getClassLoader(), new Class[]{org.bukkit.OfflinePlayer.class}, (proxy, method, args) -> {

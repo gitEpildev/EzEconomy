@@ -1,4 +1,4 @@
-package com.skyblockexp.ezeconomy.papi;
+package com.skyblockexp.ezeconomy.papi.formatting;
 
 import org.bukkit.OfflinePlayer;
 import org.junit.jupiter.api.Test;
@@ -14,16 +14,14 @@ public class BalanceFormattedShortEzFormatterTest {
     @Test
     public void ezPlugin_customFormatter_format_paths_are_called() throws Exception {
         MockBukkit.mock();
-        EzEconomyPapiPlugin papi = (EzEconomyPapiPlugin) MockBukkit.load(EzEconomyPapiPlugin.class);
-        com.skyblockexp.ezeconomy.core.EzEconomyPlugin core = (com.skyblockexp.ezeconomy.core.EzEconomyPlugin) MockBukkit.load(EzPluginPathCoverageTest.SimpleEz.class);
+        com.skyblockexp.ezeconomy.papi.EzEconomyPapiPlugin papi = (com.skyblockexp.ezeconomy.papi.EzEconomyPapiPlugin) MockBukkit.load(com.skyblockexp.ezeconomy.papi.EzEconomyPapiPlugin.class);
+        com.skyblockexp.ezeconomy.core.EzEconomyPlugin core = (com.skyblockexp.ezeconomy.core.EzEconomyPlugin) MockBukkit.load(com.skyblockexp.ezeconomy.papi.EzPluginPathCoverageTest.SimpleEz.class);
 
-        // install storage with a known uuid
-        com.skyblockexp.ezeconomy.api.storage.StorageProvider sp = new EzPluginPathCoverageTest.TestStorage();
+        com.skyblockexp.ezeconomy.api.storage.StorageProvider sp = new com.skyblockexp.ezeconomy.papi.EzPluginPathCoverageTest.TestStorage();
         UUID u = UUID.randomUUID();
-        ((EzPluginPathCoverageTest.TestStorage) sp).put(u, 321.0);
+        ((com.skyblockexp.ezeconomy.papi.EzPluginPathCoverageTest.TestStorage) sp).put(u, 321.0);
         core.setStorage(sp);
 
-        // inject a custom CurrencyFormatter that returns easily-assertable strings
         com.skyblockexp.ezeconomy.service.format.CurrencyFormatter custom = new com.skyblockexp.ezeconomy.service.format.CurrencyFormatter(core) {
             @Override public String format(double amount, String currency) { return "FMT:" + amount + ":" + currency; }
             @Override public String formatPriceForMessage(double amount, String currency) { return "PRICE:" + amount + ":" + currency; }
@@ -38,7 +36,6 @@ public class BalanceFormattedShortEzFormatterTest {
         cf.setAccessible(true);
         cf.set(core, custom);
 
-        // map plugin manager name
         java.lang.reflect.Field[] fields = org.bukkit.Bukkit.getPluginManager().getClass().getDeclaredFields();
         for (Field f : fields) {
             if (java.util.Map.class.isAssignableFrom(f.getType())) {
@@ -52,8 +49,7 @@ public class BalanceFormattedShortEzFormatterTest {
             }
         }
 
-        // Prefer the test hook to avoid depending on plugin manager mapping in MockBukkit
-        EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = new EzEconomyPAPIExpansion.TestEzEconomy() {
+        com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = new com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion.TestEzEconomy() {
             @Override public com.skyblockexp.ezeconomy.api.storage.StorageProvider getStorageOrWarn() { return core.getStorageOrWarn(); }
             @Override public String getDefaultCurrency() { return core.getDefaultCurrency(); }
             @Override public String format(double amount, String currency) { return custom.format(amount, currency); }
@@ -62,7 +58,7 @@ public class BalanceFormattedShortEzFormatterTest {
             @Override public com.skyblockexp.ezeconomy.manager.CurrencyPreferenceManager getCurrencyPreferenceManager() { return core.getCurrencyPreferenceManager(); }
         };
 
-        EzEconomyPAPIExpansion expansion = new EzEconomyPAPIExpansion(papi);
+        com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion expansion = new com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion(papi);
 
         OfflinePlayer fake = (OfflinePlayer) java.lang.reflect.Proxy.newProxyInstance(
                 OfflinePlayer.class.getClassLoader(), new Class[]{OfflinePlayer.class}, (proxy, method, args) -> {
@@ -81,7 +77,7 @@ public class BalanceFormattedShortEzFormatterTest {
             assertNotNull(shorted);
             assertTrue(shorted.startsWith("SHRT:") || shorted.startsWith("FMT:"));
         } finally {
-            EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = null;
+            com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = null;
             try { MockBukkit.unmock(); } catch (Exception ignored) {}
         }
     }
