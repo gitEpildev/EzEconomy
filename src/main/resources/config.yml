@@ -1,0 +1,100 @@
+# EzEconomy configuration
+# storage: 'yml', 'mysql', 'sqlite', or 'mongodb'
+storage: yml
+
+# Language selection for the language file in `languages/` (e.g. en, nl, es)
+# The plugin loads `languages/<language>.yml` and falls back to `languages/en.yml`.
+language: en
+
+# Daily login reward (optional)
+daily-reward:
+  enabled: false
+  amount: 100
+  currency: default
+  cooldown-hours: 24
+  permission: ezeconomy.daily
+  message: "&aYou received &e%amount% %currency% &afor your daily login!"
+  sound: ENTITY_EXPERIENCE_ORB_PICKUP
+  debug: false
+
+# When enabled, the storage provider will be asked to create/store a record
+# for each player when they join the server. This helps ensure player data
+# files/rows exist for admin reporting tools. Default: false
+store-on-join:
+  enabled: false
+
+# Banking feature toggle: set to `false` to disable built-in bank subsystem
+# (commands, GUIs, Vault bank methods, and bank PAPI placeholders).
+banking:
+  enabled: true
+
+bank-interest-interval-ticks: 72000 # How often (in ticks) to pay bank interest (default: 1 hour)
+
+# Multi-currency support (optional)
+multi-currency:
+  enabled: false
+  default: "dollar"
+  currencies:
+    dollar:
+      display: "Dollar"
+      symbol: "$"
+      decimals: 2
+    euro:
+      display: "Euro"
+      symbol: "€"
+      decimals: 2
+    gem:
+      display: "Gem"
+      symbol: "♦"
+      decimals: 0
+  conversion:
+    dollar:
+      euro: 0.95
+      gem: 0.01
+    euro:
+      dollar: 1.05
+      gem: 0.012
+    gem:
+      dollar: 100
+      euro: 80
+
+# Locking strategy used for balance updates. Options: LOCAL, REDIS, BUNGEECORD
+# LOCAL: plugin uses in-process locks only.
+# REDIS: uses a distributed Redis lock (requires ezeconomy-redis extension and redis.yml).
+# BUNGEECORD: use a proxy-backed lock transport via plugin messaging (requires bungeecord proxy component and bungeecord.yml).
+locking-strategy: LOCAL
+
+# Caching strategy used for in-memory / distributed caching. Options:
+#   LOCAL     - in-process memory cache only (default)
+#   REDIS     - use the Redis extension for a central cache
+#   BUNGEECORD - proxy-backed cache via plugin messaging (requires proxy component)
+#   DATABASE  - use the configured SQL storage as a cache backend
+# If not present, the plugin will fall back to `locking-strategy` for backward compatibility.
+caching-strategy: LOCAL
+
+# Presentation settings for money formatting. These settings affect only
+# how amounts are shown to players and in integrations (placeholders, GUIs,
+# chat). Monetary storage and arithmetic remain unchanged.
+money-format:
+  pattern: "#,##0.00"          # DecimalFormat pattern used for formatting
+  locale: "en_US"             # Locale used for separators and currency symbol
+  currencySymbol: ""         # Symbol to use (overrides locale symbol if provided). Empty to use locale.
+  symbolPlacement: "prefix"   # prefix|suffix
+  showTrailingZeros: true       # always show two decimals (1.50 vs 1.5)
+  roundingMode: "HALF_UP"     # HALF_UP, HALF_EVEN, DOWN, etc.
+  negativeFormat: "-amount"   # "-amount" or "(amount)"
+  useCompact: true             # show 1.2K style in some UIs (compact representation)
+  compact:
+    thresholds:
+      thousand: 1000
+      million: 1000000
+      billion: 1000000000
+    suffixes:
+      thousand: "K"
+      million: "M"
+      billion: "B"
+    precision: 1
+  colors:
+    useColors: true
+    positive: "&a"             # legacy color code prefix for positive values
+    negative: "&c"             # legacy color code prefix for negative values

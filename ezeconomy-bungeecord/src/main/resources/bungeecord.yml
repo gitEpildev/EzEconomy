@@ -1,0 +1,9 @@
+# ezeconomy-bungeecord configuration
+enabled: true
+channel: ezeconomy:locks
+ttl-ms: 60000
+retry-ms: 150
+max-attempts: 5
+fallback-to-local: true
+# shared-secret: optional secret to authenticate proxy messages
+shared-secret: ""
