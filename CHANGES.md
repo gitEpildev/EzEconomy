@@ -1,6 +1,7 @@
 # EzEconomy - Multi-Server Network Support, Performance & Formatting Update
 
-**Author:** GitEpildev
+**Author:** [@GitEpildev](https://github.com/gitEpildev)
+**Original Plugin:** [@ez-plugins/EzEconomy](https://github.com/ez-plugins/EzEconomy)
 **Date:** April 2026
 **Plugin Version:** 2.5.1 (modified)
 
