@@ -74,5 +74,19 @@ This project must include clear, readable tests and maintain measurable coverage
 - **Test types:** Unit tests for pure logic (fast, deterministic). Integration tests for DB, Redis, or cross-module interactions; tag them clearly (naming suffix `IT` or use maven profiles).
 - **Templates & examples:** A simple unit test template and examples are added under `docs/test-templates/` and a fuller guide is in `docs/testing.md`.
 - **CI / enforcement:** Add a jacoco `check` goal in CI to fail on regressions; consider module-level thresholds to avoid uneven enforcement.
-
 If you'd like, I can add a sample `jacoco` configuration to the parent `pom.xml` and a CI job that runs coverage checks.
+
+### Test Content Policy: No Coverage-Only Tests
+
+To keep tests meaningful and maintainable, avoid adding tests that exist solely to increase line/branch coverage without asserting concrete behavior.
+
+- **Purpose-first:** Every test must have a clear purpose tied to observable behavior (a user story, regression bug, or explicit API contract). Tests that only exercise lines without asserting outcomes should be rejected.
+- **Concrete assertions:** Prefer strong, verifiable assertions (values, state changes, exceptions) rather than lax checks like "length > 0" unless the latter documents an intentional fallback behavior.
+- **Reviewer checklist:** During PR review, ensure tests:
+    - **Reference** a ticket, bug, or rationale in the test Javadoc or test name when added for a specific reason.
+    - **Assert** behavior, not just execution (no silent smoke tests without verification).
+    - **Avoid** fragile timing or environment-dependent checks; mock or stub external systems instead.
+- **When coverage-focused additions are acceptable:** Additions that exercise hard-to-reach branches are allowed only if they also verify a meaningful outcome (e.g., fallback behavior, exception handling, null-safety). Document intent in the test.
+- **Enforcement:** CI or reviewers may ask authors to improve weak assertions or convert coverage-only tests into behavior-focused tests. If the behavior cannot be asserted meaningfully, consider removing the test.
+
+These rules help keep the test suite valuable for maintainers and agents relying on test signals, while preventing the accumulation of brittle or meaningless tests.
