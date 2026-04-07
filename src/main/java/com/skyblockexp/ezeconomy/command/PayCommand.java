@@ -6,6 +6,12 @@ import com.skyblockexp.ezeconomy.util.NumberUtil;
 import com.skyblockexp.ezeconomy.core.Money;
 
 import com.skyblockexp.ezeconomy.core.EzEconomyPlugin;
+import com.skyblockexp.ezeconomy.api.storage.StorageProvider;
+import com.skyblockexp.ezeconomy.util.CurrencyUtil;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.math.BigDecimal;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
@@ -108,6 +114,101 @@ public class PayCommand implements CommandExecutor {
             MessageUtils.send(sender, plugin, "payment_confirm_required", java.util.Map.of("amount", plugin.getCurrencyFormatter().formatPriceForMessage(amountDecimal.doubleValue(), currency), "timeout", String.valueOf(timeoutSeconds)));
             // Schedule cleanup
             Bukkit.getScheduler().runTaskLater(plugin, () -> plugin.getPayFlowManager().removeIfExpired(from.getUniqueId()), timeoutSeconds * 20L);
+            return true;
+        }
+
+        // Support: /pay * <amount>  -> pay all accounts
+        if (args[0].equals("*")) {
+            StorageProvider storage = plugin.getStorageOrWarn();
+            if (storage == null) return true;
+
+            boolean enabled = plugin.getConfig().getBoolean("pay.pay_all.enabled", true);
+            if (!enabled) {
+                MessageUtils.send(sender, plugin, "no_permission");
+                return true;
+            }
+            boolean requirePerm = plugin.getConfig().getBoolean("pay.pay_all.require_permission", true);
+            if (requirePerm && !sender.hasPermission("ezeconomy.payall")) {
+                MessageUtils.send(sender, plugin, "no_permission");
+                return true;
+            }
+
+            boolean bypassWithdraw = sender.hasPermission("ezeconomy.payall.bypasswithdraw");
+
+            boolean includeOffline = plugin.getConfig().getBoolean("pay.pay_all.include_offline", false);
+            UUID fromUuid = ((Player) sender).getUniqueId();
+            List<UUID> recipients = new ArrayList<>();
+            if (includeOffline) {
+                Map<UUID, Double> all = storage.getAllBalances(currency);
+                if (all == null || all.isEmpty()) {
+                    MessageUtils.send(sender, plugin, "player_not_found");
+                    return true;
+                }
+                for (UUID u : all.keySet()) {
+                    if (!u.equals(fromUuid)) recipients.add(u);
+                }
+            } else {
+                // default: only online players
+                for (Player p : Bukkit.getOnlinePlayers()) {
+                    if (!p.getUniqueId().equals(fromUuid)) recipients.add(p.getUniqueId());
+                }
+                if (recipients.isEmpty()) {
+                    MessageUtils.send(sender, plugin, "player_not_found");
+                    return true;
+                }
+            }
+            if (recipients.isEmpty()) {
+                MessageUtils.send(sender, plugin, "player_not_found");
+                return true;
+            }
+
+            java.math.BigDecimal totalCost = amountDecimal.multiply(java.math.BigDecimal.valueOf(recipients.size()));
+            // Withdraw total cost first (unless bypass permission)
+            if (!bypassWithdraw) {
+                double bal = storage.getBalance(fromUuid, currency);
+                if (bal < totalCost.doubleValue()) {
+                    MessageUtils.send(sender, plugin, "not_enough_money");
+                    return true;
+                }
+                boolean withdrew = storage.tryWithdraw(fromUuid, currency, totalCost.doubleValue());
+                if (!withdrew) {
+                    MessageUtils.send(sender, plugin, "not_enough_money");
+                    return true;
+                }
+            }
+
+            // Deposit to each recipient, honoring their currency preference when possible
+            for (UUID recip : recipients) {
+                String recipPref = plugin.getCurrencyPreferenceManager().getPreferredCurrency(recip);
+                if (recipPref == null || recipPref.equalsIgnoreCase(currency)) {
+                    storage.deposit(recip, currency, amountDecimal.doubleValue());
+                } else {
+                    double credit = CurrencyUtil.convert(plugin, amountDecimal.doubleValue(), currency, recipPref);
+                    if (Double.isNaN(credit)) {
+                        // rollback if we withdrew earlier
+                        if (!bypassWithdraw) storage.deposit(fromUuid, currency, totalCost.doubleValue());
+                        MessageUtils.send(sender, plugin, "unknown_currency", java.util.Map.of("currency", recipPref));
+                        return true;
+                    }
+                    storage.deposit(recip, recipPref, credit);
+                }
+                // Notify online recipients
+                OfflinePlayer op = Bukkit.getOfflinePlayer(recip);
+                if (op != null && op.isOnline() && op.getPlayer() != null) {
+                    String amountStr = plugin.getCurrencyFormatter().formatPriceForMessage(amountDecimal.doubleValue(), currency);
+                    MessageUtils.send(op.getPlayer(), plugin, "received", java.util.Map.of("player", ((Player) sender).getName(), "amount", amountStr));
+                }
+            }
+
+            // Summary to sender
+            String totalStr = plugin.getCurrencyFormatter().formatPriceForMessage(totalCost.doubleValue(), currency);
+            String msg = MessageUtils.format(plugin, "paid_all_summary", java.util.Map.of("count", String.valueOf(recipients.size()), "total", totalStr, "amount", plugin.getCurrencyFormatter().formatPriceForMessage(amountDecimal.doubleValue(), currency)));
+            // Fallback: if message key missing, send simple text
+            if (msg == null || msg.isEmpty() || msg.contains("Message system not initialized")) {
+                sender.sendMessage("Paid " + recipients.size() + " players " + plugin.getCurrencyFormatter().formatPriceForMessage(amountDecimal.doubleValue(), currency) + " each (total " + totalStr + ")");
+            } else {
+                sender.sendMessage(msg);
+            }
             return true;
         }
 

@@ -23,11 +23,19 @@ commands:
     description: Bank management commands
     usage: /bank <create|delete|balance|deposit|withdraw|addmember|removemember|info> ...
   pay:
-    description: Pay money to another player
-    usage: /pay <player> <amount> [currency]
+    description: Pay money to another player or all players
+    usage: /pay <player|*> <amount> [currency]
   currency:
     description: View or set your preferred currency
     usage: /currency [currency]
   ezeconomy:
     description: EzEconomy admin utilities
     usage: /ezeconomy <daily reset>
+
+permissions:
+  ezeconomy.payall:
+    description: Allows using /pay * to pay all players
+    default: op
+  ezeconomy.payall.bypasswithdraw:
+    description: Allows paying all without withdrawing from sender balance
+    default: op
