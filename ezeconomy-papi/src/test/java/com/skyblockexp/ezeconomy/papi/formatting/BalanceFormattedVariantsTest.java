@@ -50,7 +50,7 @@ public class BalanceFormattedVariantsTest extends com.skyblockexp.ezeconomy.papi
 
     @Test
     public void balance_formatted_with_explicit_currency_usesEzPluginPath() throws Exception {
-        MockBukkit.mock();
+        try { MockBukkit.mock(); } catch (IllegalStateException ignored) {}
         com.skyblockexp.ezeconomy.papi.EzEconomyPapiPlugin papi = (com.skyblockexp.ezeconomy.papi.EzEconomyPapiPlugin) MockBukkit.load(com.skyblockexp.ezeconomy.papi.EzEconomyPapiPlugin.class);
         com.skyblockexp.ezeconomy.core.EzEconomyPlugin core = (com.skyblockexp.ezeconomy.core.EzEconomyPlugin) MockBukkit.load(com.skyblockexp.ezeconomy.papi.EzPluginPathCoverageTest.SimpleEz.class);
 

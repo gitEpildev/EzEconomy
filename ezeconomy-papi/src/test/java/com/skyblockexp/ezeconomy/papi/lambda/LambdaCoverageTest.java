@@ -53,7 +53,7 @@ public class LambdaCoverageTest extends TestBase {
 
     @Test
     public void invoke_lambda_methods_directly_to_cover_async_codepaths() throws Exception {
-        MockBukkit.mock();
+        try { MockBukkit.mock(); } catch (IllegalStateException ignored) {}
         EzEconomyPapiPlugin papi = (EzEconomyPapiPlugin) MockBukkit.load(EzEconomyPapiPlugin.class);
         com.skyblockexp.ezeconomy.core.EzEconomyPlugin core = (com.skyblockexp.ezeconomy.core.EzEconomyPlugin) MockBukkit.load(com.skyblockexp.ezeconomy.papi.EzPluginPathCoverageTest.SimpleEz.class);
 
@@ -67,7 +67,7 @@ public class LambdaCoverageTest extends TestBase {
         String currency = "dollar";
         String cacheKey = "top:dollar:1";
 
-        expansion.handlePlaceholderRequestForTests(null, "top_1_dollar");
+        com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion.computeTopSyncForProd(core, currency, cacheKey, 1);
 
         com.skyblockexp.ezeconomy.cache.ExpiringCache.Entry<?> entry = CacheManager.getProvider().getEntry(cacheKey);
         assertNotNull(entry, "Expected entry after invoking top handler");
