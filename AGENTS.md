@@ -55,3 +55,38 @@ Economy is the most sensitive part of a server. "Zero Loss" is the requirement.
 - [ ] **Validation:** Ensure `dto` objects are validated before being passed to `storage`.
 - [ ] **Fail-Fast:** Throw meaningful exceptions in the `core` if a transaction is mathematically impossible (e.g., negative balance if not allowed).
 - [ ] **Backward Test:** Verify that new features don't use 1.21+ specific API methods without a fallback for 1.7.
+
+---
+
+## Tests & Coverage
+
+This project must include clear, readable tests and maintain measurable coverage so agents can rely on test signals when suggesting or making changes.
+
+- **Purpose:** Ensure behavior correctness, prevent regressions, and provide examples of good code patterns for agents and contributors.
+- **Where tests live:** module-specific test folders (for example, `ezeconomy-papi/src/test/java`, `ezeconomy-bukkit/src/test/java`). Follow existing module layouts.
+- **Coverage tooling:** Use JaCoCo for coverage reports and thresholds. Run with `mvn test jacoco:report` (or module-scoped `-pl <module>`).
+- **Coverage targets:** Aim for sensible targets per module (default 80% line coverage). Highly-critical modules (storage, core) should target >=90% on key classes.
+- **Readable tests guidelines:**
+    - Use Arrange / Act / Assert structure and short, descriptive test names (e.g., `deposit_increasesBalanceByAmount`).
+    - Keep tests focused: one logical behavior per test.
+    - Prefer explicit setup via builders/fixtures over long inline setup.
+    - Avoid brittle timing or network-dependent assertions; mock external IO in unit tests.
+- **Test types:** Unit tests for pure logic (fast, deterministic). Integration tests for DB, Redis, or cross-module interactions; tag them clearly (naming suffix `IT` or use maven profiles).
+- **Templates & examples:** A simple unit test template and examples are added under `docs/test-templates/` and a fuller guide is in `docs/testing.md`.
+- **CI / enforcement:** Add a jacoco `check` goal in CI to fail on regressions; consider module-level thresholds to avoid uneven enforcement.
+If you'd like, I can add a sample `jacoco` configuration to the parent `pom.xml` and a CI job that runs coverage checks.
+
+### Test Content Policy: No Coverage-Only Tests
+
+To keep tests meaningful and maintainable, avoid adding tests that exist solely to increase line/branch coverage without asserting concrete behavior.
+
+- **Purpose-first:** Every test must have a clear purpose tied to observable behavior (a user story, regression bug, or explicit API contract). Tests that only exercise lines without asserting outcomes should be rejected.
+- **Concrete assertions:** Prefer strong, verifiable assertions (values, state changes, exceptions) rather than lax checks like "length > 0" unless the latter documents an intentional fallback behavior.
+- **Reviewer checklist:** During PR review, ensure tests:
+    - **Reference** a ticket, bug, or rationale in the test Javadoc or test name when added for a specific reason.
+    - **Assert** behavior, not just execution (no silent smoke tests without verification).
+    - **Avoid** fragile timing or environment-dependent checks; mock or stub external systems instead.
+- **When coverage-focused additions are acceptable:** Additions that exercise hard-to-reach branches are allowed only if they also verify a meaningful outcome (e.g., fallback behavior, exception handling, null-safety). Document intent in the test.
+- **Enforcement:** CI or reviewers may ask authors to improve weak assertions or convert coverage-only tests into behavior-focused tests. If the behavior cannot be asserted meaningfully, consider removing the test.
+
+These rules help keep the test suite valuable for maintainers and agents relying on test signals, while preventing the accumulation of brittle or meaningless tests.

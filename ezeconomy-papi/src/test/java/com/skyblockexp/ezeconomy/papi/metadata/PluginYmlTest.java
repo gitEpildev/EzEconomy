@@ -1,4 +1,4 @@
-package com.skyblockexp.ezeconomy.papi;
+package com.skyblockexp.ezeconomy.papi.metadata;
 
 import org.junit.jupiter.api.Test;
 

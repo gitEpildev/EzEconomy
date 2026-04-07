@@ -1,30 +1,21 @@
-name: Bungeecord Module CI
+name: BungeeCord module CI
 
 on:
   pull_request:
-    branches: [ main, master ]
     paths:
       - 'ezeconomy-bungeecord/**'
-      - 'ezeconomy-bungeecord-proxy/**'
   push:
-    branches: [ main, master ]
+    branches:
+      - main
+      - master
     paths:
       - 'ezeconomy-bungeecord/**'
-      - 'ezeconomy-bungeecord-proxy/**'
 
 jobs:
-  bungeecord-tests:
+  build:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        include:
-          - paper-version: "1.21.11-R0.1-SNAPSHOT"
-            mockbukkit-artifactId: "mockbukkit-v1.21"
-            mockbukkit-version: "4.101.0"
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v6
+      - uses: actions/checkout@v6
 
       - name: Set up JDK 21
         uses: actions/setup-java@v5
@@ -36,9 +27,9 @@ jobs:
         uses: actions/cache@v5
         with:
           path: ~/.m2/repository
-          key: ${{ runner.os }}-m2-bungeecord-${{ matrix.paper-version }}-${{ hashFiles('**/pom.xml') }}
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: |
-            ${{ runner.os }}-m2-bungeecord-${{ matrix.paper-version }}-
+            ${{ runner.os }}-m2-
 
-      - name: Run Bungeecord module tests
-        run: mvn -B -Dpaper.version=${{ matrix.paper-version }} -Dmockbukkit.artifactId=${{ matrix.mockbukkit-artifactId }} -Dmockbukkit.version=${{ matrix.mockbukkit-version }} -pl ezeconomy-bungeecord,ezeconomy-bungeecord-proxy -am clean test
+      - name: Build and test BungeeCord module
+        run: mvn -B -DskipTests=false -pl ezeconomy-bungeecord -am clean test package

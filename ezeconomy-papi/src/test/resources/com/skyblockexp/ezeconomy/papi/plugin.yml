@@ -1,0 +1,4 @@
+name: PlaceholderAPI
+main: com.skyblockexp.ezeconomy.papi.PlaceholderStub
+version: "1.0"
+api-version: 1.13

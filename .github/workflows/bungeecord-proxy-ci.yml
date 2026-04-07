@@ -1,15 +1,15 @@
-name: PAPI module CI
+name: BungeeCord-Proxy module CI
 
 on:
   pull_request:
     paths:
-      - 'ezeconomy-papi/**'
+      - 'ezeconomy-bungeecord-proxy/**'
   push:
     branches:
       - main
       - master
     paths:
-      - 'ezeconomy-papi/**'
+      - 'ezeconomy-bungeecord-proxy/**'
 
 jobs:
   build:
@@ -31,5 +31,5 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-m2-
 
-      - name: Build and test PAPI module
-        run: mvn -B -DskipTests=false -pl ezeconomy-papi -am clean test package
+      - name: Build and test BungeeCord-Proxy module
+        run: mvn -B -DskipTests=false -pl ezeconomy-bungeecord-proxy -am clean test package

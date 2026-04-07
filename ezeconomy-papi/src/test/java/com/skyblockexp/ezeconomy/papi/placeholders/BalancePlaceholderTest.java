@@ -1,6 +1,7 @@
-package com.skyblockexp.ezeconomy.papi;
+package com.skyblockexp.ezeconomy.papi.placeholders;
 
 import org.bukkit.OfflinePlayer;
+import com.skyblockexp.ezeconomy.papi.testhelpers.TestPlayerFakes;
 import org.junit.jupiter.api.Test;
 
 import com.skyblockexp.ezeconomy.api.storage.StorageProvider;
@@ -31,6 +32,7 @@ public class BalancePlaceholderTest {
         @Override public boolean isConnected() { return true; }
         @Override public com.skyblockexp.ezeconomy.storage.TransferResult transfer(UUID fromUuid, UUID toUuid, String currency, double amount) { return com.skyblockexp.ezeconomy.storage.TransferResult.failure(0,0); }
         @Override public void shutdown() {}
+        @Override public com.skyblockexp.ezeconomy.dto.EconomyPlayer getPlayer(UUID uuid) { return null; }
         @Override public boolean createBank(String name, UUID owner) { return false; }
         @Override public boolean deleteBank(String name) { return false; }
         @Override public boolean bankExists(String name) { return false; }
@@ -44,11 +46,9 @@ public class BalancePlaceholderTest {
         @Override public boolean addBankMember(String name, UUID uuid) { return false; }
         @Override public boolean removeBankMember(String name, UUID uuid) { return false; }
         @Override public Set<String> getBanks() { return Collections.emptySet(); }
-        @Override
-        public com.skyblockexp.ezeconomy.dto.EconomyPlayer getPlayer(UUID uuid) { return null; }
     }
 
-    static class StubEzEconomy implements EzEconomyPAPIExpansion.TestEzEconomy {
+    static class StubEzEconomy implements com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion.TestEzEconomy {
         private final StubStorage storage = new StubStorage();
 
         @Override
@@ -73,72 +73,39 @@ public class BalancePlaceholderTest {
     @Test
     public void placeholderUsesConfiguredDefaultCurrency() throws Exception {
         StubEzEconomy stub = new StubEzEconomy();
-        EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = stub;
+        com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = stub;
 
         UUID u = UUID.randomUUID();
         // set both euro and dollar balances for the player
         stub.getStorageOrWarn().setBalance(u, "euro", 50.0);
         stub.getStorageOrWarn().setBalance(u, "dollar", 123.45);
 
-        OfflinePlayer fakePlayer = (OfflinePlayer) java.lang.reflect.Proxy.newProxyInstance(
-                OfflinePlayer.class.getClassLoader(),
-                new Class[]{OfflinePlayer.class},
-                (proxy, method, args) -> {
-                    switch (method.getName()) {
-                        case "getUniqueId": return u;
-                        case "getName": return "PlayerX";
-                        case "isOnline": return false;
-                        case "hasPlayedBefore": return true;
-                        default:
-                            Class<?> ret = method.getReturnType();
-                            if (ret.equals(boolean.class)) return false;
-                            if (ret.equals(long.class)) return 0L;
-                            return null;
-                    }
-                }
-        );
+        OfflinePlayer fakePlayer = TestPlayerFakes.fakeOfflinePlayer(u);
 
-        EzEconomyPAPIExpansion expansion = new EzEconomyPAPIExpansion(null);
+        com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion expansion = new com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion(null);
         String balance = expansion.onPlaceholderRequest(fakePlayer, "balance");
         assertNotNull(balance);
-        // Expect the euro balance to be used as the default currency
         assertTrue(balance.contains("50.00") && balance.contains("euro"), "Expected balance formatted for euro, got: " + balance);
 
-        EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = null;
+        com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = null;
     }
 
     @Test
     public void placeholderWithExplicitCurrencyResolvesThatCurrency() throws Exception {
         StubEzEconomy stub = new StubEzEconomy();
-        EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = stub;
+        com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = stub;
 
         UUID u = UUID.randomUUID();
         stub.getStorageOrWarn().setBalance(u, "euro", 50.0);
         stub.getStorageOrWarn().setBalance(u, "dollar", 123.45);
 
-        OfflinePlayer fakePlayer = (OfflinePlayer) java.lang.reflect.Proxy.newProxyInstance(
-                OfflinePlayer.class.getClassLoader(),
-                new Class[]{OfflinePlayer.class},
-                (proxy, method, args) -> {
-                    switch (method.getName()) {
-                        case "getUniqueId": return u;
-                        case "getName": return "PlayerY";
-                        case "isOnline": return false;
-                        case "hasPlayedBefore": return true;
-                        default:
-                            Class<?> ret = method.getReturnType();
-                            if (ret.equals(boolean.class)) return false;
-                            if (ret.equals(long.class)) return 0L;
-                            return null;
-                    }
-                }
-        );
+        OfflinePlayer fakePlayer = TestPlayerFakes.fakeOfflinePlayer(u);
 
-        EzEconomyPAPIExpansion expansion = new EzEconomyPAPIExpansion(null);
+        com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion expansion = new com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion(null);
         String balanceDollar = expansion.onPlaceholderRequest(fakePlayer, "balance_dollar");
         assertNotNull(balanceDollar);
         assertTrue(balanceDollar.contains("123.45") && balanceDollar.contains("dollar"), "Expected dollar balance, got: " + balanceDollar);
 
-        EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = null;
+        com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = null;
     }
 }
