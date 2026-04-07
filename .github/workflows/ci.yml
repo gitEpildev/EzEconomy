@@ -11,12 +11,16 @@ on:
       - 'ezeconomy-bungeecord/**'
       - 'ezeconomy-bungeecord-proxy/**'
       - 'ezeconomy-papi/**'
+      - 'ezeconomy-bukkit/**'
+      - 'ezeconomy-redis/**'
   push:
     branches: [ main, master ]
     paths-ignore:
       - 'ezeconomy-bungeecord/**'
       - 'ezeconomy-bungeecord-proxy/**'
       - 'ezeconomy-papi/**'
+      - 'ezeconomy-bukkit/**'
+      - 'ezeconomy-redis/**'
 
 jobs:
   unit-tests:
