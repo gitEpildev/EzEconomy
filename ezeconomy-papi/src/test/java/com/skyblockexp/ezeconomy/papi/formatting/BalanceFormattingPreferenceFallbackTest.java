@@ -3,6 +3,7 @@ package com.skyblockexp.ezeconomy.papi.formatting;
 import com.skyblockexp.ezeconomy.papi.testhelpers.TestEzEconomyStubs;
 import com.skyblockexp.ezeconomy.papi.testhelpers.TestPlayerFakes;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockbukkit.mockbukkit.MockBukkit;
 
@@ -18,9 +19,13 @@ public class BalanceFormattingPreferenceFallbackTest {
         com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = null;
     }
 
+    @BeforeEach
+    public void setUp() {
+        MockBukkit.mock();
+    }
+
     @Test
     public void preference_manager_overrides_default_currency() throws Exception {
-        MockBukkit.mock();
         com.skyblockexp.ezeconomy.papi.EzEconomyPapiPlugin papi = (com.skyblockexp.ezeconomy.papi.EzEconomyPapiPlugin) MockBukkit.load(com.skyblockexp.ezeconomy.papi.EzEconomyPapiPlugin.class);
 
         TestEzEconomyStubs.SimpleStorageProvider storage = new TestEzEconomyStubs.SimpleStorageProvider();
@@ -42,7 +47,6 @@ public class BalanceFormattingPreferenceFallbackTest {
 
     @Test
     public void null_preference_and_null_default_handled_gracefully() throws Exception {
-        MockBukkit.mock();
         com.skyblockexp.ezeconomy.papi.EzEconomyPapiPlugin papi = (com.skyblockexp.ezeconomy.papi.EzEconomyPapiPlugin) MockBukkit.load(com.skyblockexp.ezeconomy.papi.EzEconomyPapiPlugin.class);
 
         TestEzEconomyStubs.SimpleStorageProvider storage = new TestEzEconomyStubs.SimpleStorageProvider();
@@ -74,7 +78,6 @@ public class BalanceFormattingPreferenceFallbackTest {
 
     @Test
     public void explicit_currency_with_null_storage_returns_zero_formatted() throws Exception {
-        MockBukkit.mock();
         com.skyblockexp.ezeconomy.papi.EzEconomyPapiPlugin papi = (com.skyblockexp.ezeconomy.papi.EzEconomyPapiPlugin) MockBukkit.load(com.skyblockexp.ezeconomy.papi.EzEconomyPapiPlugin.class);
 
         TestEzEconomyStubs.SimpleTestEz stub = new TestEzEconomyStubs.SimpleTestEz(null, "usd");
