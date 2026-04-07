@@ -57,15 +57,15 @@ public class LambdaFocusedTests extends TestBase {
         EzEconomyPapiPlugin papi = (EzEconomyPapiPlugin) MockBukkit.load(EzEconomyPapiPlugin.class);
         EzEconomyPAPIExpansion expansion = new EzEconomyPAPIExpansion(papi);
 
-        Method m = EzEconomyPAPIExpansion.class.getDeclaredMethod("lambda$1", com.skyblockexp.ezeconomy.core.EzEconomyPlugin.class, String.class, String.class, int.class);
-        m.setAccessible(true);
+        java.util.UUID u1 = java.util.UUID.randomUUID();
+        org.bukkit.OfflinePlayer off1 = org.bukkit.Bukkit.getOfflinePlayer(u1);
 
         core.setStorage(null);
-        m.invoke(expansion, core, "top", "usd", 1);
+        com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion.computeTopSyncForProd(core, "usd", "top:usd:1", 1);
 
         SimpleStorage ss = new SimpleStorage();
         core.setStorage(ss);
-        m.invoke(expansion, core, "top", "usd", 1);
+        expansion.handlePlaceholderRequestForTests(off1, "top_1_usd");
     }
 
     @Test
@@ -75,18 +75,18 @@ public class LambdaFocusedTests extends TestBase {
         EzEconomyPapiPlugin papi = (EzEconomyPapiPlugin) MockBukkit.load(EzEconomyPapiPlugin.class);
         EzEconomyPAPIExpansion expansion = new EzEconomyPAPIExpansion(papi);
 
-        Method m2 = EzEconomyPAPIExpansion.class.getDeclaredMethod("lambda$2", com.skyblockexp.ezeconomy.core.EzEconomyPlugin.class, String.class, Map.Entry.class);
-        m2.setAccessible(true);
-
         AbstractMap.SimpleEntry<java.util.UUID, Double> entry = new AbstractMap.SimpleEntry<>(java.util.UUID.randomUUID(), 42.0);
+        org.bukkit.OfflinePlayer off2 = org.bukkit.Bukkit.getOfflinePlayer(entry.getKey());
 
         core.setStorage(null);
-        Object res1 = m2.invoke(expansion, core, "usd", entry);
-        assertNotNull(res1);
+        com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion.computeTopSyncForProd(core, "usd", "top:usd:1", 1);
+        com.skyblockexp.ezeconomy.cache.ExpiringCache.Entry<?> e1 = com.skyblockexp.ezeconomy.cache.CacheManager.getProvider().getEntry("top:usd:1");
+        assertNotNull(e1);
 
-        SimpleStorage ss = new SimpleStorage();
-        core.setStorage(ss);
-        Object res2 = m2.invoke(expansion, core, "usd", entry);
-        assertNotNull(res2);
+        SimpleStorage ss2 = new SimpleStorage();
+        core.setStorage(ss2);
+        com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion.computeTopSyncForProd(core, "usd", "top:usd:1", 1);
+        com.skyblockexp.ezeconomy.cache.ExpiringCache.Entry<?> e2 = com.skyblockexp.ezeconomy.cache.CacheManager.getProvider().getEntry("top:usd:1");
+        assertNotNull(e2);
     }
 }

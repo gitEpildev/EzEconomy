@@ -87,17 +87,10 @@ public class Lambda1EdgeCasesTest extends com.skyblockexp.ezeconomy.papi.TestBas
 
         com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion expansion = new com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion(papi);
 
-        Method lambda1 = null;
-        for (Method m : com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion.class.getDeclaredMethods()) {
-            if (m.getName().contains("lambda$1")) { lambda1 = m; break; }
-        }
-        assertNotNull(lambda1);
-        lambda1.setAccessible(true);
-
         String currency = "edgecase_currency_for_tests";
         String cacheKey = "top:edgecase_currency_for_tests:1";
-        Object target1 = java.lang.reflect.Modifier.isStatic(lambda1.getModifiers()) ? null : expansion;
-        lambda1.invoke(target1, core, currency, cacheKey, Integer.valueOf(1));
+
+        com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion.computeTopSyncForProd(core, currency, cacheKey, 1);
 
         var entry = CacheManager.getProvider().getEntry(cacheKey);
         assertNotNull(entry);
@@ -115,17 +108,10 @@ public class Lambda1EdgeCasesTest extends com.skyblockexp.ezeconomy.papi.TestBas
 
         com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion expansion = new com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion(papi);
 
-        Method lambda1 = null;
-        for (Method m : com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion.class.getDeclaredMethods()) {
-            if (m.getName().contains("lambda$1")) { lambda1 = m; break; }
-        }
-        assertNotNull(lambda1);
-        lambda1.setAccessible(true);
-
         String currency = "edgecase_currency_for_tests";
         String cacheKey = "top:edgecase_currency_for_tests:2";
-        Object target1 = java.lang.reflect.Modifier.isStatic(lambda1.getModifiers()) ? null : expansion;
-        lambda1.invoke(target1, core, currency, cacheKey, Integer.valueOf(2));
+
+        com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion.computeTopSyncForProd(core, currency, cacheKey, 2);
 
         var entry = CacheManager.getProvider().getEntry(cacheKey);
         assertNotNull(entry);
@@ -134,7 +120,7 @@ public class Lambda1EdgeCasesTest extends com.skyblockexp.ezeconomy.papi.TestBas
         StorageEmptyAll sEmpty = new StorageEmptyAll();
         core.setStorage(sEmpty);
         String cacheKey2 = "top:edgecase_currency_for_tests:3";
-        lambda1.invoke(target1, core, currency, cacheKey2, Integer.valueOf(3));
+        com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion.computeTopSyncForProd(core, currency, cacheKey2, 3);
         var entry2 = CacheManager.getProvider().getEntry(cacheKey2);
         assertNotNull(entry2);
         assertEquals("", entry2.value);

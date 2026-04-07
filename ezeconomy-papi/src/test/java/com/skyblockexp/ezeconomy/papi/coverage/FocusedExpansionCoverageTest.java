@@ -133,9 +133,7 @@ public class FocusedExpansionCoverageTest {
 
         java.util.Map.Entry<java.util.UUID, Double> entry = new java.util.AbstractMap.SimpleEntry<>(u, 77.0);
 
-        java.lang.reflect.Method m0 = com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion.class.getDeclaredMethod("lambda$0", com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion.TestEzEconomy.class, String.class, java.util.Map.Entry.class);
-        m0.setAccessible(true);
-        Object r0 = m0.invoke(null, testEz, "dollar", entry);
+        Object r0 = com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion.formatTopEntryForTests(testEz, "dollar", entry);
         assertNotNull(r0);
         assertTrue(r0.toString().contains("77.00") || r0.toString().contains("77"));
 

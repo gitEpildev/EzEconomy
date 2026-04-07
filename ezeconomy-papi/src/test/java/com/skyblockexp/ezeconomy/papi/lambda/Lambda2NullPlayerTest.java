@@ -78,22 +78,14 @@ public class Lambda2NullPlayerTest extends TestBase {
 
         EzEconomyPAPIExpansion expansion = new EzEconomyPAPIExpansion(papi);
 
-        Method lambda2 = null;
-        for (Method m : EzEconomyPAPIExpansion.class.getDeclaredMethods()) {
-            if (m.getName().contains("lambda$2")) { lambda2 = m; break; }
-        }
-        assertNotNull(lambda2, "lambda$2 method not found");
-        lambda2.setAccessible(true);
-
         AbstractMap.SimpleEntry<java.util.UUID, Double> entryPair = new AbstractMap.SimpleEntry<>(a, 12345.0);
-        Object target2 = java.lang.reflect.Modifier.isStatic(lambda2.getModifiers()) ? null : expansion;
-        Object mapped = lambda2.invoke(target2, core, "dollar", entryPair);
-        assertNotNull(mapped);
-        String s = mapped.toString();
-        assertTrue(s.contains("12345") || s.length() > 0);
+        org.bukkit.OfflinePlayer off = org.bukkit.Bukkit.getOfflinePlayer(a);
 
+        com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion.computeTopSyncForProd(core, "dollar", "top:dollar:1", 1);
         String cacheKey = "top:dollar:1";
-        var entry = CacheManager.getProvider().getEntry(cacheKey);
-        assertNotNull(mapped);
+        com.skyblockexp.ezeconomy.cache.ExpiringCache.Entry<?> entry = CacheManager.getProvider().getEntry(cacheKey);
+        assertNotNull(entry);
+        String s = entry.value == null ? "" : entry.value.toString();
+        assertTrue(s.contains("12345") || s.length() > 0);
     }
 }

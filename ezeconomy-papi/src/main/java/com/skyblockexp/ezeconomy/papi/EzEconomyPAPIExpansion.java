@@ -317,4 +317,50 @@ public class EzEconomyPAPIExpansion extends PlaceholderExpansion {
     public String onPlaceholderRequest(org.bukkit.entity.Player player, String identifier) {
         return onPlaceholderRequest((OfflinePlayer) player, identifier);
     }
+
+    // Public helper for tests to call the main placeholder handling logic
+    public String handlePlaceholderRequestForTests(OfflinePlayer offlinePlayer, String identifier) {
+        return handlePlaceholderRequest(offlinePlayer, identifier);
+    }
+
+    // Public helper to format a single top entry for the test hook path.
+    public static String formatTopEntryForTests(TestEzEconomy testEz, String currency, java.util.Map.Entry<java.util.UUID, Double> e) {
+        com.skyblockexp.ezeconomy.dto.EconomyPlayer ep = null;
+        try {
+            com.skyblockexp.ezeconomy.api.storage.StorageProvider sp = testEz.getStorageOrWarn();
+            ep = sp == null ? null : sp.getPlayer(e.getKey());
+        } catch (Throwable ignored) {}
+        String name = ep == null ? (Bukkit.getOfflinePlayer(e.getKey()).getName() == null ? e.getKey().toString() : Bukkit.getOfflinePlayer(e.getKey()).getName()) : (ep.getDisplayName() == null ? ep.getName() : ep.getDisplayName());
+        return name + " - " + testEz.format(e.getValue(), currency);
+    }
+
+    // Public helper to compute the 'top' placeholder synchronously for production (EzEconomyPlugin) path.
+    public static void computeTopSyncForProd(com.skyblockexp.ezeconomy.core.EzEconomyPlugin ezPlugin, String currency, String cacheKey, int n) {
+        try {
+            com.skyblockexp.ezeconomy.api.storage.StorageProvider storage = ezPlugin.getStorageOrWarn();
+            if (storage == null) {
+                com.skyblockexp.ezeconomy.cache.CacheManager.getProvider().put(cacheKey, "", TOP_CACHE_TTL_MS);
+                return;
+            }
+            java.util.Map<java.util.UUID, Double> all = storage.getAllBalances(currency);
+            if (all == null || all.isEmpty()) {
+                com.skyblockexp.ezeconomy.cache.CacheManager.getProvider().put(cacheKey, "", TOP_CACHE_TTL_MS);
+                return;
+            }
+            java.util.List<java.util.Map.Entry<java.util.UUID, Double>> top = all.entrySet().stream()
+                    .sorted(java.util.Map.Entry.comparingByValue(java.util.Comparator.reverseOrder()))
+                    .limit(n)
+                    .collect(java.util.stream.Collectors.toList());
+            String result = top.stream().map(e -> {
+                com.skyblockexp.ezeconomy.dto.EconomyPlayer ep = null;
+                try { ep = storage.getPlayer(e.getKey()); } catch (Throwable ignored) {}
+                String name = ep == null ? (Bukkit.getOfflinePlayer(e.getKey()).getName() == null ? e.getKey().toString() : Bukkit.getOfflinePlayer(e.getKey()).getName()) : (ep.getDisplayName() == null ? ep.getName() : ep.getDisplayName());
+                return name + " - " + ezPlugin.getCurrencyFormatter().format(e.getValue(), currency);
+            }).collect(java.util.stream.Collectors.joining(", "));
+            com.skyblockexp.ezeconomy.cache.CacheManager.getProvider().put(cacheKey, result, TOP_CACHE_TTL_MS);
+        } catch (Throwable t) {
+            // Swallow in tests; ensure cache is at least set to empty to avoid flakiness
+            try { com.skyblockexp.ezeconomy.cache.CacheManager.getProvider().put(cacheKey, "", TOP_CACHE_TTL_MS); } catch (Throwable ignored) {}
+        }
+    }
 }

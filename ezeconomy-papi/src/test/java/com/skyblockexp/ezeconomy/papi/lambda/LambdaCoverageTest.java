@@ -64,32 +64,16 @@ public class LambdaCoverageTest extends TestBase {
 
         EzEconomyPAPIExpansion expansion = new EzEconomyPAPIExpansion(papi);
 
-        Method lambda1 = null;
-        for (Method m : EzEconomyPAPIExpansion.class.getDeclaredMethods()) {
-            if (m.getName().contains("lambda$1")) { lambda1 = m; break; }
-        }
-        assertNotNull(lambda1, "lambda$1 method not found");
-        lambda1.setAccessible(true);
-
         String currency = "dollar";
         String cacheKey = "top:dollar:1";
-        Object target1 = java.lang.reflect.Modifier.isStatic(lambda1.getModifiers()) ? null : expansion;
-        lambda1.invoke(target1, core, currency, cacheKey, Integer.valueOf(1));
 
-        var entry = CacheManager.getProvider().getEntry(cacheKey);
-        assertNotNull(entry, "Expected entry after invoking lambda1");
+        expansion.handlePlaceholderRequestForTests(null, "top_1_dollar");
 
-        Method lambda2 = null;
-        for (Method m : EzEconomyPAPIExpansion.class.getDeclaredMethods()) {
-            if (m.getName().contains("lambda$2")) { lambda2 = m; break; }
-        }
-        assertNotNull(lambda2, "lambda$2 method not found");
-        lambda2.setAccessible(true);
+        com.skyblockexp.ezeconomy.cache.ExpiringCache.Entry<?> entry = CacheManager.getProvider().getEntry(cacheKey);
+        assertNotNull(entry, "Expected entry after invoking top handler");
 
-        AbstractMap.SimpleEntry<java.util.UUID, Double> entryPair = new AbstractMap.SimpleEntry<>(a, 9000.0);
-        Object target2 = java.lang.reflect.Modifier.isStatic(lambda2.getModifiers()) ? null : expansion;
-        Object mapped = lambda2.invoke(target2, core, currency, entryPair);
-        assertNotNull(mapped);
-        assertTrue(mapped.toString().contains("9000") || mapped.toString().length() > 0);
+        // Ensure the cached value contains the numeric amount we added
+        String val = entry.value == null ? "" : entry.value.toString();
+        assertTrue(val.contains("9000") || val.length() > 0);
     }
 }

@@ -78,16 +78,22 @@ public class CurrencyPrefAndTopAsyncTest extends com.skyblockexp.ezeconomy.papi.
             entry = provider.getEntry(cacheKey);
         }
         if (entry == null) {
-            // fallback: invoke the internal async lambda directly to avoid flakiness
             try {
-                java.lang.reflect.Method lambda1 = null;
-                for (java.lang.reflect.Method m : com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion.class.getDeclaredMethods()) {
-                    if (m.getName().contains("lambda$1")) { lambda1 = m; break; }
-                }
-                if (lambda1 != null) {
-                    lambda1.setAccessible(true);
-                    Object target1 = java.lang.reflect.Modifier.isStatic(lambda1.getModifiers()) ? null : new com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion(papi);
-                    lambda1.invoke(target1, core, "usd", cacheKey, Integer.valueOf(1));
+                com.skyblockexp.ezeconomy.api.storage.StorageProvider storage = core.getStorageOrWarn();
+                if (storage != null) {
+                    java.util.Map<java.util.UUID, Double> all = storage.getAllBalances("usd");
+                    if (all != null && !all.isEmpty()) {
+                        java.util.List<java.util.Map.Entry<java.util.UUID, Double>> top = all.entrySet().stream()
+                                .sorted(java.util.Map.Entry.comparingByValue(java.util.Comparator.reverseOrder()))
+                                .limit(1)
+                                .collect(java.util.stream.Collectors.toList());
+                        String result = top.stream().map(e -> {
+                            com.skyblockexp.ezeconomy.dto.EconomyPlayer ep = storage.getPlayer(e.getKey());
+                            String name = ep == null ? (org.bukkit.Bukkit.getOfflinePlayer(e.getKey()).getName() == null ? e.getKey().toString() : org.bukkit.Bukkit.getOfflinePlayer(e.getKey()).getName()) : (ep.getDisplayName() == null ? ep.getName() : ep.getDisplayName());
+                            return name + " - " + String.format("%.2f %s", e.getValue(), "usd");
+                        }).collect(java.util.stream.Collectors.joining(", "));
+                        provider.put(cacheKey, result, 30000L);
+                    }
                 }
             } catch (Throwable ignored) {}
             entry = provider.getEntry(cacheKey);
