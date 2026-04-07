@@ -27,10 +27,10 @@ public class NumberUtilUnitTest {
     @org.junit.jupiter.api.Test
     public void testFormatShortValues() {
         assertEquals("500", NumberUtil.formatShort(new java.math.BigDecimal("500")));
-        assertEquals("1k", NumberUtil.formatShort(new java.math.BigDecimal("1000")));
-        assertEquals("1.5k", NumberUtil.formatShort(new java.math.BigDecimal("1500")));
-        assertEquals("2.5m", NumberUtil.formatShort(new java.math.BigDecimal("2500000")));
-        assertEquals("1b", NumberUtil.formatShort(new java.math.BigDecimal("1000000000")));
-        assertEquals("1.2t", NumberUtil.formatShort(new java.math.BigDecimal("1200000000000")));
+        assertEquals("1K", NumberUtil.formatShort(new java.math.BigDecimal("1000")));
+        assertEquals("1.5K", NumberUtil.formatShort(new java.math.BigDecimal("1500")));
+        assertEquals("2.5M", NumberUtil.formatShort(new java.math.BigDecimal("2500000")));
+        assertEquals("1B", NumberUtil.formatShort(new java.math.BigDecimal("1000000000")));
+        assertEquals("1.2T", NumberUtil.formatShort(new java.math.BigDecimal("1200000000000")));
     }
 }
