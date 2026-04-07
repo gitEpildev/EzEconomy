@@ -11,6 +11,7 @@ import org.bukkit.OfflinePlayer;
 import org.bukkit.command.CommandSender;
 
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * Subcommand for /eco set <player> <amount>
@@ -22,13 +23,26 @@ public class SetSubcommand implements Subcommand {
         this.plugin = plugin;
     }
 
+    private OfflinePlayer resolveTarget(String name) {
+        org.bukkit.entity.Player online = Bukkit.getPlayerExact(name);
+        if (online != null) return online;
+        com.skyblockexp.ezeconomy.api.storage.StorageProvider storage = plugin.getStorageOrWarn();
+        if (storage != null) {
+            UUID dbUuid = storage.resolvePlayerByName(name);
+            if (dbUuid != null) return Bukkit.getOfflinePlayer(dbUuid);
+        }
+        var maybe = com.skyblockexp.ezeconomy.util.PlayerLookup.findByName(name);
+        if (maybe.isPresent()) return maybe.get();
+        return Bukkit.getOfflinePlayer(name);
+    }
+
     @Override
     public boolean execute(CommandSender sender, String[] args) {
         if (args.length < 2 || args.length > 3) {
             MessageUtils.send(sender, plugin, "usage_eco");
             return true;
         }
-        OfflinePlayer target = Bukkit.getOfflinePlayer(args[0]);
+        OfflinePlayer target = resolveTarget(args[0]);
         Money money = NumberUtil.parseMoney(args[1], null);
         if (money == null || money.getAmount().compareTo(java.math.BigDecimal.ZERO) < 0) {
             MessageUtils.send(sender, plugin, "invalid_amount", java.util.Map.of("input", args[1]));

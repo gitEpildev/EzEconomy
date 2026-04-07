@@ -23,6 +23,17 @@ public class PlayerJoinListener implements Listener {
         // Keep existing daily reward behaviour
         manager.handleJoin(event.getPlayer());
 
+        // Always persist correct UUID-to-name mapping from Velocity
+        try {
+            StorageProvider storage = plugin.getStorageOrWarn();
+            if (storage != null) {
+                org.bukkit.entity.Player p = event.getPlayer();
+                storage.persistPlayerInfo(p.getUniqueId(), p.getName(), p.getDisplayName());
+            }
+        } catch (Exception e) {
+            plugin.getLogger().warning("Failed to persist player info on join: " + e.getMessage());
+        }
+
         // Optionally ensure player is stored in the configured storage backend
         if (!plugin.getConfig().getBoolean("store-on-join.enabled", false)) {
             return;

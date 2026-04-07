@@ -27,6 +27,7 @@ public class Bootstrap {
         components.add(new com.skyblockexp.ezeconomy.bootstrap.component.CacheComponent(plugin));
         components.add(new com.skyblockexp.ezeconomy.bootstrap.component.LockingComponent(plugin));
         components.add(new StorageComponent(plugin));
+        components.add(new com.skyblockexp.ezeconomy.bootstrap.component.MessagingComponent(plugin));
         components.add(new ManagersComponent(plugin));
         // Metrics component should be initialized after managers
         components.add(new MetricsComponent(plugin));

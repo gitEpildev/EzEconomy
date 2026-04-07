@@ -9,6 +9,26 @@
 
 **EzEconomy** is a professional-grade Vault economy provider for Minecraft servers. Choose from YML, MySQL, SQLite, MongoDB, or custom storage with multi-currency support, async caching, and thorough permission controls.
 
+> **Original plugin by [@ez-plugins](https://github.com/ez-plugins) — [ez-plugins/EzEconomy](https://github.com/ez-plugins/EzEconomy)**
+> This fork contains community contributions by [@GitEpildev](https://github.com/gitEpildev) — see [CHANGES.md](CHANGES.md) for full details.
+
+---
+
+## 🔀 What's New in This Fork
+
+The following changes were made by **GitEpildev** on top of the original EzEconomy codebase. All original features, APIs, and plugin compatibility are preserved.
+
+- **Full multi-server Velocity network support** — cross-server payments, real-time notifications, offline message queue, network-wide tab completion
+- **HikariCP connection pooling** for MySQL — replaces the single synchronized connection with a pool of 10 concurrent connections, eliminating main-thread freezes
+- **Atomic MySQL transactions** — transfers use `commit`/`rollback` for data integrity
+- **57% code reduction** in `MySQLStorageProvider` (1,448 → 625 lines)
+- **Message formatting redesign** — gold for sending, green for receiving, red for errors, styled `/baltop` with dividers
+- **Uppercase currency suffixes** — K, M, B, T instead of k, m, b, t
+- **Dedicated admin messages** — `/eco give` and `/eco take` have their own distinct messages
+- **Pre-built jars** included in `jars/` for both Bukkit and Velocity
+
+> **Note:** These changes currently apply to the MySQL storage provider only. SQLite, MongoDB, and YML providers are unchanged.
+
 ---
 
 ## 📚 Documentation

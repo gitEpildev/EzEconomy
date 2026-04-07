@@ -26,11 +26,15 @@ public class BalanceTabCompleter implements TabCompleter {
         if (args.length == 1) {
             String partial = args[0].toLowerCase();
             List<String> res = new ArrayList<>();
-            // suggest online players
-            res.addAll(Bukkit.getOnlinePlayers().stream()
-                    .map(OfflinePlayer::getName)
-                    .filter(n -> n != null && n.toLowerCase().startsWith(partial))
-                    .collect(Collectors.toList()));
+            Bukkit.getOnlinePlayers().forEach(p -> {
+                if (p.getName() != null && p.getName().toLowerCase().startsWith(partial)) res.add(p.getName());
+            });
+            var messenger = plugin.getCrossServerMessenger();
+            if (messenger != null) {
+                messenger.getNetworkPlayers().stream()
+                    .filter(n -> n.toLowerCase().startsWith(partial))
+                    .forEach(res::add);
+            }
             // suggest currencies
             var cfg = plugin.getConfig();
             if (cfg.isConfigurationSection("multi-currency.currencies")) {

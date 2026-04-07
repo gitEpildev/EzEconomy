@@ -7,6 +7,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.LinkedHashSet;
 import com.skyblockexp.ezeconomy.core.EzEconomyPlugin;
 
 public class PayTabCompleter implements TabCompleter {
@@ -20,9 +21,12 @@ public class PayTabCompleter implements TabCompleter {
         if (!sender.hasPermission("ezeconomy.pay")) return Collections.emptyList();
         if (args.length == 1) {
             String partial = args[0].toLowerCase();
-            return Bukkit.getOnlinePlayers().stream()
-                .map(OfflinePlayer::getName)
-                .filter(name -> name != null && name.toLowerCase().startsWith(partial))
+            Set<String> names = new LinkedHashSet<>();
+            Bukkit.getOnlinePlayers().forEach(p -> { if (p.getName() != null) names.add(p.getName()); });
+            var messenger = plugin.getCrossServerMessenger();
+            if (messenger != null) names.addAll(messenger.getNetworkPlayers());
+            return names.stream()
+                .filter(name -> name.toLowerCase().startsWith(partial))
                 .collect(Collectors.toList());
         }
         if (args.length == 2) {

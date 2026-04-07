@@ -13,8 +13,8 @@ public class CurrencyFormatterMoneyConfigTest {
         plugin.getConfig().set("money-format.useCompact", true);
         plugin.getConfig().set("money-format.compact.precision", 2);
 
-        // 1500 should be compacted with 2 decimals -> 1.50k
-        assertEquals("1.50k", plugin.getCurrencyFormatter().formatShort(1500.0, null));
+        // 1500 should be compacted with 2 decimals -> 1.50K
+        assertEquals("1.50K", plugin.getCurrencyFormatter().formatShort(1500.0, null));
     }
 
     @Test

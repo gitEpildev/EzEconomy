@@ -100,6 +100,7 @@ public class BaltopCommand implements CommandExecutor {
                 ));
                 rank++;
             }
+            MessageUtils.send(sender, plugin, "baltop_footer");
             return true;
         }
         if (top > 0 && sorted.size() > top) {
@@ -121,6 +122,7 @@ public class BaltopCommand implements CommandExecutor {
             ));
             rank++;
         }
+        MessageUtils.send(sender, plugin, "baltop_footer");
         return true;
     }
 }

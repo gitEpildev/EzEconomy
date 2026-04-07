@@ -49,6 +49,15 @@ public class EzEconomyPlugin extends JavaPlugin {
     private com.skyblockexp.ezeconomy.service.metrics.TransactionMetricsService transactionMetricsService;
     private com.skyblockexp.ezeconomy.service.format.CurrencyFormatter currencyFormatter;
     private com.skyblockexp.ezeconomy.service.storage.StorageConfigLoader storageConfigLoader;
+    private com.skyblockexp.ezeconomy.messaging.CrossServerMessenger crossServerMessenger;
+
+    public com.skyblockexp.ezeconomy.messaging.CrossServerMessenger getCrossServerMessenger() {
+        return crossServerMessenger;
+    }
+
+    public void setCrossServerMessenger(com.skyblockexp.ezeconomy.messaging.CrossServerMessenger messenger) {
+        this.crossServerMessenger = messenger;
+    }
 
     
 

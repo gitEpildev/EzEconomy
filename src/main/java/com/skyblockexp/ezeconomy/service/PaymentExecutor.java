@@ -30,9 +30,25 @@ public class PaymentExecutor {
         if (storage == null) return true;
         plugin.getLogger().info("PaymentExecutor: start execute from=" + from.getName() + " toName=" + toName + " amount=" + netAmount + " currency=" + currency + " knownOffline=" + knownOffline);
 
-        // Try online fast path
+        // Try online fast path, then DB-backed resolution, then PlayerLookup
         Player online = Bukkit.getPlayerExact(toName);
-        OfflinePlayer toOffline = online != null ? online : Bukkit.getOfflinePlayer(toName);
+        OfflinePlayer toOffline = null;
+        if (online != null) {
+            toOffline = online;
+        } else {
+            UUID dbUuid = storage.resolvePlayerByName(toName);
+            if (dbUuid != null) {
+                toOffline = Bukkit.getOfflinePlayer(dbUuid);
+                knownOffline = true;
+            } else {
+                var maybe = com.skyblockexp.ezeconomy.util.PlayerLookup.findByName(toName);
+                if (maybe.isPresent()) {
+                    toOffline = maybe.get();
+                } else {
+                    toOffline = Bukkit.getOfflinePlayer(toName);
+                }
+            }
+        }
 
         UUID fromUuid = from.getUniqueId();
 
@@ -63,7 +79,7 @@ public class PaymentExecutor {
                 Bukkit.getScheduler().callSyncMethod(plugin, () -> {
                     Bukkit.getPluginManager().callEvent(payEvent);
                     return null;
-                }).get();
+                }).get(5, java.util.concurrent.TimeUnit.SECONDS);
             } catch (Exception e) {
                 plugin.getLogger().warning("PaymentExecutor: failed to call PlayerPayPlayerEvent on main thread: " + e.getMessage());
                 // If we cannot safely call the event, cancel the payment to be safe
@@ -150,6 +166,10 @@ public class PaymentExecutor {
                             } else {
                                 MessageUtils.send(toOffline.getPlayer(), plugin, "received", java.util.Map.of("player", from.getName(), "amount", receiverDisplay));
                             }
+                        } else if (plugin.getCrossServerMessenger() != null) {
+                            plugin.getCrossServerMessenger().sendPaymentNotification(
+                                toOffline.getUniqueId(), toOffline.getName() != null ? toOffline.getName() : toName,
+                                from.getName(), receiverDisplay, recipientCurrency);
                         }
                         return true;
                     } finally {
@@ -216,6 +236,10 @@ public class PaymentExecutor {
                     } else {
                         MessageUtils.send(toOffline.getPlayer(), plugin, "received", java.util.Map.of("player", from.getName(), "amount", receiverDisplay));
                     }
+                } else if (plugin.getCrossServerMessenger() != null) {
+                    plugin.getCrossServerMessenger().sendPaymentNotification(
+                        toOffline.getUniqueId(), toOffline.getName() != null ? toOffline.getName() : toName,
+                        from.getName(), receiverDisplay, recipientCurrency);
                 }
                 return true;
             } finally {
@@ -235,20 +259,26 @@ public class PaymentExecutor {
         }
 
         String amountWithSymbol = plugin.getCurrencyFormatter().formatPriceForMessage(netAmount, currency);
+        String senderBalDisplay = plugin.getCurrencyFormatter().formatPriceForMessage(transfer.getFromBalance(), currency);
+        String receiverBalDisplay = plugin.getCurrencyFormatter().formatPriceForMessage(transfer.getToBalance(), currency);
         String defaultCur = plugin.getDefaultCurrency();
         if (!currency.equalsIgnoreCase(defaultCur)) {
             double equiv = CurrencyUtil.convert(plugin, netAmount, currency, defaultCur);
             if (!Double.isNaN(equiv)) {
                 String equivDisplay = plugin.getCurrencyFormatter().formatPriceForMessage(equiv, defaultCur);
-                MessageUtils.send(from, plugin, "paid_other_currency", java.util.Map.of("player", toOffline.getName(), "amount", amountWithSymbol, "amount_default", equivDisplay));
+                MessageUtils.send(from, plugin, "paid_other_currency", java.util.Map.of("player", toOffline.getName(), "amount", amountWithSymbol, "amount_default", equivDisplay, "balance", senderBalDisplay));
             } else {
-                MessageUtils.send(from, plugin, "paid", java.util.Map.of("player", toOffline.getName(), "amount", amountWithSymbol));
+                MessageUtils.send(from, plugin, "paid", java.util.Map.of("player", toOffline.getName(), "amount", amountWithSymbol, "balance", senderBalDisplay));
             }
         } else {
-            MessageUtils.send(from, plugin, "paid", java.util.Map.of("player", toOffline.getName(), "amount", amountWithSymbol));
+            MessageUtils.send(from, plugin, "paid", java.util.Map.of("player", toOffline.getName(), "amount", amountWithSymbol, "balance", senderBalDisplay));
         }
         if (toOffline.isOnline() && toOffline.getPlayer() != null) {
-            MessageUtils.send(toOffline.getPlayer(), plugin, "received", java.util.Map.of("player", from.getName(), "amount", amountWithSymbol));
+            MessageUtils.send(toOffline.getPlayer(), plugin, "received", java.util.Map.of("player", from.getName(), "amount", amountWithSymbol, "balance", receiverBalDisplay));
+        } else if (plugin.getCrossServerMessenger() != null) {
+            plugin.getCrossServerMessenger().sendPaymentNotification(
+                toOffline.getUniqueId(), toOffline.getName() != null ? toOffline.getName() : toName,
+                from.getName(), amountWithSymbol, currency);
         }
         return true;
     }

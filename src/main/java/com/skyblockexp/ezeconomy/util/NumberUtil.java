@@ -103,16 +103,16 @@ public class NumberUtil {
         java.math.BigDecimal display;
         if (abs.compareTo(trillion) >= 0) {
             display = value.divide(trillion, decimals, RoundingMode.HALF_UP);
-            suffix = "t";
+            suffix = "T";
         } else if (abs.compareTo(billion) >= 0) {
             display = value.divide(billion, decimals, RoundingMode.HALF_UP);
-            suffix = "b";
+            suffix = "B";
         } else if (abs.compareTo(million) >= 0) {
             display = value.divide(million, decimals, RoundingMode.HALF_UP);
-            suffix = "m";
+            suffix = "M";
         } else if (abs.compareTo(thousand) >= 0) {
             display = value.divide(thousand, decimals, RoundingMode.HALF_UP);
-            suffix = "k";
+            suffix = "K";
         } else {
             // small values: return plain integer/decimal string without suffix
             java.math.BigDecimal stripped = value.stripTrailingZeros();

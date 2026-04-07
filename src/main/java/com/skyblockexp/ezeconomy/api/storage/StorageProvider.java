@@ -426,4 +426,11 @@ public interface StorageProvider {
     default void depositBank(String name, double amount) {
         depositBank(name, "dollar", amount);
     }
+
+    default UUID resolvePlayerByName(String name) {
+        return null;
+    }
+
+    default void persistPlayerInfo(UUID uuid, String name, String displayName) {
+    }
 }

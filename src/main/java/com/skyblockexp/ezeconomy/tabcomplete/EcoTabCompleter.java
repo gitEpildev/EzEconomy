@@ -27,7 +27,16 @@ public class EcoTabCompleter implements TabCompleter {
                     .collect(Collectors.toList());
         }
         if (args.length == 2) {
-            return com.skyblockexp.ezeconomy.util.PlayerLookup.namesStartingWith(args[1]);
+            java.util.Set<String> names = new java.util.LinkedHashSet<>(
+                com.skyblockexp.ezeconomy.util.PlayerLookup.namesStartingWith(args[1]));
+            var messenger = plugin.getCrossServerMessenger();
+            if (messenger != null) {
+                String p = args[1].toLowerCase();
+                messenger.getNetworkPlayers().stream()
+                    .filter(n -> n.toLowerCase().startsWith(p))
+                    .forEach(names::add);
+            }
+            return new ArrayList<>(names);
         }
         // suggest currency at position 4: /eco give <player> <amount> [currency]
         if (args.length == 4) {
