@@ -1,4 +1,4 @@
-package com.skyblockexp.ezeconomy.papi;
+package com.skyblockexp.ezeconomy.papi.integration;
 
 import org.mockbukkit.mockbukkit.MockBukkit;
 import org.junit.jupiter.api.AfterEach;
@@ -18,7 +18,7 @@ public class MockBukkitEzEconomyPapiPluginTest {
     public void onEnable_disables_when_placeholder_missing() {
         MockBukkit.mock();
 
-        EzEconomyPapiPlugin plugin = (EzEconomyPapiPlugin) MockBukkit.load(EzEconomyPapiPlugin.class);
+        com.skyblockexp.ezeconomy.papi.EzEconomyPapiPlugin plugin = (com.skyblockexp.ezeconomy.papi.EzEconomyPapiPlugin) MockBukkit.load(com.skyblockexp.ezeconomy.papi.EzEconomyPapiPlugin.class);
 
         // If PlaceholderAPI is not present, the expansion should disable itself
         assertFalse(plugin.isEnabled());
@@ -30,13 +30,11 @@ public class MockBukkitEzEconomyPapiPluginTest {
         // Try to load a simple placeholder plugin stub; if MockBukkit doesn't register it
         // then the plugin should be disabled. We assert that enabled state matches
         // whether PlaceholderAPI is present in the mock plugin manager.
-        try { MockBukkit.load(PlaceholderStub.class); } catch (Exception ignored) {}
+        try { MockBukkit.load(com.skyblockexp.ezeconomy.papi.testhelpers.PlaceholderStub.class); } catch (Exception ignored) {}
 
         boolean placeholderPresent = MockBukkit.getMock().getPluginManager().getPlugin("PlaceholderAPI") != null;
-        EzEconomyPapiPlugin plugin = (EzEconomyPapiPlugin) MockBukkit.load(EzEconomyPapiPlugin.class);
+        com.skyblockexp.ezeconomy.papi.EzEconomyPapiPlugin plugin = (com.skyblockexp.ezeconomy.papi.EzEconomyPapiPlugin) MockBukkit.load(com.skyblockexp.ezeconomy.papi.EzEconomyPapiPlugin.class);
 
         assertEquals(placeholderPresent, plugin.isEnabled());
     }
 }
-
-// PlaceholderStub is provided as a top-level test plugin in PlaceholderStub.java

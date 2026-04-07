@@ -5,10 +5,9 @@ import com.skyblockexp.ezeconomy.dto.EconomyPlayer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.bukkit.OfflinePlayer;
+import com.skyblockexp.ezeconomy.papi.testhelpers.TestPlayerFakes;
 
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
+ 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -22,31 +21,14 @@ public class EzEconomyPAPIExpansionTest {
     }
 
     private OfflinePlayer offlinePlayer(UUID id) {
-        InvocationHandler h = new InvocationHandler() {
-            @Override
-            public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-                String name = method.getName();
-                if ("getUniqueId".equals(name)) return id;
-                if (method.getReturnType().equals(boolean.class)) return false;
-                if (method.getReturnType().equals(int.class)) return 0;
-                return null;
-            }
-        };
-        return (OfflinePlayer) Proxy.newProxyInstance(OfflinePlayer.class.getClassLoader(), new Class[]{OfflinePlayer.class}, h);
+        return TestPlayerFakes.fakeOfflinePlayer(id);
     }
 
     @Test
     public void balance_returnsZeroWhenPlayerNull() {
         EzEconomyPAPIExpansion exp = new EzEconomyPAPIExpansion(null);
         // Provide a test hook so the code path doesn't attempt to access Bukkit static server
-        EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = new EzEconomyPAPIExpansion.TestEzEconomy() {
-            @Override public StorageProvider getStorageOrWarn() { return null; }
-            @Override public String getDefaultCurrency() { return "dollar"; }
-            @Override public String format(double amount, String currency) { return String.format("$%.2f", amount); }
-            @Override public String formatShort(double amount, String currency) { return String.format("$%.0f", amount); }
-            @Override public String getCurrencySymbol(String currency) { return "$"; }
-            @Override public com.skyblockexp.ezeconomy.manager.CurrencyPreferenceManager getCurrencyPreferenceManager() { return null; }
-        };
+        EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = com.skyblockexp.ezeconomy.papi.testhelpers.TestEzEconomyHelpers.formatting("dollar", "$");
 
         assertEquals("0", exp.onPlaceholderRequest((OfflinePlayer) null, "balance"));
     }

@@ -1,12 +1,13 @@
 package com.skyblockexp.ezeconomy.papi.placeholders;
 
 import com.skyblockexp.ezeconomy.papi.testhelpers.TestEzEconomyStubs;
+import com.skyblockexp.ezeconomy.papi.testhelpers.TestPlayerFakes;
 import org.bukkit.OfflinePlayer;
 import org.junit.jupiter.api.Test;
 import org.mockbukkit.mockbukkit.MockBukkit;
 
-import java.lang.reflect.Proxy;
 import java.util.UUID;
+ 
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -31,11 +32,7 @@ public class PlaceholderBranchCoverageTest extends com.skyblockexp.ezeconomy.pap
 
         com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion expansion = new com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion(papi);
 
-        OfflinePlayer fake = (OfflinePlayer) Proxy.newProxyInstance(OfflinePlayer.class.getClassLoader(), new Class[]{OfflinePlayer.class}, (proxy, method, args) -> {
-            if ("getUniqueId".equals(method.getName())) return UUID.randomUUID();
-            if (method.getReturnType().equals(boolean.class)) return false;
-            return null;
-        });
+        OfflinePlayer fake = TestPlayerFakes.fakeOfflinePlayer();
 
         String b = expansion.onPlaceholderRequest(fake, "balance");
         assertNotNull(b);

@@ -79,7 +79,7 @@ public class Lambda1EdgeCasesTest extends com.skyblockexp.ezeconomy.papi.TestBas
 
     @Test
     public void lambda1_writes_empty_for_null_storage() throws Exception {
-        MockBukkit.mock();
+        try { MockBukkit.mock(); } catch (IllegalStateException ignored) {}
         com.skyblockexp.ezeconomy.papi.EzEconomyPapiPlugin papi = (com.skyblockexp.ezeconomy.papi.EzEconomyPapiPlugin) MockBukkit.load(com.skyblockexp.ezeconomy.papi.EzEconomyPapiPlugin.class);
         com.skyblockexp.ezeconomy.core.EzEconomyPlugin core = (com.skyblockexp.ezeconomy.core.EzEconomyPlugin) MockBukkit.load(com.skyblockexp.ezeconomy.papi.EzPluginPathCoverageTest.SimpleEz.class);
 
@@ -106,7 +106,7 @@ public class Lambda1EdgeCasesTest extends com.skyblockexp.ezeconomy.papi.TestBas
 
     @Test
     public void lambda1_handles_null_and_empty_allBalances() throws Exception {
-        MockBukkit.mock();
+        try { MockBukkit.mock(); } catch (IllegalStateException ignored) {}
         com.skyblockexp.ezeconomy.papi.EzEconomyPapiPlugin papi = (com.skyblockexp.ezeconomy.papi.EzEconomyPapiPlugin) MockBukkit.load(com.skyblockexp.ezeconomy.papi.EzEconomyPapiPlugin.class);
         com.skyblockexp.ezeconomy.core.EzEconomyPlugin core = (com.skyblockexp.ezeconomy.core.EzEconomyPlugin) MockBukkit.load(com.skyblockexp.ezeconomy.papi.EzPluginPathCoverageTest.SimpleEz.class);
 

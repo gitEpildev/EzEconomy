@@ -60,13 +60,7 @@ public class BalanceFormattedShortEzFormatterTest {
 
         com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion expansion = new com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion(papi);
 
-        OfflinePlayer fake = (OfflinePlayer) java.lang.reflect.Proxy.newProxyInstance(
-                OfflinePlayer.class.getClassLoader(), new Class[]{OfflinePlayer.class}, (proxy, method, args) -> {
-                    if ("getUniqueId".equals(method.getName())) return u;
-                    if (method.getReturnType().equals(boolean.class)) return false;
-                    return null;
-                }
-        );
+        OfflinePlayer fake = com.skyblockexp.ezeconomy.papi.testhelpers.TestPlayerFakes.fakeOfflinePlayer(u);
 
         try {
             String formatted = expansion.onPlaceholderRequest(fake, "balance_formatted_eur");

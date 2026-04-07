@@ -1,4 +1,4 @@
-package com.skyblockexp.ezeconomy.papi;
+package com.skyblockexp.ezeconomy.papi.testhelpers;
 
 import org.bukkit.plugin.java.JavaPlugin;
 

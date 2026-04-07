@@ -1,6 +1,7 @@
 package com.skyblockexp.ezeconomy.papi.placeholders;
 
 import com.skyblockexp.ezeconomy.papi.testhelpers.TestEzEconomyStubs;
+import com.skyblockexp.ezeconomy.papi.testhelpers.TestPlayerFakes;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -23,23 +24,7 @@ public class StorageNullBranchesTest {
             com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion expansion = new com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion(null);
 
             java.util.UUID u = java.util.UUID.randomUUID();
-            org.bukkit.OfflinePlayer fakePlayer = (org.bukkit.OfflinePlayer) java.lang.reflect.Proxy.newProxyInstance(
-                    org.bukkit.OfflinePlayer.class.getClassLoader(),
-                    new Class[]{org.bukkit.OfflinePlayer.class},
-                    (proxy, method, args) -> {
-                        switch (method.getName()) {
-                            case "getUniqueId": return u;
-                            case "getName": return null;
-                            case "isOnline": return false;
-                            case "hasPlayedBefore": return true;
-                            default:
-                                Class<?> ret = method.getReturnType();
-                                if (ret.equals(boolean.class)) return false;
-                                if (ret.equals(long.class)) return 0L;
-                                return null;
-                        }
-                    }
-            );
+            org.bukkit.OfflinePlayer fakePlayer = TestPlayerFakes.fakeOfflinePlayer(u);
 
             assertEquals("0.00 dollar", expansion.onPlaceholderRequest(fakePlayer, "balance"));
             assertEquals("0.00 eur", expansion.onPlaceholderRequest(fakePlayer, "balance_eur"));

@@ -1,10 +1,11 @@
-package com.skyblockexp.ezeconomy.papi;
+package com.skyblockexp.ezeconomy.papi.coverage;
 
 import com.skyblockexp.ezeconomy.api.storage.StorageProvider;
 import com.skyblockexp.ezeconomy.dto.EconomyPlayer;
 import com.skyblockexp.ezeconomy.manager.CurrencyPreferenceManager;
 import com.skyblockexp.ezeconomy.cache.CacheManager;
 import org.bukkit.OfflinePlayer;
+import com.skyblockexp.ezeconomy.papi.testhelpers.TestPlayerFakes;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.mockbukkit.mockbukkit.MockBukkit;
@@ -20,10 +21,10 @@ public class TargetedExpansionCoverageTest {
     @AfterEach
     public void tearDown() {
         try { MockBukkit.unmock(); } catch (Exception ignored) {}
-        EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = null;
+        com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = null;
     }
 
-    static class SimpleTestEz implements EzEconomyPAPIExpansion.TestEzEconomy {
+    static class SimpleTestEz implements com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion.TestEzEconomy {
         private final StorageProvider storage;
         private final String def;
         private final CurrencyPreferenceManager prefManager;
@@ -42,7 +43,7 @@ public class TargetedExpansionCoverageTest {
         @Override public com.skyblockexp.ezeconomy.manager.CurrencyPreferenceManager getCurrencyPreferenceManager() { return prefManager; }
     }
 
-    static class MapStorage implements StorageProvider {
+    static class MapStorage implements com.skyblockexp.ezeconomy.api.storage.StorageProvider {
         private final Map<UUID, Double> all = new HashMap<>();
         public void put(UUID u, double v) { all.put(u, v); }
         @Override public void init() {}
@@ -78,23 +79,17 @@ public class TargetedExpansionCoverageTest {
     @Test
     public void test_balance_and_currency_branches_with_test_hook() throws Exception {
         MockBukkit.mock();
-        EzEconomyPapiPlugin papi = (EzEconomyPapiPlugin) MockBukkit.load(EzEconomyPapiPlugin.class);
+        com.skyblockexp.ezeconomy.papi.EzEconomyPapiPlugin papi = (com.skyblockexp.ezeconomy.papi.EzEconomyPapiPlugin) MockBukkit.load(com.skyblockexp.ezeconomy.papi.EzEconomyPapiPlugin.class);
 
         MapStorage ms = new MapStorage();
         UUID u = UUID.randomUUID();
         ms.put(u, 42.5);
 
-        EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = new SimpleTestEz(ms, "dollar", null);
+        com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = new SimpleTestEz(ms, "dollar", null);
 
-        EzEconomyPAPIExpansion expansion = new EzEconomyPAPIExpansion(papi);
+        com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion expansion = new com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion(papi);
 
-        OfflinePlayer fake = (OfflinePlayer) java.lang.reflect.Proxy.newProxyInstance(
-                OfflinePlayer.class.getClassLoader(), new Class[]{OfflinePlayer.class}, (proxy, method, args) -> {
-                    if ("getUniqueId".equals(method.getName())) return u;
-                    if (method.getReturnType().equals(boolean.class)) return false;
-                    return null;
-                }
-        );
+        OfflinePlayer fake = TestPlayerFakes.fakeOfflinePlayer(u);
 
         String bal = expansion.onPlaceholderRequest(fake, "balance");
         assertTrue(bal.contains("42.50") || !bal.isEmpty());
@@ -116,7 +111,7 @@ public class TargetedExpansionCoverageTest {
     @Test
     public void test_top_path_with_test_hook_populates_cache() throws Exception {
         MockBukkit.mock();
-        EzEconomyPapiPlugin papi = (EzEconomyPapiPlugin) MockBukkit.load(EzEconomyPapiPlugin.class);
+        com.skyblockexp.ezeconomy.papi.EzEconomyPapiPlugin papi = (com.skyblockexp.ezeconomy.papi.EzEconomyPapiPlugin) MockBukkit.load(com.skyblockexp.ezeconomy.papi.EzEconomyPapiPlugin.class);
 
         MapStorage ms = new MapStorage();
         UUID a = UUID.randomUUID();
@@ -124,9 +119,9 @@ public class TargetedExpansionCoverageTest {
         ms.put(a, 1000.0);
         ms.put(b, 2000.0);
 
-        EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = new SimpleTestEz(ms, "dollar", null);
+        com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = new SimpleTestEz(ms, "dollar", null);
 
-        EzEconomyPAPIExpansion expansion = new EzEconomyPAPIExpansion(papi);
+        com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion expansion = new com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion(papi);
 
         String res = expansion.onPlaceholderRequest(null, "top_2_dollar");
         assertNotNull(res);

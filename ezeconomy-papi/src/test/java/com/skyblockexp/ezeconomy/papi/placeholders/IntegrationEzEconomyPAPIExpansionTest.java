@@ -1,6 +1,7 @@
 package com.skyblockexp.ezeconomy.papi.placeholders;
 
 import org.bukkit.OfflinePlayer;
+import com.skyblockexp.ezeconomy.papi.testhelpers.TestPlayerFakes;
 import org.junit.jupiter.api.Test;
 
 import com.skyblockexp.ezeconomy.core.EzEconomyPlugin;
@@ -84,23 +85,7 @@ public class IntegrationEzEconomyPAPIExpansionTest {
         stub.getStorageOrWarn().setBalance(u, "dollar", 123.45);
         stub.getStorageOrWarn().setBalance(UUID.randomUUID(), "dollar", 10.0);
 
-        OfflinePlayer fakePlayer = (OfflinePlayer) java.lang.reflect.Proxy.newProxyInstance(
-                OfflinePlayer.class.getClassLoader(),
-                new Class[]{OfflinePlayer.class},
-                (proxy, method, args) -> {
-                    switch (method.getName()) {
-                        case "getUniqueId": return u;
-                        case "getName": return "TestPlayer";
-                        case "isOnline": return false;
-                        case "hasPlayedBefore": return true;
-                        default:
-                            Class<?> ret = method.getReturnType();
-                            if (ret.equals(boolean.class)) return false;
-                            if (ret.equals(long.class)) return 0L;
-                            return null;
-                    }
-                }
-        );
+        OfflinePlayer fakePlayer = TestPlayerFakes.fakeOfflinePlayer(u);
 
         com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion expansion = new com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion(null);
 

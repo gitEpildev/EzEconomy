@@ -1,6 +1,7 @@
-package com.skyblockexp.ezeconomy.papi;
+package com.skyblockexp.ezeconomy.papi.coverage;
 
 import com.skyblockexp.ezeconomy.papi.testhelpers.TestEzEconomyStubs;
+import com.skyblockexp.ezeconomy.papi.testhelpers.TestPlayerFakes;
 import com.skyblockexp.ezeconomy.cache.CacheManager;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -13,7 +14,7 @@ public class ExhaustiveExpansionPathsTest {
 
     @AfterEach
     public void tearDown() {
-        EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = null;
+        com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = null;
     }
 
     @Test
@@ -25,33 +26,17 @@ public class ExhaustiveExpansionPathsTest {
         sp.setBalance(b, "eur", 99.0);
         sp.putPlayer(a, new com.skyblockexp.ezeconomy.dto.EconomyPlayer(a, "Alice", "A"));
 
-        EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = new TestEzEconomyStubs.SimpleTestEz(sp, "dollar");
-        EzEconomyPAPIExpansion expansion = new EzEconomyPAPIExpansion(null);
+        com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = new TestEzEconomyStubs.SimpleTestEz(sp, "dollar");
+        com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion expansion = new com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion(null);
 
         // balance with player
-        org.bukkit.OfflinePlayer pa = (org.bukkit.OfflinePlayer) java.lang.reflect.Proxy.newProxyInstance(
-                org.bukkit.OfflinePlayer.class.getClassLoader(), new Class[]{org.bukkit.OfflinePlayer.class}, (proxy, method, args) -> {
-                    if ("getUniqueId".equals(method.getName())) return a;
-                    Class<?> r = method.getReturnType();
-                    if (r.equals(boolean.class)) return false;
-                    if (r.equals(long.class)) return 0L;
-                    return null;
-                }
-        );
+        org.bukkit.OfflinePlayer pa = TestPlayerFakes.fakeOfflinePlayer(a);
 
         String s1 = expansion.onPlaceholderRequest(pa, "balance");
         assertTrue(s1.contains("123.45") || s1.length() > 0);
 
         // balance explicit currency
-        org.bukkit.OfflinePlayer pb = (org.bukkit.OfflinePlayer) java.lang.reflect.Proxy.newProxyInstance(
-                org.bukkit.OfflinePlayer.class.getClassLoader(), new Class[]{org.bukkit.OfflinePlayer.class}, (proxy, method, args) -> {
-                    if ("getUniqueId".equals(method.getName())) return b;
-                    Class<?> r = method.getReturnType();
-                    if (r.equals(boolean.class)) return false;
-                    if (r.equals(long.class)) return 0L;
-                    return null;
-                }
-        );
+        org.bukkit.OfflinePlayer pb = TestPlayerFakes.fakeOfflinePlayer(b);
         String s2 = expansion.onPlaceholderRequest(pb, "balance_eur");
         assertTrue(s2.contains("99.00") || s2.length() > 0);
 

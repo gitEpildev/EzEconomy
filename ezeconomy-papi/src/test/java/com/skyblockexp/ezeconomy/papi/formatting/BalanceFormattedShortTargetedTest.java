@@ -1,6 +1,7 @@
 package com.skyblockexp.ezeconomy.papi.formatting;
 
 import com.skyblockexp.ezeconomy.papi.testhelpers.TestEzEconomyStubs;
+import com.skyblockexp.ezeconomy.papi.testhelpers.TestPlayerFakes;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.mockbukkit.mockbukkit.MockBukkit;
@@ -30,13 +31,7 @@ public class BalanceFormattedShortTargetedTest {
         com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = stub;
         com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion expansion = new com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion(papi);
 
-        org.bukkit.OfflinePlayer fake = (org.bukkit.OfflinePlayer) java.lang.reflect.Proxy.newProxyInstance(
-                org.bukkit.OfflinePlayer.class.getClassLoader(), new Class[]{org.bukkit.OfflinePlayer.class}, (proxy, method, args) -> {
-                    if ("getUniqueId".equals(method.getName())) return u;
-                    if (method.getReturnType().equals(boolean.class)) return false;
-                    return null;
-                }
-        );
+        org.bukkit.OfflinePlayer fake = TestPlayerFakes.fakeOfflinePlayer(u);
 
         // identifier with trailing underscore should trigger blank-rest handling
         String out = expansion.onPlaceholderRequest(fake, "balance_formatted_");
@@ -57,13 +52,7 @@ public class BalanceFormattedShortTargetedTest {
         com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = stub;
         com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion expansion = new com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion(papi);
 
-        org.bukkit.OfflinePlayer fake = (org.bukkit.OfflinePlayer) java.lang.reflect.Proxy.newProxyInstance(
-                org.bukkit.OfflinePlayer.class.getClassLoader(), new Class[]{org.bukkit.OfflinePlayer.class}, (proxy, method, args) -> {
-                    if ("getUniqueId".equals(method.getName())) return u;
-                    if (method.getReturnType().equals(boolean.class)) return false;
-                    return null;
-                }
-        );
+        org.bukkit.OfflinePlayer fake = TestPlayerFakes.fakeOfflinePlayer(u);
 
         String out = expansion.onPlaceholderRequest(fake, "balance_short_");
         assertNotNull(out);
@@ -83,13 +72,7 @@ public class BalanceFormattedShortTargetedTest {
         com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = stub;
         com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion expansion = new com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion(papi);
 
-        org.bukkit.OfflinePlayer fake = (org.bukkit.OfflinePlayer) java.lang.reflect.Proxy.newProxyInstance(
-                org.bukkit.OfflinePlayer.class.getClassLoader(), new Class[]{org.bukkit.OfflinePlayer.class}, (proxy, method, args) -> {
-                    if ("getUniqueId".equals(method.getName())) return u;
-                    if (method.getReturnType().equals(boolean.class)) return false;
-                    return null;
-                }
-        );
+        org.bukkit.OfflinePlayer fake = TestPlayerFakes.fakeOfflinePlayer(u);
 
         String out = expansion.onPlaceholderRequest(fake, "balance_formatted_usd");
         assertNotNull(out);

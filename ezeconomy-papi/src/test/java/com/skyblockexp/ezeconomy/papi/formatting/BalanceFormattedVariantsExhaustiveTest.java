@@ -32,13 +32,7 @@ public class BalanceFormattedVariantsExhaustiveTest {
         com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = stubWithStorage;
         com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion expansion = new com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion(papi);
 
-        org.bukkit.OfflinePlayer fake = (org.bukkit.OfflinePlayer) java.lang.reflect.Proxy.newProxyInstance(
-                org.bukkit.OfflinePlayer.class.getClassLoader(), new Class[]{org.bukkit.OfflinePlayer.class}, (proxy, method, args) -> {
-                    if ("getUniqueId".equals(method.getName())) return u;
-                    if (method.getReturnType().equals(boolean.class)) return false;
-                    return null;
-                }
-        );
+            org.bukkit.OfflinePlayer fake = com.skyblockexp.ezeconomy.papi.testhelpers.TestPlayerFakes.fakeOfflinePlayer(u);
 
         // explicit currency formatted
         String fUsd = expansion.onPlaceholderRequest(fake, "balance_formatted_usd");

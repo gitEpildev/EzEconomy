@@ -2,6 +2,7 @@ package com.skyblockexp.ezeconomy.papi.formatting;
 
 import com.skyblockexp.ezeconomy.api.storage.StorageProvider;
 import org.bukkit.OfflinePlayer;
+import com.skyblockexp.ezeconomy.papi.testhelpers.TestPlayerFakes;
 import org.junit.jupiter.api.Test;
 import org.mockbukkit.mockbukkit.MockBukkit;
 
@@ -75,13 +76,7 @@ public class BalanceFormattedVariantsTest extends com.skyblockexp.ezeconomy.papi
 
         com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion expansion = new com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion(papi);
 
-        OfflinePlayer fake = (OfflinePlayer) java.lang.reflect.Proxy.newProxyInstance(
-                OfflinePlayer.class.getClassLoader(), new Class[]{OfflinePlayer.class}, (proxy, method, args) -> {
-                    if ("getUniqueId".equals(method.getName())) return u;
-                    if (method.getReturnType().equals(boolean.class)) return false;
-                    return null;
-                }
-        );
+        OfflinePlayer fake = TestPlayerFakes.fakeOfflinePlayer(u);
 
         String out = expansion.onPlaceholderRequest(fake, "balance_formatted_eur");
         assertNotNull(out);

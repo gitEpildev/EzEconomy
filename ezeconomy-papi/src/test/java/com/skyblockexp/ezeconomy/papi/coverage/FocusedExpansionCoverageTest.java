@@ -1,4 +1,4 @@
-package com.skyblockexp.ezeconomy.papi;
+package com.skyblockexp.ezeconomy.papi.coverage;
 
 import com.skyblockexp.ezeconomy.papi.testhelpers.TestEzEconomyStubs;
 import org.junit.jupiter.api.AfterEach;
@@ -12,7 +12,7 @@ public class FocusedExpansionCoverageTest {
 
     @AfterEach
     public void tearDown() {
-        EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = null;
+        com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = null;
     }
 
     @Test
@@ -20,14 +20,14 @@ public class FocusedExpansionCoverageTest {
         TestEzEconomyStubs.SimpleStorageProvider sp = new TestEzEconomyStubs.SimpleStorageProvider();
 
         // stub that throws for getCurrencySymbol to exercise reflective fallback and null handling
-        EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = new TestEzEconomyStubs.SimpleTestEz(sp, "dollar") {
+        com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = new TestEzEconomyStubs.SimpleTestEz(sp, "dollar") {
             @Override public String getCurrencySymbol(String currency) {
                 if ("boom".equals(currency)) throw new RuntimeException("boom");
                 return null; // default to null to exercise empty handling
             }
         };
 
-        EzEconomyPAPIExpansion expansion = new EzEconomyPAPIExpansion(null);
+        com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion expansion = new com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion(null);
 
         // unknown currency returns empty string (safe wraps null)
         assertEquals("", expansion.onPlaceholderRequest(null, "symbol_eur"));
@@ -51,9 +51,9 @@ public class FocusedExpansionCoverageTest {
         // provide an EconomyPlayer for `a` but leave `b` without a player to exercise both branches
         sp.putPlayer(a, new com.skyblockexp.ezeconomy.dto.EconomyPlayer(a, "Alice", null));
 
-        EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = new TestEzEconomyStubs.SimpleTestEz(sp, "dollar");
+        com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = new TestEzEconomyStubs.SimpleTestEz(sp, "dollar");
 
-        EzEconomyPAPIExpansion expansion = new EzEconomyPAPIExpansion(null);
+        com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion expansion = new com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion(null);
 
         String cacheKey = "top:dollar:2";
         com.skyblockexp.ezeconomy.cache.CacheManager.getProvider().remove(cacheKey);
@@ -72,9 +72,9 @@ public class FocusedExpansionCoverageTest {
         TestEzEconomyStubs.SimpleStorageProvider sp = new TestEzEconomyStubs.SimpleStorageProvider();
         sp.setBankBalance("vault", "dollar", 5.0);
 
-        EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = new TestEzEconomyStubs.SimpleTestEz(sp, "dollar");
+        com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = new TestEzEconomyStubs.SimpleTestEz(sp, "dollar");
 
-        EzEconomyPAPIExpansion expansion = new EzEconomyPAPIExpansion(null);
+        com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion expansion = new com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion(null);
 
         String out = expansion.onPlaceholderRequest(null, "bank_vault_dollar");
         assertEquals("5.00 dollar", out);
@@ -85,8 +85,8 @@ public class FocusedExpansionCoverageTest {
         TestEzEconomyStubs.SimpleStorageProvider sp = new TestEzEconomyStubs.SimpleStorageProvider();
         // no balances added -> getAllBalances returns empty map
 
-        EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = new TestEzEconomyStubs.SimpleTestEz(sp, "dollar");
-        EzEconomyPAPIExpansion expansion = new EzEconomyPAPIExpansion(null);
+        com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = new TestEzEconomyStubs.SimpleTestEz(sp, "dollar");
+        com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion expansion = new com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion(null);
 
         String cacheKey = "top:dollar:5";
         com.skyblockexp.ezeconomy.cache.CacheManager.getProvider().remove(cacheKey);
@@ -109,8 +109,8 @@ public class FocusedExpansionCoverageTest {
         sp.putPlayer(a, new com.skyblockexp.ezeconomy.dto.EconomyPlayer(a, "Alice", "AliceDisplay"));
         sp.putPlayer(b, new com.skyblockexp.ezeconomy.dto.EconomyPlayer(b, "Bob", "BobDisplay"));
 
-        EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = new TestEzEconomyStubs.SimpleTestEz(sp, "dollar");
-        EzEconomyPAPIExpansion expansion = new EzEconomyPAPIExpansion(null);
+        com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = new TestEzEconomyStubs.SimpleTestEz(sp, "dollar");
+        com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion expansion = new com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion(null);
 
         com.skyblockexp.ezeconomy.cache.CacheManager.getProvider().remove("top:dollar:2");
 
@@ -133,7 +133,7 @@ public class FocusedExpansionCoverageTest {
 
         java.util.Map.Entry<java.util.UUID, Double> entry = new java.util.AbstractMap.SimpleEntry<>(u, 77.0);
 
-        java.lang.reflect.Method m0 = EzEconomyPAPIExpansion.class.getDeclaredMethod("lambda$0", EzEconomyPAPIExpansion.TestEzEconomy.class, String.class, java.util.Map.Entry.class);
+        java.lang.reflect.Method m0 = com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion.class.getDeclaredMethod("lambda$0", com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion.TestEzEconomy.class, String.class, java.util.Map.Entry.class);
         m0.setAccessible(true);
         Object r0 = m0.invoke(null, testEz, "dollar", entry);
         assertNotNull(r0);

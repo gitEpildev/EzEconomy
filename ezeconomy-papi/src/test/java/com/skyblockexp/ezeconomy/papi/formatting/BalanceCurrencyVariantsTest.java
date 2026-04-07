@@ -1,6 +1,7 @@
-package com.skyblockexp.ezeconomy.papi;
+package com.skyblockexp.ezeconomy.papi.formatting;
 
 import com.skyblockexp.ezeconomy.papi.testhelpers.TestEzEconomyStubs;
+import com.skyblockexp.ezeconomy.papi.testhelpers.TestPlayerFakes;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.mockbukkit.mockbukkit.MockBukkit;
@@ -14,13 +15,13 @@ public class BalanceCurrencyVariantsTest {
     @AfterEach
     public void tearDown() {
         try { MockBukkit.unmock(); } catch (Exception ignored) {}
-        EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = null;
+        com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = null;
     }
 
     @Test
     public void balance_formatted_and_short_with_currency_suffix_are_handled() throws Exception {
         MockBukkit.mock();
-        EzEconomyPapiPlugin papi = (EzEconomyPapiPlugin) MockBukkit.load(EzEconomyPapiPlugin.class);
+        com.skyblockexp.ezeconomy.papi.EzEconomyPapiPlugin papi = (com.skyblockexp.ezeconomy.papi.EzEconomyPapiPlugin) MockBukkit.load(com.skyblockexp.ezeconomy.papi.EzEconomyPapiPlugin.class);
 
         TestEzEconomyStubs.SimpleStorageProvider sp = new TestEzEconomyStubs.SimpleStorageProvider();
         UUID u = UUID.randomUUID();
@@ -31,16 +32,10 @@ public class BalanceCurrencyVariantsTest {
             @Override public String formatShort(double amount, String currency) { return String.format("SRT:%.1f:%s", amount, currency); }
         };
 
-        EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = stub;
-        EzEconomyPAPIExpansion expansion = new EzEconomyPAPIExpansion(papi);
+        com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = stub;
+        com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion expansion = new com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion(papi);
 
-        org.bukkit.OfflinePlayer fake = (org.bukkit.OfflinePlayer) java.lang.reflect.Proxy.newProxyInstance(
-                org.bukkit.OfflinePlayer.class.getClassLoader(), new Class[]{org.bukkit.OfflinePlayer.class}, (proxy, method, args) -> {
-                    if ("getUniqueId".equals(method.getName())) return u;
-                    if (method.getReturnType().equals(boolean.class)) return false;
-                    return null;
-                }
-        );
+        org.bukkit.OfflinePlayer fake = TestPlayerFakes.fakeOfflinePlayer(u);
 
         String formatted = expansion.onPlaceholderRequest(fake, "balance_formatted_gold");
         assertNotNull(formatted);

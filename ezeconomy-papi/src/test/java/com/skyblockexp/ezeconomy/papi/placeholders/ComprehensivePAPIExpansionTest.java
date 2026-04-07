@@ -1,4 +1,4 @@
-package com.skyblockexp.ezeconomy.papi;
+package com.skyblockexp.ezeconomy.papi.placeholders;
 
 import com.skyblockexp.ezeconomy.papi.testhelpers.TestEzEconomyStubs;
 import org.junit.jupiter.api.AfterEach;
@@ -15,7 +15,7 @@ public class ComprehensivePAPIExpansionTest {
 
     @AfterEach
     public void cleanup() throws Exception {
-        EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = null;
+        com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = null;
         // Attempt to clear any global caches if present by resetting CacheManager provider entry
         try {
             Class<?> cm = Class.forName("com.skyblockexp.ezeconomy.cache.CacheManager");
@@ -31,14 +31,7 @@ public class ComprehensivePAPIExpansionTest {
     }
 
     private OfflinePlayer offlinePlayer(java.util.UUID id) {
-        java.lang.reflect.InvocationHandler h = (proxy, method, args) -> {
-            String name = method.getName();
-            if ("getUniqueId".equals(name)) return id;
-            if (method.getReturnType().equals(boolean.class)) return false;
-            if (method.getReturnType().equals(int.class)) return 0;
-            return null;
-        };
-        return (OfflinePlayer) java.lang.reflect.Proxy.newProxyInstance(OfflinePlayer.class.getClassLoader(), new Class[]{OfflinePlayer.class}, h);
+        return com.skyblockexp.ezeconomy.papi.testhelpers.TestPlayerFakes.fakeOfflinePlayer(id);
     }
 
     @Test
@@ -53,9 +46,9 @@ public class ComprehensivePAPIExpansionTest {
         sp.putPlayer(a, new com.skyblockexp.ezeconomy.dto.EconomyPlayer(a, "Alice", null));
         sp.putPlayer(b, new com.skyblockexp.ezeconomy.dto.EconomyPlayer(b, "Bob", null));
 
-        EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = new TestEzEconomyStubs.SimpleTestEz(sp, "dollar");
+        com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = new TestEzEconomyStubs.SimpleTestEz(sp, "dollar");
 
-        EzEconomyPAPIExpansion expansion = new EzEconomyPAPIExpansion(null);
+        com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion expansion = new com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion(null);
 
         OfflinePlayer offA = offlinePlayer(a);
         OfflinePlayer offB = offlinePlayer(b);
@@ -82,8 +75,8 @@ public class ComprehensivePAPIExpansionTest {
     @Test
     public void unknown_returnsEmpty_and_nullOffline_for_balance() {
         TestEzEconomyStubs.SimpleStorageProvider sp = new TestEzEconomyStubs.SimpleStorageProvider();
-        EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = new TestEzEconomyStubs.SimpleTestEz(sp, "dollar");
-        EzEconomyPAPIExpansion expansion = new EzEconomyPAPIExpansion(null);
+        com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = new TestEzEconomyStubs.SimpleTestEz(sp, "dollar");
+        com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion expansion = new com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion(null);
 
         assertEquals("", expansion.onPlaceholderRequest(null, "not_a_placeholder"));
         // balance with null offline player should return "0"

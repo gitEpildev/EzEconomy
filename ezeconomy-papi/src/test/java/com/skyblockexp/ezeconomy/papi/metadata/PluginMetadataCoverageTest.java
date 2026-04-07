@@ -1,4 +1,4 @@
-package com.skyblockexp.ezeconomy.papi;
+package com.skyblockexp.ezeconomy.papi.metadata;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -16,9 +16,9 @@ public class PluginMetadataCoverageTest {
     @Test
     public void expansion_metadata_and_flags_are_accessible() {
         MockBukkit.mock();
-        EzEconomyPapiPlugin plugin = (EzEconomyPapiPlugin) MockBukkit.load(EzEconomyPapiPlugin.class);
+        com.skyblockexp.ezeconomy.papi.EzEconomyPapiPlugin plugin = (com.skyblockexp.ezeconomy.papi.EzEconomyPapiPlugin) MockBukkit.load(com.skyblockexp.ezeconomy.papi.EzEconomyPapiPlugin.class);
 
-        EzEconomyPAPIExpansion expansion = new EzEconomyPAPIExpansion(plugin);
+        com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion expansion = new com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion(plugin);
 
         assertTrue(expansion.persist());
         assertTrue(expansion.canRegister());

@@ -67,14 +67,7 @@ public class TargetedPAPIExpansionTests {
     @Test
     public void bank_withNullStorage_returnsEmpty() {
         EzEconomyPAPIExpansion expansion = new EzEconomyPAPIExpansion(null);
-        EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = new EzEconomyPAPIExpansion.TestEzEconomy() {
-            @Override public com.skyblockexp.ezeconomy.api.storage.StorageProvider getStorageOrWarn() { return null; }
-            @Override public String getDefaultCurrency() { return "dollar"; }
-            @Override public String format(double amount, String currency) { return String.format("$%.2f", amount); }
-            @Override public String formatShort(double amount, String currency) { return String.format("$%.0f", amount); }
-            @Override public String getCurrencySymbol(String currency) { return "$"; }
-            @Override public com.skyblockexp.ezeconomy.manager.CurrencyPreferenceManager getCurrencyPreferenceManager() { return null; }
-        };
+        EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = com.skyblockexp.ezeconomy.papi.testhelpers.TestEzEconomyHelpers.formatting("dollar", "$");
 
         String out = expansion.onPlaceholderRequest(null, "bank_test_dollar");
         assertEquals("", out);
@@ -83,14 +76,7 @@ public class TargetedPAPIExpansionTests {
     @Test
     public void symbol_emptyString_returnsDollarFallback() {
         EzEconomyPAPIExpansion expansion = new EzEconomyPAPIExpansion(null);
-        EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = new EzEconomyPAPIExpansion.TestEzEconomy() {
-            @Override public com.skyblockexp.ezeconomy.api.storage.StorageProvider getStorageOrWarn() { return null; }
-            @Override public String getDefaultCurrency() { return "dollar"; }
-            @Override public String format(double amount, String currency) { return ""; }
-            @Override public String formatShort(double amount, String currency) { return ""; }
-            @Override public String getCurrencySymbol(String currency) { return ""; }
-            @Override public com.skyblockexp.ezeconomy.manager.CurrencyPreferenceManager getCurrencyPreferenceManager() { return null; }
-        };
+        EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = com.skyblockexp.ezeconomy.papi.testhelpers.TestEzEconomyHelpers.emptyFormatting("dollar");
 
         String out = expansion.onPlaceholderRequest(null, "symbol_dollar");
         assertEquals("$", out);

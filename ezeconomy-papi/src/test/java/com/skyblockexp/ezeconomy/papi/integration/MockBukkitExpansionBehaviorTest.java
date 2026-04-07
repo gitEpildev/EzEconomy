@@ -1,6 +1,7 @@
-package com.skyblockexp.ezeconomy.papi;
+package com.skyblockexp.ezeconomy.papi.integration;
 
 import com.skyblockexp.ezeconomy.papi.testhelpers.TestEzEconomyStubs;
+import com.skyblockexp.ezeconomy.papi.testhelpers.TestPlayerFakes;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.mockbukkit.mockbukkit.MockBukkit;
@@ -13,34 +14,27 @@ public class MockBukkitExpansionBehaviorTest {
     @AfterEach
     public void tearDown() {
         try { MockBukkit.unmock(); } catch (Exception ignored) {}
-        EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = null;
+        com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = null;
     }
 
     @Test
     public void placeholder_calls_work_when_plugin_enabled_and_placeholder_present() {
+        try { MockBukkit.unmock(); } catch (Exception ignored) {}
         MockBukkit.mock();
-        try { MockBukkit.load(PlaceholderStub.class); } catch (Exception ignored) {}
+        try { MockBukkit.load(com.skyblockexp.ezeconomy.papi.testhelpers.PlaceholderStub.class); } catch (Exception ignored) {}
 
-        EzEconomyPapiPlugin parent = (EzEconomyPapiPlugin) MockBukkit.load(EzEconomyPapiPlugin.class);
+        com.skyblockexp.ezeconomy.papi.EzEconomyPapiPlugin parent = (com.skyblockexp.ezeconomy.papi.EzEconomyPapiPlugin) MockBukkit.load(com.skyblockexp.ezeconomy.papi.EzEconomyPapiPlugin.class);
         assertNotNull(parent);
 
         // Inject a simple test economy implementation to avoid relying on EzEconomy bootstrap
         TestEzEconomyStubs.SimpleStorageProvider sp = new TestEzEconomyStubs.SimpleStorageProvider();
         java.util.UUID id = java.util.UUID.randomUUID();
         sp.setBalance(id, "dollar", 42.0);
-        EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = new TestEzEconomyStubs.SimpleTestEz(sp, "dollar");
+        com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = new TestEzEconomyStubs.SimpleTestEz(sp, "dollar");
 
-        EzEconomyPAPIExpansion expansion = new EzEconomyPAPIExpansion(parent);
+        com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion expansion = new com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion(parent);
 
-        OfflinePlayer fake = (OfflinePlayer) java.lang.reflect.Proxy.newProxyInstance(
-                OfflinePlayer.class.getClassLoader(),
-                new Class[]{OfflinePlayer.class},
-                (proxy, method, args) -> {
-                    if ("getUniqueId".equals(method.getName())) return id;
-                    if (method.getReturnType().equals(boolean.class)) return false;
-                    return null;
-                }
-        );
+            OfflinePlayer fake = TestPlayerFakes.fakeOfflinePlayer(id);
 
         String out = expansion.onPlaceholderRequest(fake, "balance");
         assertNotNull(out);

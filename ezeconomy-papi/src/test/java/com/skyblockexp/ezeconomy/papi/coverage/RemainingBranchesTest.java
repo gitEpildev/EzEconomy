@@ -1,7 +1,8 @@
-package com.skyblockexp.ezeconomy.papi;
+package com.skyblockexp.ezeconomy.papi.coverage;
 
 import com.skyblockexp.ezeconomy.papi.testhelpers.TestEzEconomyStubs;
 import org.bukkit.OfflinePlayer;
+import com.skyblockexp.ezeconomy.papi.testhelpers.TestPlayerFakes;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
@@ -13,15 +14,15 @@ public class RemainingBranchesTest {
 
     @AfterEach
     public void tearDown() {
-        EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = null;
+        com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = null;
     }
 
     @Test
     public void balance_formatted_with_null_storage_returns_zero_formatted() {
         // TestEz with null storage should return formatted zero for balance_formatted
-        EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = new TestEzEconomyStubs.SimpleTestEz(null, "dollar");
+        com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = new TestEzEconomyStubs.SimpleTestEz(null, "dollar");
 
-        EzEconomyPAPIExpansion expansion = new EzEconomyPAPIExpansion(null);
+        com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion expansion = new com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion(null);
 
         OfflinePlayer p = offlinePlayer(UUID.randomUUID());
 
@@ -35,8 +36,8 @@ public class RemainingBranchesTest {
 
     @Test
     public void balance_short_with_null_storage_returns_short_format_of_zero() {
-        EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = new TestEzEconomyStubs.SimpleTestEz(null, "dollar");
-        EzEconomyPAPIExpansion expansion = new EzEconomyPAPIExpansion(null);
+        com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = new TestEzEconomyStubs.SimpleTestEz(null, "dollar");
+        com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion expansion = new com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion(null);
 
         OfflinePlayer p = offlinePlayer(UUID.randomUUID());
 
@@ -55,9 +56,9 @@ public class RemainingBranchesTest {
         sp.setBalance(id, "dollar", 12.34);
 
         // SimpleTestEz has a null CurrencyPreferenceManager by default
-        EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = new TestEzEconomyStubs.SimpleTestEz(sp, "dollar");
+        com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = new TestEzEconomyStubs.SimpleTestEz(sp, "dollar");
 
-        EzEconomyPAPIExpansion expansion = new EzEconomyPAPIExpansion(null);
+        com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion expansion = new com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion(null);
 
         OfflinePlayer p = offlinePlayer(id);
 
@@ -66,15 +67,6 @@ public class RemainingBranchesTest {
     }
 
     private OfflinePlayer offlinePlayer(UUID id) {
-        java.lang.reflect.InvocationHandler h = (proxy, method, args) -> {
-            String name = method.getName();
-            if ("getUniqueId".equals(name)) return id;
-            Class<?> r = method.getReturnType();
-            if (r.equals(boolean.class)) return false;
-            if (r.equals(int.class)) return 0;
-            if (r.equals(long.class)) return 0L;
-            return null;
-        };
-        return (OfflinePlayer) java.lang.reflect.Proxy.newProxyInstance(OfflinePlayer.class.getClassLoader(), new Class[]{OfflinePlayer.class}, h);
+        return TestPlayerFakes.fakeOfflinePlayer(id);
     }
 }

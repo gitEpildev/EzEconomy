@@ -1,6 +1,5 @@
 package com.skyblockexp.ezeconomy.papi.top;
 
-import org.bukkit.OfflinePlayer;
 import org.junit.jupiter.api.Test;
 import org.mockbukkit.mockbukkit.MockBukkit;
 
@@ -15,6 +14,7 @@ public class TopInlineComplexTest {
         MockBukkit.mock();
         com.skyblockexp.ezeconomy.papi.EzEconomyPapiPlugin papi = (com.skyblockexp.ezeconomy.papi.EzEconomyPapiPlugin) MockBukkit.load(com.skyblockexp.ezeconomy.papi.EzEconomyPapiPlugin.class);
 
+        // Build a TestEzEconomy that returns a storage with multiple balances
         final UUID a = UUID.randomUUID();
         final UUID b = UUID.randomUUID();
 
@@ -35,6 +35,8 @@ public class TopInlineComplexTest {
         com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion expansion = new com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion(papi);
 
         try {
+            // First call may return the "loading" placeholder while inline refresh runs.
+            // Poll until the cache is populated and expansion returns the assembled result.
             String result = null;
             long deadline = System.currentTimeMillis() + 1000;
             while (System.currentTimeMillis() < deadline) {
@@ -43,9 +45,11 @@ public class TopInlineComplexTest {
                 Thread.sleep(50);
             }
             assertNotNull(result);
+            // Result should contain two entries joined by comma and each with a ' - ' separator
             assertTrue(result.contains(","), "expected comma-separated entries in: " + result);
             assertTrue(result.contains(" - "), "expected name/amount separator in: " + result);
 
+            // Calling again should hit the cache and return same value
             String second = expansion.onPlaceholderRequest(null, "top_2_dollar");
             assertEquals(result, second);
         } finally {
@@ -54,3 +58,4 @@ public class TopInlineComplexTest {
         }
     }
 }
+

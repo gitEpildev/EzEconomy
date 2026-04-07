@@ -3,6 +3,7 @@ package com.skyblockexp.ezeconomy.papi;
 import com.skyblockexp.ezeconomy.api.storage.StorageProvider;
 import com.skyblockexp.ezeconomy.dto.EconomyPlayer;
 import org.bukkit.OfflinePlayer;
+import com.skyblockexp.ezeconomy.papi.testhelpers.TestPlayerFakes;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.mockbukkit.mockbukkit.MockBukkit;
@@ -20,7 +21,7 @@ public class EzPluginPathCoverageTest {
         EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = null;
     }
 
-    static class TestStorage implements StorageProvider {
+    public static class TestStorage implements StorageProvider {
         private final Map<UUID, Double> balances = new HashMap<>();
         public void put(UUID u, double v) { balances.put(u, v); }
         @Override public void init() {}
@@ -99,13 +100,7 @@ public class EzPluginPathCoverageTest {
 
         EzEconomyPAPIExpansion expansion = new EzEconomyPAPIExpansion(papi);
 
-        OfflinePlayer fake = (OfflinePlayer) java.lang.reflect.Proxy.newProxyInstance(
-                OfflinePlayer.class.getClassLoader(), new Class[]{OfflinePlayer.class}, (proxy, method, args) -> {
-                    if ("getUniqueId".equals(method.getName())) return u;
-                    if (method.getReturnType().equals(boolean.class)) return false;
-                    return null;
-                }
-        );
+        OfflinePlayer fake = TestPlayerFakes.fakeOfflinePlayer(u);
 
         // Call balance which should use core.getStorageOrWarn path
         String bal = expansion.onPlaceholderRequest(fake, "balance");

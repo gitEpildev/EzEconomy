@@ -1,10 +1,11 @@
 package com.skyblockexp.ezeconomy.papi.formatting;
 
 import org.bukkit.OfflinePlayer;
+import com.skyblockexp.ezeconomy.papi.testhelpers.TestPlayerFakes;
 import org.junit.jupiter.api.Test;
 
-import java.lang.reflect.Proxy;
 import java.util.UUID;
+ 
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -54,18 +55,7 @@ public class BalanceFormattedShortEdgeCasesTest {
     }
 
     private OfflinePlayer offlinePlayer(UUID id) {
-        return (OfflinePlayer) Proxy.newProxyInstance(OfflinePlayer.class.getClassLoader(), new Class[]{OfflinePlayer.class}, (proxy, method, args) -> {
-            switch (method.getName()) {
-                case "getUniqueId": return id;
-                case "getName": return "Tester";
-                case "isOnline": return false;
-                case "hasPlayedBefore": return true;
-            }
-            Class<?> ret = method.getReturnType();
-            if (ret.equals(boolean.class)) return false;
-            if (ret.equals(long.class)) return 0L;
-            return null;
-        });
+        return TestPlayerFakes.fakeOfflinePlayer(id);
     }
 
     @Test
