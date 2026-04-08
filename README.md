@@ -3,14 +3,14 @@
 ![EzEconomy Icon](https://www.spigotmc.org/data/resource_icons/130/130975.jpg)
 
 [![Release](https://img.shields.io/github/v/release/ez-plugins/EzEconomy?label=release&style=flat-square)](https://github.com/ez-plugins/EzEconomy/releases)
-[![CI](https://github.com/ez-plugins/EzEconomy/actions/workflows/ci.yml/badge.svg)](https://github.com/ez-plugins/EzEconomy/actions)
+[![Publish CI](https://github.com/ez-plugins/EzEconomy/actions/workflows/maven-publish.yml/badge.svg)](https://github.com/ez-plugins/EzEconomy/actions)
 [![License](https://img.shields.io/github/license/ez-plugins/EzEconomy?style=flat-square)](https://github.com/ez-plugins/EzEconomy/blob/main/LICENSE.md)
 [![GitHub Stars](https://img.shields.io/github/stars/ez-plugins/EzEconomy?style=social)](https://github.com/ez-plugins/EzEconomy/stargazers)
 
 **EzEconomy** is a professional-grade Vault economy provider for Minecraft servers. Choose from YML, MySQL, SQLite, MongoDB, or custom storage with multi-currency support, async caching, and thorough permission controls.
 
 > **Original plugin by [@ez-plugins](https://github.com/ez-plugins) — [ez-plugins/EzEconomy](https://github.com/ez-plugins/EzEconomy)**
-> This fork contains community contributions by [@GitEpildev](https://github.com/gitEpildev) — see [docs/changelog.md](docs/changelog.md) for details.
+> This fork includes additional community improvements by [@GitEpildev](https://github.com/gitEpildev), listed in [docs/changelog.md](docs/changelog.md).
 
 ---
 
@@ -23,12 +23,15 @@
 - [Permissions](docs/permissions.md): Permission nodes and details
 - [Placeholders](docs/integration/placeholderapi.md): PlaceholderAPI integration
 - [Storage](docs/storage/storage.md): Storage backends and setup
-- [Features — Multi-currency](docs/feature/multi-currency.md): Configure multiple currencies
-- [Features — Banking](docs/feature/banking.md): In-plugin bank accounts and permissions
+- [Features - Multi-currency](docs/feature/multi-currency.md): Configure multiple currencies
+- [Features - Banking](docs/feature/banking.md): In-plugin bank accounts and permissions
+- [Features - Money formatting](docs/feature/money-formatting.md): Presentation options, locales, compact formats, and placeholders
 - [Caching strategy](docs/feature/caching-strategy.md): `LOCAL`, `REDIS`, `BUNGEECORD`, `DATABASE` options
 - [Locking strategy and options](docs/feature/locking-strategy.md): How to choose `LOCAL` vs `REDIS` and what each means
 - [Proxy & Redis notes](docs/integration/redis.md): Redis and proxy operational notes
 - [Changelog](docs/changelog.md): Release and fork change history
+
+> Do you get the message "Missing message: ..."? Please check the latest available translations: https://github.com/ez-plugins/EzEconomy/tree/main/src/main/resources/languages
 
 ---
 
@@ -54,6 +57,7 @@ EzEconomy is designed for performance, reliability, and operational clarity. Hig
 - **/baltop [amount]**: Show top balances
 - **/bank <create|delete|balance|deposit|withdraw|addmember|removemember|info> ...**: Bank management (`ezeconomy.bank`)
 - **/pay <player> <amount>**: Send funds to another player (`ezeconomy.pay`)
+- **/pay * <amount>**: Send funds to all online players (requires `ezeconomy.payall`; configurable via `pay.pay_all` in `config.yml`). See [Commands](docs/commands.md) for details.
 - **/currency [currency]**: Set or view your preferred currency
 
 ---

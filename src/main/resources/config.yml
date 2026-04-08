@@ -108,3 +108,20 @@ money-format:
     useColors: true
     positive: "&a"             # legacy color code prefix for positive values
     negative: "&c"             # legacy color code prefix for negative values
+ 
+# Pay command settings
+pay:
+  # Confirmation threshold (amount >= threshold requires /pay confirm)
+  confirmation:
+    threshold: -1.0
+    timeout_seconds: 30
+
+  # Pay-all (*) feature
+  pay_all:
+    # Enabled by default. Set to false to disable /pay * entirely.
+    enabled: true
+    # Require extra permission to use /pay * (default: true). If false, any player with ezeconomy.pay may use it.
+    require_permission: true
+    # When true, /pay * will include offline players (based on stored balances).
+    # Default: false (only online players are targeted).
+    include_offline: false

@@ -1,13 +1,11 @@
 package com.skyblockexp.ezeconomy.tabcomplete;
 
 import org.bukkit.Bukkit;
-import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.LinkedHashSet;
 import com.skyblockexp.ezeconomy.core.EzEconomyPlugin;
 
 public class PayTabCompleter implements TabCompleter {
@@ -19,12 +17,26 @@ public class PayTabCompleter implements TabCompleter {
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (!sender.hasPermission("ezeconomy.pay")) return Collections.emptyList();
+        // For /payall the first argument is the amount, not a player name.
         if (args.length == 1) {
             String partial = args[0].toLowerCase();
+            if (command != null && (command.getName().equalsIgnoreCase("payall") || alias.equalsIgnoreCase("payall"))) {
+                // Suggest compact/shortcut formats
+                return Arrays.asList("1k", "2k", "5k", "10k", "100", "1000", "1m")
+                        .stream()
+                        .filter(s -> s.startsWith(partial))
+                        .collect(Collectors.toList());
+            }
             Set<String> names = new LinkedHashSet<>();
-            Bukkit.getOnlinePlayers().forEach(p -> { if (p.getName() != null) names.add(p.getName()); });
+            Bukkit.getOnlinePlayers().forEach(p -> {
+                if (p.getName() != null) {
+                    names.add(p.getName());
+                }
+            });
             var messenger = plugin.getCrossServerMessenger();
-            if (messenger != null) names.addAll(messenger.getNetworkPlayers());
+            if (messenger != null) {
+                names.addAll(messenger.getNetworkPlayers());
+            }
             return names.stream()
                 .filter(name -> name.toLowerCase().startsWith(partial))
                 .collect(Collectors.toList());

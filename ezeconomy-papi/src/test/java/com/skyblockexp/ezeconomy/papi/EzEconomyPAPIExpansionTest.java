@@ -1,50 +1,168 @@
 package com.skyblockexp.ezeconomy.papi;
 
+import com.skyblockexp.ezeconomy.api.storage.StorageProvider;
+import com.skyblockexp.ezeconomy.dto.EconomyPlayer;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.bukkit.OfflinePlayer;
+import com.skyblockexp.ezeconomy.papi.testhelpers.TestPlayerFakes;
 
-import java.lang.reflect.Method;
-import java.util.Map;
-import com.skyblockexp.ezeconomy.cache.ExpiringCache;
+ 
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 public class EzEconomyPAPIExpansionTest {
 
-    @Test
-    public void testParseIntOrDefault() throws Exception {
-        Method m = EzEconomyPAPIExpansion.class.getDeclaredMethod("parseIntOrDefault", String.class, int.class);
-        m.setAccessible(true);
-        int v1 = (int) m.invoke(null, "42", 10);
-        assertEquals(42, v1);
-        int v2 = (int) m.invoke(null, "notanumber", 7);
-        assertEquals(7, v2);
-        int v3 = (int) m.invoke(null, "", 5);
-        assertEquals(5, v3);
+    @AfterEach
+    public void tearDown() {
+        EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = null;
+    }
+
+    private OfflinePlayer offlinePlayer(UUID id) {
+        return TestPlayerFakes.fakeOfflinePlayer(id);
     }
 
     @Test
-    public void testTopCachePutAndExpire() throws Exception {
-        // construct expansion (plugin param may be null for this test)
+    public void balance_returnsZeroWhenPlayerNull() {
+        EzEconomyPAPIExpansion exp = new EzEconomyPAPIExpansion(null);
+        // Provide a test hook so the code path doesn't attempt to access Bukkit static server
+        EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = com.skyblockexp.ezeconomy.papi.testhelpers.TestEzEconomyHelpers.formatting("dollar", "$");
+
+        assertEquals("0", exp.onPlaceholderRequest((OfflinePlayer) null, "balance"));
+    }
+
+    @Test
+    public void balance_usesTestEconomyStorage() {
+        EzEconomyPAPIExpansion expansion = new EzEconomyPAPIExpansion(null);
+        UUID id = UUID.randomUUID();
+
+        StorageProvider stub = new SimpleStorageProvider();
+        stub.setBalance(id, "dollar", 123.45);
+
+        EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = new EzEconomyPAPIExpansion.TestEzEconomy() {
+            @Override
+            public StorageProvider getStorageOrWarn() { return stub; }
+
+            @Override
+            public String getDefaultCurrency() { return "dollar"; }
+
+            @Override
+            public String format(double amount, String currency) { return String.format("$%.2f", amount); }
+
+            @Override
+            public String formatShort(double amount, String currency) { return String.format("$%.0f", amount); }
+
+            @Override
+            public String getCurrencySymbol(String currency) { return "$"; }
+
+            @Override
+            public com.skyblockexp.ezeconomy.manager.CurrencyPreferenceManager getCurrencyPreferenceManager() { return null; }
+        };
+
+        OfflinePlayer p = offlinePlayer(id);
+        String out = expansion.onPlaceholderRequest(p, "balance");
+        assertEquals("$123.45", out);
+    }
+
+    @Test
+    public void symbol_fallsBackToDollarWhenNullOrThrows() {
         EzEconomyPAPIExpansion expansion = new EzEconomyPAPIExpansion(null);
 
-        // access private topCache field
-        java.lang.reflect.Field cacheField = EzEconomyPAPIExpansion.class.getDeclaredField("topCache");
-        cacheField.setAccessible(true);
-        @SuppressWarnings("unchecked")
-        com.skyblockexp.ezeconomy.cache.CacheProvider<String, String> topCache = (com.skyblockexp.ezeconomy.cache.CacheProvider<String, String>) cacheField.get(expansion);
-        assertNotNull(topCache);
+        EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = new EzEconomyPAPIExpansion.TestEzEconomy() {
+            @Override public StorageProvider getStorageOrWarn() { return null; }
+            @Override public String getDefaultCurrency() { return "dollar"; }
+            @Override public String format(double amount, String currency) { return ""; }
+            @Override public String formatShort(double amount, String currency) { return ""; }
+            @Override public String getCurrencySymbol(String currency) { throw new RuntimeException("boom"); }
+            @Override public com.skyblockexp.ezeconomy.manager.CurrencyPreferenceManager getCurrencyPreferenceManager() { return null; }
+        };
 
-        // Put a fresh entry and verify it's present
-        topCache.put("key1", "value1", 1000);
-        com.skyblockexp.ezeconomy.cache.ExpiringCache.Entry<String> e = topCache.getEntry("key1");
-        assertNotNull(e);
-        assertEquals("value1", e.value);
+        String out = expansion.onPlaceholderRequest(null, "symbol_dollar");
+        assertEquals("$", out);
+    }
 
-        // Put an entry with tiny TTL and ensure it expires
-        topCache.put("key-expired", "old", 1);
-        Thread.sleep(10);
-        com.skyblockexp.ezeconomy.cache.ExpiringCache.Entry<String> expired = topCache.getEntry("key-expired");
-        assertNotNull(expired);
-        assertTrue(expired.expiresAt < System.currentTimeMillis());
+    @Test
+    public void top_buildsAndCachesResult() {
+        EzEconomyPAPIExpansion expansion = new EzEconomyPAPIExpansion(null);
+
+        UUID a = UUID.randomUUID();
+        UUID b = UUID.randomUUID();
+
+        SimpleStorageProvider stub = new SimpleStorageProvider();
+        stub.setBalance(a, "dollar", 50.0);
+        stub.setBalance(b, "dollar", 100.0);
+        stub.putPlayer(a, new EconomyPlayer(a, "Alice", null));
+        stub.putPlayer(b, new EconomyPlayer(b, "Bob", null));
+
+        EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = new EzEconomyPAPIExpansion.TestEzEconomy() {
+            @Override public StorageProvider getStorageOrWarn() { return stub; }
+            @Override public String getDefaultCurrency() { return "dollar"; }
+            @Override public String format(double amount, String currency) { return String.format("$%.0f", amount); }
+            @Override public String formatShort(double amount, String currency) { return String.format("$%.0f", amount); }
+            @Override public String getCurrencySymbol(String currency) { return "$"; }
+            @Override public com.skyblockexp.ezeconomy.manager.CurrencyPreferenceManager getCurrencyPreferenceManager() { return null; }
+        };
+
+        // First call returns a previous/cached value (likely "loading").
+        String first = expansion.onPlaceholderRequest(null, "top_2_dollar");
+        // Trigger a refresh by calling again; the second call should return the computed result
+        String second = expansion.onPlaceholderRequest(null, "top_2_dollar");
+        assertTrue(second.contains("Bob") && second.contains("Alice") && second.contains("$100") && second.contains("$50"));
+
+        String third = expansion.onPlaceholderRequest(null, "top_2_dollar");
+        assertEquals(second, third);
+    }
+
+    // Minimal test StorageProvider to support the tests above
+    static class SimpleStorageProvider implements StorageProvider {
+        private final Map<UUID, Map<String, Double>> balances = new ConcurrentHashMap<>();
+        private final Map<UUID, EconomyPlayer> players = new ConcurrentHashMap<>();
+        private final Map<String, Double> banks = new ConcurrentHashMap<>();
+
+        public void putPlayer(UUID id, EconomyPlayer p) { players.put(id, p); }
+
+        @Override public void init() {}
+        @Override public void load() {}
+        @Override public void save() {}
+
+        @Override
+        public double getBalance(UUID uuid, String currency) {
+            return balances.getOrDefault(uuid, Collections.emptyMap()).getOrDefault(currency, 0d);
+        }
+
+        @Override public void setBalance(UUID uuid, String currency, double amount) { balances.computeIfAbsent(uuid, k->new ConcurrentHashMap<>()).put(currency, amount); }
+        @Override public void logTransaction(com.skyblockexp.ezeconomy.api.storage.models.Transaction transaction) {}
+        @Override public java.util.List<com.skyblockexp.ezeconomy.api.storage.models.Transaction> getTransactions(UUID uuid, String currency) { return Collections.emptyList(); }
+        @Override public boolean tryWithdraw(UUID uuid, String currency, double amount) {
+            double cur = getBalance(uuid, currency);
+            if (cur < amount) return false;
+            setBalance(uuid, currency, cur - amount);
+            return true;
+        }
+        @Override public void deposit(UUID uuid, String currency, double amount) { setBalance(uuid, currency, getBalance(uuid, currency) + amount); }
+        @Override public java.util.Map<UUID, Double> getAllBalances(String currency) {
+            Map<UUID, Double> out = new HashMap<>();
+            balances.forEach((k, v) -> out.put(k, v.getOrDefault(currency, 0d)));
+            return out;
+        }
+
+        @Override public void shutdown() {}
+        @Override public EconomyPlayer getPlayer(UUID uuid) { return players.get(uuid); }
+        @Override public boolean createBank(String name, UUID owner) { banks.putIfAbsent(name, 0d); return true; }
+        @Override public boolean deleteBank(String name) { return banks.remove(name) != null; }
+        @Override public boolean bankExists(String name) { return banks.containsKey(name); }
+        @Override public double getBankBalance(String name, String currency) { return banks.getOrDefault(name, 0d); }
+        @Override public void setBankBalance(String name, String currency, double amount) { banks.put(name, amount); }
+        @Override public boolean tryWithdrawBank(String name, String currency, double amount) { double cur = getBankBalance(name, currency); if (cur < amount) return false; banks.put(name, cur - amount); return true; }
+        @Override public void depositBank(String name, String currency, double amount) { banks.put(name, getBankBalance(name, currency) + amount); }
+        @Override public java.util.Set<String> getBanks() { return banks.keySet(); }
+        @Override public boolean isBankOwner(String name, UUID uuid) { return false; }
+        @Override public boolean isBankMember(String name, UUID uuid) { return false; }
+        @Override public boolean addBankMember(String name, UUID uuid) { return false; }
+        @Override public boolean removeBankMember(String name, UUID uuid) { return false; }
+        @Override public java.util.Set<UUID> getBankMembers(String name) { return Collections.emptySet(); }
     }
 }
+

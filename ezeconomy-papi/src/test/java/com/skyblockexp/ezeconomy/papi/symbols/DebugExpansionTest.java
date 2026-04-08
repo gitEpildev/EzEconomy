@@ -1,4 +1,4 @@
-package com.skyblockexp.ezeconomy.papi;
+package com.skyblockexp.ezeconomy.papi.symbols;
 
 import org.junit.jupiter.api.Test;
 
@@ -7,7 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class DebugExpansionTest {
     @Test
     public void debugSymbolFallback() {
-        EzEconomyPAPIExpansion.TestEzEconomy stub = new EzEconomyPAPIExpansion.TestEzEconomy() {
+        com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion.TestEzEconomy stub = new com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion.TestEzEconomy() {
             @Override public com.skyblockexp.ezeconomy.api.storage.StorageProvider getStorageOrWarn() { return null; }
             @Override public String getDefaultCurrency() { return "dollar"; }
             @Override public String format(double amount, String currency) { return String.format("%.2f %s", amount, currency); }
@@ -16,8 +16,8 @@ public class DebugExpansionTest {
             @Override public com.skyblockexp.ezeconomy.manager.CurrencyPreferenceManager getCurrencyPreferenceManager() { return null; }
         };
 
-        EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = stub;
-        EzEconomyPAPIExpansion exp = new EzEconomyPAPIExpansion(null);
+        com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = stub;
+        com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion exp = new com.skyblockexp.ezeconomy.papi.EzEconomyPAPIExpansion(null);
         String sym = exp.onPlaceholderRequest(null, "symbol_dollar");
         System.out.println("DEBUG harness symbol -> '" + sym + "'");
         org.junit.jupiter.api.Assertions.assertNotNull(sym);
