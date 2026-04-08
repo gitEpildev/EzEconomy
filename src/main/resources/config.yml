@@ -23,6 +23,16 @@ daily-reward:
 store-on-join:
   enabled: false
 
+# Cross-server messaging support. Disable if running single-server only.
+cross-server:
+  enabled: true
+  # Set to true only while troubleshooting cross-server messaging.
+  verbose-logging: false
+
+# Timeout used when async contexts must execute a sync payment event.
+payment:
+  sync-event-timeout-ms: 5000
+
 # Banking feature toggle: set to `false` to disable built-in bank subsystem
 # (commands, GUIs, Vault bank methods, and bank PAPI placeholders).
 banking:

@@ -13,15 +13,13 @@ EzEconomy supports multiple storage backends to store player balances, bank data
 
 ## Configuration
 
-Storage providers are configured in the main `config.yml` file under the `storage` section:
+Storage providers are configured in the main `config.yml` file:
 
 ```yaml
-storage:
-  type: sqlite  # Options: yml, sqlite, mysql, mongodb
-  # Provider-specific config below
+storage: sqlite  # Options: yml, sqlite, mysql, mongodb
 ```
 
-Each provider has its own configuration file (e.g., `config-sqlite.yml`) that is loaded based on the type.
+Each provider has its own configuration file (for example, `config-sqlite.yml`) that is loaded based on this value.
 
 ## YML Storage Provider
 
@@ -29,7 +27,7 @@ Each provider has its own configuration file (e.g., `config-sqlite.yml`) that is
 Stores data in YAML files on the filesystem. Each player has their own file, and bank data is stored in the owner's file.
 
 ### Setup
-1. Set `storage.type: yml` in `config.yml`
+1. Set `storage: yml` in `config.yml`.
 2. Configure in `config-yml.yml`:
    ```yaml
    yml:
@@ -66,7 +64,7 @@ Stores data in YAML files on the filesystem. Each player has their own file, and
 Uses a local SQLite database file for all data storage.
 
 ### Setup
-1. Set `storage.type: sqlite` in `config.yml`
+1. Set `storage: sqlite` in `config.yml`.
 2. Configure in `config-sqlite.yml`:
    ```yaml
    sqlite:
@@ -124,7 +122,7 @@ CREATE TABLE bank_members (
 Uses a remote MySQL database for scalable storage.
 
 ### Setup
-1. Set `storage.type: mysql` in `config.yml`
+1. Set `storage: mysql` in `config.yml`.
 2. Configure in `config-mysql.yml`:
    ```yaml
    mysql:
@@ -190,7 +188,7 @@ CREATE TABLE transactions (
 Uses MongoDB for NoSQL document-based storage.
 
 ### Setup
-1. Set `storage.type: mongodb` in `config.yml`
+1. Set `storage: mongodb` in `config.yml`.
 2. Configure in `config-mongodb.yml`:
    ```yaml
    mongodb:
@@ -269,4 +267,4 @@ Currently, there is no automatic migration tool. To switch providers:
 
 1. **Permission denied**: Ensure the plugin has write access to the data folder
 2. **Connection failed**: Check database credentials and network connectivity
-3. **Table creation failed**: Ensure the database user has CREATE privileges
+3. **Table creation failed**: Ensure the database user has CREATE privileges.

@@ -23,17 +23,6 @@ public class PlayerJoinListener implements Listener {
         // Keep existing daily reward behaviour
         manager.handleJoin(event.getPlayer());
 
-        // Always persist correct UUID-to-name mapping from Velocity
-        try {
-            StorageProvider storage = plugin.getStorageOrWarn();
-            if (storage != null) {
-                org.bukkit.entity.Player p = event.getPlayer();
-                storage.persistPlayerInfo(p.getUniqueId(), p.getName(), p.getDisplayName());
-            }
-        } catch (Exception e) {
-            plugin.getLogger().warning("Failed to persist player info on join: " + e.getMessage());
-        }
-
         // Optionally ensure player is stored in the configured storage backend
         if (!plugin.getConfig().getBoolean("store-on-join.enabled", false)) {
             return;
@@ -42,15 +31,26 @@ public class PlayerJoinListener implements Listener {
         StorageProvider storage = plugin.getStorageOrWarn();
         if (storage == null) return;
 
+        // Only persist mapping when store-on-join is enabled to avoid write spam.
+        try {
+            org.bukkit.entity.Player p = event.getPlayer();
+            storage.persistPlayerInfo(p.getUniqueId(), p.getName(), p.getDisplayName());
+        } catch (Exception e) {
+            plugin.getLogger().warning("Failed to persist player info on join: " + e.getMessage());
+        }
+
         String currency = plugin.getDefaultCurrency();
         try {
             UUID uuid = event.getPlayer().getUniqueId();
             if (!storage.playerExists(uuid)) {
                 com.skyblockexp.ezeconomy.lock.LockManager lm = plugin.getLockManager();
+                long ttlMs = plugin.getConfig().getLong("redis.ttl-ms", 5000L);
+                long retryMs = plugin.getConfig().getLong("redis.retry-ms", 50L);
+                int maxAttempts = plugin.getConfig().getInt("redis.max-attempts", 100);
                 if (lm != null) {
                     String token = null;
                     try {
-                        token = lm.acquire(uuid, 5000L, 50L, 100);
+                        token = lm.acquire(uuid, ttlMs, retryMs, maxAttempts);
                     } catch (InterruptedException ie) {
                         Thread.currentThread().interrupt();
                         token = null;

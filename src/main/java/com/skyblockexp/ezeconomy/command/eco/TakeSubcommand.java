@@ -71,8 +71,8 @@ public class TakeSubcommand implements Subcommand {
             return true;
         }
 
-        boolean ok = storage.tryWithdraw(target.getUniqueId(), currency, amount);
-        if (!ok) {
+        net.milkbowl.vault.economy.EconomyResponse response = plugin.getEconomy().withdrawPlayer(target, amount, currency);
+        if (response.type != net.milkbowl.vault.economy.EconomyResponse.ResponseType.SUCCESS) {
             MessageUtils.send(sender, plugin, "not_enough_money");
             return true;
         }

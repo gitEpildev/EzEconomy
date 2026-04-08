@@ -1,8 +1,12 @@
-# EzEconomy - Multi-Server Network Support, Performance & Formatting Update
+# EzEconomy Changelog
 
-**Author:** [@GitEpildev](https://github.com/gitEpildev)
-**Original Plugin:** [@ez-plugins/EzEconomy](https://github.com/ez-plugins/EzEconomy)
-**Date:** April 2026
+This file was moved from the repository root `CHANGES.md` into `docs/` to keep top-level files stable.
+
+## 2.5.1 Fork Update - Multi-Server, Performance, Formatting
+
+**Author:** [@GitEpildev](https://github.com/gitEpildev)  
+**Original Plugin:** [@ez-plugins/EzEconomy](https://github.com/ez-plugins/EzEconomy)  
+**Date:** April 2026  
 **Plugin Version:** 2.5.1 (modified)
 
 ---
@@ -13,16 +17,9 @@ These changes add full multi-server network support to EzEconomy over Velocity, 
 
 ---
 
-## Pre-Built Jars
+## Build Artifacts
 
-Ready-to-use jars are included in the `jars/` folder:
-
-| Jar | Where to install | Description |
-|---|---|---|
-| `jars/ezeconomy-bukkit-2.5.1.jar` | Each backend server's `plugins/` folder | The main EzEconomy plugin (Paper/Spigot) |
-| `jars/ezeconomy-velocity-2.5.1.jar` | Velocity proxy's `plugins/` folder | Handles cross-server message routing and player list broadcasting |
-
-Both jars are built from this source and are the latest versions with all changes below included.
+Historical notes in this changelog may reference pre-built jars under `jars/`. Current builds produce artifacts from Maven `target/` directories.
 
 ---
 
@@ -81,7 +78,7 @@ Colour scheme redesigned for clarity:
 | Admin give (`/eco give`) | Green (`&a`) | "Gave 100K $ to Epildev." |
 | Admin take (`/eco take`) | Red (`&c`) | "Took 50K $ from Epildev." |
 | Errors | Red (`&c`) | "You do not have enough money." |
-| Usage hints | Grey/White (`&7`/`&f`) | "Usage: /pay \<player\> \<amount\>" |
+| Usage hints | Grey/White (`&7`/`&f`) | "Usage: /pay \\<player\\> \\<amount\\>" |
 | Amounts & player names | Yellow (`&e`) | Accent colour throughout |
 
 ### 5. Baltop Redesign

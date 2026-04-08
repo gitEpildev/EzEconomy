@@ -45,6 +45,37 @@ banking:
 
 Set `banking.enabled` to `false` if you prefer using a different bank plugin or want to disable shared bank accounts.
 
+### Store on join
+
+Control whether player metadata and initial storage records are written when a player joins.
+
+```yaml
+store-on-join:
+  enabled: false
+```
+
+When disabled, EzEconomy avoids those join-time writes.
+
+### Cross-server messaging
+
+```yaml
+cross-server:
+  enabled: true
+  verbose-logging: false
+```
+
+- Set `enabled` to `false` to fully disable cross-server messaging startup.
+- Set `verbose-logging` to `true` temporarily for troubleshooting proxy/message flow.
+
+### Payment sync timeout
+
+```yaml
+payment:
+  sync-event-timeout-ms: 5000
+```
+
+This controls how long async payment execution waits for sync event dispatch before the payment is cancelled for safety.
+
 ### Caching strategy
 
 Configure how EzEconomy caches frequently-read values (placeholders, top lists, GUI data).

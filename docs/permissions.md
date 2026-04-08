@@ -2,6 +2,11 @@
 
 Assign permissions through your permissions plugin (LuckPerms, PermissionsEx, etc.).
 
+## Notes
+
+- All bank permissions are disabled if `banking.enabled` is set to `false`.
+- Grant `ezeconomy.bank.admin` only to trusted staff.
+
 ## Player Permissions
 
 | Permission | Description |
@@ -33,5 +38,5 @@ Assign permissions through your permissions plugin (LuckPerms, PermissionsEx, et
 ## Recommended Roles
 
 - **Players**: `ezeconomy.pay`, `ezeconomy.currency`
-- **Staff**: `ezeconomy.balance.others`
+- **Moderators/Staff**: `ezeconomy.balance.others`
 - **Administrators**: `ezeconomy.eco`, `ezeconomy.bank.admin`

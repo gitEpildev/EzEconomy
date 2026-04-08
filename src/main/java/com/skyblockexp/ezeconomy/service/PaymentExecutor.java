@@ -14,8 +14,14 @@ import org.bukkit.entity.Player;
 
 import java.math.BigDecimal;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 public class PaymentExecutor {
+    private static long syncEventTimeoutMs(EzEconomyPlugin plugin) {
+        long configured = plugin.getConfig().getLong("payment.sync-event-timeout-ms", 5000L);
+        return configured > 0L ? configured : 5000L;
+    }
+
     /**
      * Execute a payment between players. Returns true if the operation completed (success or handled failure).
      */
@@ -76,10 +82,11 @@ public class PaymentExecutor {
             Bukkit.getPluginManager().callEvent(payEvent);
         } else {
             try {
+                long timeoutMs = syncEventTimeoutMs(plugin);
                 Bukkit.getScheduler().callSyncMethod(plugin, () -> {
                     Bukkit.getPluginManager().callEvent(payEvent);
                     return null;
-                }).get(5, java.util.concurrent.TimeUnit.SECONDS);
+                }).get(timeoutMs, TimeUnit.MILLISECONDS);
             } catch (Exception e) {
                 plugin.getLogger().warning("PaymentExecutor: failed to call PlayerPayPlayerEvent on main thread: " + e.getMessage());
                 // If we cannot safely call the event, cancel the payment to be safe
@@ -109,8 +116,11 @@ public class PaymentExecutor {
             if (lm != null) {
                 UUID[] uuids = new UUID[]{first, second};
                 String[] tokens = null;
+                long ttlMs = plugin.getConfig().getLong("redis.ttl-ms", 5000L);
+                long retryMs = plugin.getConfig().getLong("redis.retry-ms", 50L);
+                int maxAttempts = plugin.getConfig().getInt("redis.max-attempts", 100);
                 try {
-                    tokens = lm.acquireOrdered(uuids, 5000L, 50L, 100);
+                    tokens = lm.acquireOrdered(uuids, ttlMs, retryMs, maxAttempts);
                 } catch (InterruptedException ie) {
                     Thread.currentThread().interrupt();
                     tokens = null;

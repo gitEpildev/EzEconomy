@@ -9,6 +9,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockbukkit.MockBukkit;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class PlayerJoinListenerTest {
@@ -46,5 +47,23 @@ public class PlayerJoinListenerTest {
         Thread.sleep(100);
 
         assertTrue(yml.playerExists(player.getUniqueId()));
+    }
+
+    @Test
+    public void testStoreOnJoinDisabled_doesNotCreatePlayerRecord() throws Exception {
+        plugin.getConfig().set("store-on-join.enabled", false);
+        YamlConfiguration cfg = new YamlConfiguration();
+        cfg.set("yml.data-folder", "test-store-on-join");
+        cfg.set("yml.per-player-file-naming", "uuid");
+
+        YMLStorageProvider yml = new YMLStorageProvider(plugin, cfg);
+        TestSupport.createTestDataFolder(plugin, "test-store-on-join");
+        TestSupport.injectField(plugin, "storage", yml);
+
+        Object playerObj = server.getClass().getMethod("addPlayer", String.class).invoke(server, "joinerNoStore");
+        org.bukkit.entity.Player player = (org.bukkit.entity.Player) playerObj;
+        Thread.sleep(100);
+
+        assertFalse(yml.playerExists(player.getUniqueId()));
     }
 }

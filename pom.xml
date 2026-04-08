@@ -71,6 +71,7 @@
                                     <include>net.kyori:adventure-text-minimessage</include>
                                     <include>net.kyori:adventure-text-serializer-legacy</include>
                                     <include>net.kyori:examination-api</include>
+                                    <!-- Keep Hikari shaded to avoid classpath conflicts between plugins. -->
                                     <include>com.zaxxer:HikariCP</include>
                                     <include>org.slf4j:slf4j-api</include>
                                 </includes>
@@ -106,7 +107,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.0.0-M8</version>
+                <version>3.5.5</version>
                 <configuration>
                     <useModulePath>false</useModulePath>
                 </configuration>
@@ -156,7 +157,7 @@
         <dependency>
             <groupId>net.kyori</groupId>
             <artifactId>adventure-text-minimessage</artifactId>
-            <version>4.16.0</version>
+            <version>4.26.1</version>
         </dependency>
         <dependency>
             <groupId>net.kyori</groupId>
@@ -183,7 +184,7 @@
         <dependency>
             <groupId>me.clip</groupId>
             <artifactId>placeholderapi</artifactId>
-            <version>2.11.5</version>
+            <version>2.12.2</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -196,6 +197,7 @@
             <artifactId>mysql-connector-java</artifactId>
             <version>8.0.33</version>
         </dependency>
+        <!-- Hikari keeps DB operations off a single shared connection; debit safety still relies on lock+atomic SQL. -->
         <dependency>
             <groupId>com.zaxxer</groupId>
             <artifactId>HikariCP</artifactId>
@@ -216,7 +218,7 @@
         <dependency>
             <groupId>org.mongodb</groupId>
             <artifactId>mongodb-driver-sync</artifactId>
-            <version>4.11.1</version>
+            <version>5.6.4</version>
         </dependency>
         <dependency>
             <groupId>${mockbukkit.groupId}</groupId>
@@ -239,7 +241,7 @@
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>testcontainers</artifactId>
-            <version>1.19.0</version>
+            <version>2.0.4</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -412,7 +414,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-surefire-plugin</artifactId>
-                        <version>3.0.0-M7</version>
+                        <version>3.5.5</version>
                         <configuration>
                             <failIfNoSpecifiedTests>false</failIfNoSpecifiedTests>
                             <includes>

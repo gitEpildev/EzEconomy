@@ -6,6 +6,7 @@ import com.skyblockexp.ezeconomy.messaging.CrossServerMessenger;
 import com.skyblockexp.ezeconomy.storage.MySQLStorageProvider;
 import com.skyblockexp.ezeconomy.api.storage.StorageProvider;
 import org.bukkit.Bukkit;
+import org.bukkit.event.HandlerList;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
@@ -21,17 +22,24 @@ public class MessagingComponent implements BootstrapComponent, Listener {
 
     @Override
     public void start() {
+        if (!plugin.getConfig().getBoolean("cross-server.enabled", true)) {
+            plugin.setCrossServerMessenger(null);
+            plugin.getLogger().info("Cross-server messaging is disabled in config.");
+            return;
+        }
+
         messenger = new CrossServerMessenger(plugin);
         messenger.register();
         plugin.setCrossServerMessenger(messenger);
         Bukkit.getPluginManager().registerEvents(this, plugin);
 
-        cleanupTaskId = Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, () -> {
-            StorageProvider s = plugin.getStorage();
-            if (s instanceof MySQLStorageProvider) {
-                ((MySQLStorageProvider) s).cleanupOldNotifications(86400000L);
-            }
-        }, 6000L, 6000L).getTaskId();
+        StorageProvider s = plugin.getStorage();
+        if (s instanceof MySQLStorageProvider) {
+            cleanupTaskId = Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, () ->
+                ((MySQLStorageProvider) s).cleanupOldNotifications(86400000L),
+                6000L, 6000L
+            ).getTaskId();
+        }
 
         plugin.getLogger().info("Cross-server messaging component started.");
     }
@@ -44,7 +52,10 @@ public class MessagingComponent implements BootstrapComponent, Listener {
         }
         if (messenger != null) {
             messenger.unregister();
+            messenger = null;
         }
+        plugin.setCrossServerMessenger(null);
+        HandlerList.unregisterAll(this);
     }
 
     @Override

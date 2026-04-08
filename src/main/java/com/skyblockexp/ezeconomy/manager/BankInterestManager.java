@@ -73,8 +73,11 @@ public class BankInterestManager {
                         com.skyblockexp.ezeconomy.lock.LockManager lm = plugin.getLockManager();
                         if (lm != null) {
                             String token = null;
+                            long ttlMs = plugin.getConfig().getLong("redis.ttl-ms", 5000L);
+                            long retryMs = plugin.getConfig().getLong("redis.retry-ms", 50L);
+                            int maxAttempts = plugin.getConfig().getInt("redis.max-attempts", 100);
                             try {
-                                token = lm.acquire(uuid, 5000L, 50L, 100);
+                                token = lm.acquire(uuid, ttlMs, retryMs, maxAttempts);
                             } catch (InterruptedException ie) {
                                 Thread.currentThread().interrupt();
                                 token = null;

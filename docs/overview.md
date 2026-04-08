@@ -9,7 +9,7 @@ EzEconomy is a Vault-compatible economy provider built for reliability, clarity,
 - **Multi-currency**: Optional per-player currency selection with conversion rates.
 - **Async caching**: Keeps balance lookups fast on busy servers.
 - **Banking system**: Shared accounts with member management and permissions.
-- **Banking system**: Shared accounts with member management and permissions. You can disable the built-in banking subsystem via `banking.enabled: false` in `config.yml` if you run an external bank plugin or don't need bank features.
+- **Optional banking toggle**: Disable built-in banking via `banking.enabled: false` in `config.yml` if you run an external bank plugin.
 
 ## Supported Versions
 
@@ -32,6 +32,10 @@ EzEconomy targets modern Paper/Spigot servers that support Vault. For best resul
 
 - **Configuration**: See storage-specific settings and multi-currency setup.
 - **Commands & Permissions**: Confirm staff and player access rules.
-- **Storage Details**: Understand backend behavior and data safety.
-
-- **Events**: EzEconomy now exposes pre/post transaction events for integrations and moderation. See `docs/api/event/PreTransactionEvent.md`, `docs/api/event/PostTransactionEvent.md`, `docs/api/event/PlayerPayPlayerEvent.md`, and `docs/api/event/TransactionType.md` for details and examples.
+- **Storage details**: Understand backend behavior and data safety.
+- **Events**: EzEconomy exposes transaction events for integrations and moderation.
+  See:
+  - `docs/api/event/PreTransactionEvent.md`
+  - `docs/api/event/PostTransactionEvent.md`
+  - `docs/api/event/PlayerPayPlayerEvent.md`
+  - `docs/api/event/TransactionType.md`

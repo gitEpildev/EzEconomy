@@ -15,6 +15,7 @@ public class CrossServerMessenger implements PluginMessageListener {
     public static final String CHANNEL = "ezeconomy:notify";
     private final EzEconomyPlugin plugin;
     private final Set<String> networkPlayers = ConcurrentHashMap.newKeySet();
+    private final Map<UUID, List<String>> localPendingNotifications = new ConcurrentHashMap<>();
 
     public CrossServerMessenger(EzEconomyPlugin plugin) {
         this.plugin = plugin;
@@ -23,7 +24,7 @@ public class CrossServerMessenger implements PluginMessageListener {
     public void register() {
         Bukkit.getMessenger().registerOutgoingPluginChannel(plugin, CHANNEL);
         Bukkit.getMessenger().registerIncomingPluginChannel(plugin, CHANNEL, this);
-        plugin.getLogger().info("Registered cross-server messaging channel: " + CHANNEL);
+        logVerbose("Registered cross-server messaging channel: " + CHANNEL);
     }
 
     public void unregister() {
@@ -39,8 +40,7 @@ public class CrossServerMessenger implements PluginMessageListener {
                                          String senderName, String amount, String currency) {
         Player relay = findRelayPlayer();
         if (relay == null) {
-            plugin.getLogger().warning("No online player to relay cross-server notification; storing in DB.");
-            storePendingNotification(recipientUuid, senderName, amount, currency);
+            storePendingNotification(recipientUuid, recipientName, senderName, amount, currency);
             return;
         }
 
@@ -54,9 +54,10 @@ public class CrossServerMessenger implements PluginMessageListener {
             out.writeUTF(amount);
             out.writeUTF(currency);
             relay.sendPluginMessage(plugin, CHANNEL, bos.toByteArray());
+            logVerbose("Relayed cross-server notification for recipient=" + recipientName + " via " + relay.getName());
         } catch (IOException e) {
             plugin.getLogger().warning("Failed to send cross-server notification: " + e.getMessage());
-            storePendingNotification(recipientUuid, senderName, amount, currency);
+            storePendingNotification(recipientUuid, recipientName, senderName, amount, currency);
         }
     }
 
@@ -74,24 +75,24 @@ public class CrossServerMessenger implements PluginMessageListener {
                 String senderName = in.readUTF();
                 String amount = in.readUTF();
                 String currency = in.readUTF();
-                plugin.getLogger().info("Received cross-server NOTIFY: recipient=" + recipientName
+                logVerbose("Received cross-server NOTIFY: recipient=" + recipientName
                     + " uuid=" + recipientUuidStr + " from=" + senderName + " amount=" + amount);
 
                 Player recipient = Bukkit.getPlayer(UUID.fromString(recipientUuidStr));
                 if (recipient != null && recipient.isOnline()) {
                     String msg = plugin.getMessageProvider().get("received",
                         Map.of("player", senderName, "amount", amount));
-                    plugin.getLogger().info("Delivering cross-server message to " + recipientName + ": " + msg);
+                    logVerbose("Delivering cross-server message to " + recipientName + ": " + msg);
                     recipient.sendMessage(msg);
                 } else {
-                    plugin.getLogger().warning("Cross-server NOTIFY: recipient " + recipientName + " not found locally (uuid=" + recipientUuidStr + ")");
+                    logVerbose("Cross-server NOTIFY: recipient " + recipientName + " not found locally (uuid=" + recipientUuidStr + ")");
                 }
             } else if ("RECIPIENT_OFFLINE".equals(type)) {
                 String recipientUuidStr = in.readUTF();
                 String senderName = in.readUTF();
                 String amount = in.readUTF();
                 String currency = in.readUTF();
-                storePendingNotification(UUID.fromString(recipientUuidStr), senderName, amount, currency);
+                storePendingNotification(UUID.fromString(recipientUuidStr), recipientUuidStr, senderName, amount, currency);
             } else if ("PLAYER_LIST".equals(type)) {
                 int count = in.readInt();
                 Set<String> newList = ConcurrentHashMap.newKeySet();
@@ -108,25 +109,44 @@ public class CrossServerMessenger implements PluginMessageListener {
 
     public void deliverPendingNotifications(Player player) {
         StorageProvider storage = plugin.getStorageOrWarn();
-        if (!(storage instanceof MySQLStorageProvider)) return;
-        MySQLStorageProvider mysql = (MySQLStorageProvider) storage;
-        List<String> messages = mysql.pollPendingNotifications(player.getUniqueId());
+        List<String> messages = new ArrayList<>();
+        if (storage instanceof MySQLStorageProvider) {
+            MySQLStorageProvider mysql = (MySQLStorageProvider) storage;
+            messages.addAll(mysql.pollPendingNotifications(player.getUniqueId()));
+        } else {
+            List<String> drained = localPendingNotifications.remove(player.getUniqueId());
+            if (drained != null && !drained.isEmpty()) {
+                messages.addAll(drained);
+                logVerbose("Delivered " + drained.size() + " in-memory pending notifications to " + player.getName());
+            }
+        }
         for (String msg : messages) {
             player.sendMessage(msg);
         }
     }
 
-    private void storePendingNotification(UUID recipientUuid, String senderName, String amount, String currency) {
+    private void storePendingNotification(UUID recipientUuid, String recipientName, String senderName, String amount, String currency) {
         StorageProvider storage = plugin.getStorageOrWarn();
-        if (!(storage instanceof MySQLStorageProvider)) return;
-        MySQLStorageProvider mysql = (MySQLStorageProvider) storage;
         String msg = plugin.getMessageProvider().get("received",
             Map.of("player", senderName, "amount", amount));
-        mysql.insertPendingNotification(recipientUuid, msg);
+        if (storage instanceof MySQLStorageProvider) {
+            MySQLStorageProvider mysql = (MySQLStorageProvider) storage;
+            mysql.insertPendingNotification(recipientUuid, msg);
+            return;
+        }
+
+        localPendingNotifications.computeIfAbsent(recipientUuid, ignored -> Collections.synchronizedList(new ArrayList<>())).add(msg);
+        logVerbose("Queued in-memory pending notification for recipient=" + recipientName + " (storage is not MySQL)");
     }
 
     private Player findRelayPlayer() {
         Collection<? extends Player> online = Bukkit.getOnlinePlayers();
         return online.isEmpty() ? null : online.iterator().next();
+    }
+
+    private void logVerbose(String message) {
+        if (plugin.getConfig().getBoolean("cross-server.verbose-logging", false)) {
+            plugin.getLogger().info(message);
+        }
     }
 }

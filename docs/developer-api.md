@@ -1,7 +1,19 @@
 # Developer API (v2)
 
-This file has moved to the API folder. See the full developer API documentation at:
+The full developer API documentation now lives under the `docs/api/` folder.
 
-- [docs/api/README.md](api/README.md)
+## Start Here
 
-The new location contains the complete Developer API guide, examples, and links to storage and command docs.
+- [API Overview](api/README.md)
+- [Storage Provider API](api/storage-provider.md)
+
+## Event Reference
+
+- [PreTransactionEvent](api/event/PreTransactionEvent.md)
+- [PostTransactionEvent](api/event/PostTransactionEvent.md)
+- [PlayerPayPlayerEvent](api/event/PlayerPayPlayerEvent.md)
+- [TransactionType](api/event/TransactionType.md)
+- [BankPreTransactionEvent](api/event/BankPreTransactionEvent.md)
+- [BankPostTransactionEvent](api/event/BankPostTransactionEvent.md)
+
+These pages include method summaries, usage notes, and examples for integrations.
