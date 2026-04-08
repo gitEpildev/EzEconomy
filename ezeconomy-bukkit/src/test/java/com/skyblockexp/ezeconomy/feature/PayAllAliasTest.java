@@ -40,9 +40,10 @@ public class PayAllAliasTest {
             org.bukkit.entity.Player alice = (org.bukkit.entity.Player) r1;
             org.bukkit.entity.Player bob = (org.bukkit.entity.Player) r2;
 
-            // Give necessary permission (but do not grant bypass-withdraw)
+            // Give necessary permissions (but do not grant bypass-withdraw)
             payer.setOp(false);
             payer.addAttachment(plugin, "ezeconomy.payall", true);
+            payer.addAttachment(plugin, "ezeconomy.pay", true);
 
             storage.setBalance(payer.getUniqueId(), CURRENCY, 20.0);
             storage.setBalance(alice.getUniqueId(), CURRENCY, 0.0);
