@@ -13,6 +13,7 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 import net.milkbowl.vault.economy.Economy;
+import java.util.Locale;
 
 public class EzEconomyPlugin extends JavaPlugin {
     private static final int SPIGOT_RESOURCE_ID = 130975;
@@ -236,6 +237,83 @@ public class EzEconomyPlugin extends JavaPlugin {
 
     public void setLockManager(com.skyblockexp.ezeconomy.lock.LockManager m) {
         this.lockManager = m;
+    }
+
+    /**
+     * Resolve lock timing/attempt settings according to configured locking strategy.
+     * Strategy-specific files (redis.yml / bungeecord.yml) override generic config values.
+     */
+    public long getLockTtlMs() {
+        return resolveLockSettings().ttlMs;
+    }
+
+    public long getLockRetryMs() {
+        return resolveLockSettings().retryMs;
+    }
+
+    public int getLockMaxAttempts() {
+        return resolveLockSettings().maxAttempts;
+    }
+
+    /**
+     * Compute effective lock settings and mirror them into legacy redis.* config keys.
+     * This keeps existing call sites strategy-aware without breaking compatibility.
+     */
+    public void refreshEffectiveLockSettings() {
+        LockSettings settings = resolveLockSettings();
+        FileConfiguration cfg = getConfig();
+        cfg.set("redis.ttl-ms", settings.ttlMs);
+        cfg.set("redis.retry-ms", settings.retryMs);
+        cfg.set("redis.max-attempts", settings.maxAttempts);
+    }
+
+    private LockSettings resolveLockSettings() {
+        FileConfiguration cfg = getConfig();
+        String strategy = cfg.getString("locking-strategy", "LOCAL").toUpperCase(Locale.ROOT);
+
+        long ttlMs = cfg.getLong("locking.ttl-ms", 5000L);
+        long retryMs = cfg.getLong("locking.retry-ms", 50L);
+        int maxAttempts = cfg.getInt("locking.max-attempts", 100);
+
+        // Backward compatibility with previous config keys.
+        ttlMs = cfg.getLong("redis.ttl-ms", ttlMs);
+        retryMs = cfg.getLong("redis.retry-ms", retryMs);
+        maxAttempts = cfg.getInt("redis.max-attempts", maxAttempts);
+
+        if ("REDIS".equals(strategy)) {
+            FileConfiguration redis = loadOptionalConfig("redis.yml");
+            if (redis != null) {
+                ttlMs = redis.getLong("ttl-ms", ttlMs);
+                retryMs = redis.getLong("retry-ms", retryMs);
+                maxAttempts = redis.getInt("max-attempts", maxAttempts);
+            }
+        } else if ("BUNGEECORD".equals(strategy)) {
+            FileConfiguration bungee = loadOptionalConfig("bungeecord.yml");
+            if (bungee != null) {
+                ttlMs = bungee.getLong("ttl-ms", ttlMs);
+                retryMs = bungee.getLong("retry-ms", retryMs);
+                maxAttempts = bungee.getInt("max-attempts", maxAttempts);
+            }
+        }
+
+        return new LockSettings(ttlMs, retryMs, maxAttempts);
+    }
+
+    private FileConfiguration loadOptionalConfig(String fileName) {
+        File file = new File(getDataFolder(), fileName);
+        return file.exists() ? YamlConfiguration.loadConfiguration(file) : null;
+    }
+
+    private static final class LockSettings {
+        private final long ttlMs;
+        private final long retryMs;
+        private final int maxAttempts;
+
+        private LockSettings(long ttlMs, long retryMs, int maxAttempts) {
+            this.ttlMs = ttlMs;
+            this.retryMs = retryMs;
+            this.maxAttempts = maxAttempts;
+        }
     }
 
     /**

@@ -44,9 +44,9 @@ public class PlayerJoinListener implements Listener {
             UUID uuid = event.getPlayer().getUniqueId();
             if (!storage.playerExists(uuid)) {
                 com.skyblockexp.ezeconomy.lock.LockManager lm = plugin.getLockManager();
-                long ttlMs = plugin.getConfig().getLong("redis.ttl-ms", 5000L);
-                long retryMs = plugin.getConfig().getLong("redis.retry-ms", 50L);
-                int maxAttempts = plugin.getConfig().getInt("redis.max-attempts", 100);
+                long ttlMs = plugin.getLockTtlMs();
+                long retryMs = plugin.getLockRetryMs();
+                int maxAttempts = plugin.getLockMaxAttempts();
                 if (lm != null) {
                     String token = null;
                     try {

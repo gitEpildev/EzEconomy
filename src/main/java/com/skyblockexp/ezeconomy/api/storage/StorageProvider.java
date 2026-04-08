@@ -173,7 +173,7 @@ public interface StorageProvider {
         if (fromUuid.compareTo(toUuid) > 0) ordered = new UUID[]{toUuid, fromUuid};
         String[] tokens = null;
         try {
-            tokens = lm.acquireOrdered(ordered, inst.getConfig().getLong("redis.ttl-ms", 5000), inst.getConfig().getLong("redis.retry-ms", 50), inst.getConfig().getInt("redis.max-attempts", 100));
+            tokens = lm.acquireOrdered(ordered, inst.getLockTtlMs(), inst.getLockRetryMs(), inst.getLockMaxAttempts());
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
         }

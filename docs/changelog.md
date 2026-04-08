@@ -2,6 +2,49 @@
 
 This file was moved from the repository root `CHANGES.md` into `docs/` to keep top-level files stable.
 
+## 2.5.1 Fork Patch - Upstream Merge + Locking Strategy Consistency
+
+**Author:** [@GitEpildev](https://github.com/gitEpildev)  
+**Original Plugin:** [@ez-plugins/EzEconomy](https://github.com/ez-plugins/EzEconomy)  
+**Date:** April 2026  
+**Plugin Version:** 2.5.1 (fork patch)
+
+### Summary
+
+This patch resolves the upstream merge conflicts on `pr-branch` and aligns lock timing behavior across runtime services so lock acquisition respects the configured `locking-strategy` (`LOCAL`, `REDIS`, `BUNGEECORD`, `DATABASE`) instead of assuming Redis defaults.
+
+### Included in this patch
+
+- Resolved merge conflicts in:
+  - `README.md`
+  - `src/main/java/com/skyblockexp/ezeconomy/tabcomplete/PayTabCompleter.java`
+  - `src/main/resources/config.yml`
+  - `src/main/resources/languages/en.yml`
+- Preserved fork behavior while keeping upstream additions:
+  - Cross-server name completion for `/pay`
+  - Upstream `pay_all` command/config/docs additions
+  - Fork message style + attribution notes
+- Added strategy-aware lock settings resolution in `EzEconomyPlugin`:
+  - Reads strategy from `locking-strategy`
+  - Uses `redis.yml` when strategy is `REDIS`
+  - Uses `bungeecord.yml` when strategy is `BUNGEECORD`
+  - Falls back to generic/default values for other strategies
+  - Mirrors effective values to legacy `redis.*` runtime keys for backward compatibility
+- Updated runtime lock call sites to use the resolved lock settings helpers:
+  - `VaultEconomyImpl`
+  - `PaymentExecutor`
+  - `PlayerJoinListener`
+  - `BankInterestManager`
+  - `StorageProvider` default transfer flow
+- `LockingComponent` now refreshes effective lock settings on startup/reload to keep older code paths compatible.
+
+### Verification
+
+- Merge conflict markers removed.
+- `mvn -DskipTests compile` passes after changes.
+
+---
+
 ## 2.5.1 Fork Update - Multi-Server, Performance, Formatting
 
 **Author:** [@GitEpildev](https://github.com/gitEpildev)  

@@ -26,6 +26,7 @@ public class LockingComponent implements BootstrapComponent {
     @Override
     public void start() {
         FileConfiguration cfg = plugin.getConfig();
+        plugin.refreshEffectiveLockSettings();
         // Configure cache strategy early from config (backwards-compatible with 'caching-strategy')
         String caching = cfg.getString("caching-strategy", cfg.getString("locking-strategy", "LOCAL")).toUpperCase();
         try {

@@ -116,9 +116,9 @@ public class PaymentExecutor {
             if (lm != null) {
                 UUID[] uuids = new UUID[]{first, second};
                 String[] tokens = null;
-                long ttlMs = plugin.getConfig().getLong("redis.ttl-ms", 5000L);
-                long retryMs = plugin.getConfig().getLong("redis.retry-ms", 50L);
-                int maxAttempts = plugin.getConfig().getInt("redis.max-attempts", 100);
+                long ttlMs = plugin.getLockTtlMs();
+                long retryMs = plugin.getLockRetryMs();
+                int maxAttempts = plugin.getLockMaxAttempts();
                 try {
                     tokens = lm.acquireOrdered(uuids, ttlMs, retryMs, maxAttempts);
                 } catch (InterruptedException ie) {

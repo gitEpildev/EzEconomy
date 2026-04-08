@@ -437,9 +437,9 @@ public class VaultEconomyImpl implements Economy {
             try {
                 String token = lm.acquire(
                     key,
-                    plugin.getConfig().getLong("redis.ttl-ms", 5000L),
-                    plugin.getConfig().getLong("redis.retry-ms", 50L),
-                    plugin.getConfig().getInt("redis.max-attempts", 100)
+                    plugin.getLockTtlMs(),
+                    plugin.getLockRetryMs(),
+                    plugin.getLockMaxAttempts()
                 );
                 if (token != null) {
                     return new LockedOperation(lm, key, token, null);
