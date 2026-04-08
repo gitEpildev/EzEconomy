@@ -1,37 +1,37 @@
 package com.skyblockexp.ezeconomy.storage;
 
 import com.skyblockexp.ezeconomy.core.EzEconomyPlugin;
-import com.skyblockexp.ezeconomy.test.DbTestHelper;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockbukkit.mockbukkit.MockBukkit;
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 
 import java.lang.reflect.Field;
-import java.sql.Connection;
-import java.sql.Statement;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 public class MySQLStorageProviderH2IntegrationTest {
 
-    private Connection conn;
+    private HikariDataSource testDataSource;
 
     @BeforeEach
     void setup() throws Exception {
         try { MockBukkit.mock(); } catch (IllegalStateException e) { MockBukkit.unmock(); MockBukkit.mock(); }
-        conn = DbTestHelper.createH2MemoryMysql();
-        try (Statement s = conn.createStatement()) {
-            s.executeUpdate("CREATE TABLE IF NOT EXISTS balances (uuid VARCHAR(36), currency VARCHAR(32), balance DOUBLE, PRIMARY KEY (uuid, currency))");
-            s.executeUpdate("CREATE TABLE IF NOT EXISTS players (uuid VARCHAR(36) PRIMARY KEY, name VARCHAR(64), displayName VARCHAR(128))");
-        }
+        HikariConfig hc = new HikariConfig();
+        hc.setJdbcUrl("jdbc:h2:mem:test;MODE=MySQL;DB_CLOSE_DELAY=-1");
+        hc.setUsername("sa");
+        hc.setPassword("");
+        hc.setMaximumPoolSize(2);
+        testDataSource = new HikariDataSource(hc);
     }
 
     @AfterEach
     void teardown() throws Exception {
-        try { if (conn != null && !conn.isClosed()) conn.close(); } catch (Exception ignored) {}
+        try { if (testDataSource != null && !testDataSource.isClosed()) testDataSource.close(); } catch (Exception ignored) {}
         try { MockBukkit.unmock(); } catch (Exception ignored) {}
     }
 
@@ -48,10 +48,11 @@ public class MySQLStorageProviderH2IntegrationTest {
 
         MySQLStorageProvider provider = new MySQLStorageProvider(plugin, cfg);
 
-        // Inject the H2 connection into the provider using reflection
-        Field connField = MySQLStorageProvider.class.getDeclaredField("connection");
-        connField.setAccessible(true);
-        connField.set(provider, conn);
+        // Inject H2-backed datasource (provider uses HikariCP, not a raw Connection field).
+        Field dsField = MySQLStorageProvider.class.getDeclaredField("dataSource");
+        dsField.setAccessible(true);
+        dsField.set(provider, testDataSource);
+        provider.init();
 
         UUID u = UUID.randomUUID();
         // Initially zero
