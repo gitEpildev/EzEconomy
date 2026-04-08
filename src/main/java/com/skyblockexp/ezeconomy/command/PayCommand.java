@@ -39,8 +39,19 @@ public class PayCommand implements CommandExecutor {
             MessageUtils.send(sender, plugin, "no_permission");
             return true;
         }
+        // Support: /payall <amount> as alias for /pay * <amount>
+        String[] computedArgs;
+        if (command != null && command.getName().equalsIgnoreCase("payall")) {
+            String[] newArgs = new String[args.length + 1];
+            newArgs[0] = "*";
+            if (args.length > 0) System.arraycopy(args, 0, newArgs, 1, args.length);
+            computedArgs = newArgs;
+        } else {
+            computedArgs = args;
+        }
+        final String[] operands = computedArgs;
         // Support: /pay confirm
-        if (args.length == 1 && args[0].equalsIgnoreCase("confirm")) {
+        if (operands.length == 1 && operands[0].equalsIgnoreCase("confirm")) {
             if (!(sender instanceof Player)) {
                 MessageUtils.send(sender, plugin, "only_players");
                 return true;
@@ -58,23 +69,23 @@ public class PayCommand implements CommandExecutor {
             return true;
         }
 
-        if (args.length < 2) {
+        if (operands.length < 2) {
             MessageUtils.send(sender, plugin, "usage_pay");
             return true;
         }
         // Accept either: /pay <player> <amount> OR /pay <player> <amount> <currency>
-        if (args.length > 3) {
+        if (operands.length > 3) {
             MessageUtils.send(sender, plugin, "usage_pay");
             return true;
         }
         Player from = (Player) sender;
         // Prefer online exact match to avoid blocking lookups.
-        Player online = Bukkit.getPlayerExact(args[0]);
+        Player online = Bukkit.getPlayerExact(operands[0]);
         OfflinePlayer to = (online != null) ? online : null;
         // Determine currency (optional 3rd arg) — use before parsing so parseMoney can know currency context
         final String currency;
-        if (args.length == 3) {
-            String tmpCurrency = args[2].toLowerCase();
+        if (operands.length == 3) {
+            String tmpCurrency = operands[2].toLowerCase();
             java.util.Map<String, Object> currencies = plugin.getConfig().getConfigurationSection("multi-currency.currencies") != null
                 ? plugin.getConfig().getConfigurationSection("multi-currency.currencies").getValues(false)
                 : java.util.Collections.emptyMap();
@@ -87,11 +98,11 @@ public class PayCommand implements CommandExecutor {
             currency = plugin.getDefaultCurrency();
         }
 
-        Money money = NumberUtil.parseMoney(args[1], currency);
+        Money money = NumberUtil.parseMoney(operands[1], currency);
 
         // Validate amount and parsing
         if (money == null) {
-            MessageUtils.send(sender, plugin, "invalid_amount", java.util.Map.of("input", args[1]));
+            MessageUtils.send(sender, plugin, "invalid_amount", java.util.Map.of("input", operands[1]));
             return true;
         }
         java.math.BigDecimal amountDecimal = money.getAmount();
@@ -107,10 +118,10 @@ public class PayCommand implements CommandExecutor {
         double threshold = plugin.getConfig().getDouble("pay.confirmation.threshold", -1.0);
         int timeoutSeconds = plugin.getConfig().getInt("pay.confirmation.timeout_seconds", 30);
         boolean requireConfirm = threshold >= 0 && amountDecimal.compareTo(java.math.BigDecimal.valueOf(threshold)) >= 0;
-        if (requireConfirm && !args[1].equalsIgnoreCase("confirm")) {
+        if (requireConfirm && !operands[1].equalsIgnoreCase("confirm")) {
             // Store pending transfer via PayFlowManager and instruct user to confirm
             long expiresAt = System.currentTimeMillis() + (timeoutSeconds * 1000L);
-            plugin.getPayFlowManager().createPendingTransfer(from.getUniqueId(), to == null ? null : to.getUniqueId(), args[0], money, currency, expiresAt);
+            plugin.getPayFlowManager().createPendingTransfer(from.getUniqueId(), to == null ? null : to.getUniqueId(), operands[0], money, currency, expiresAt);
             MessageUtils.send(sender, plugin, "payment_confirm_required", java.util.Map.of("amount", plugin.getCurrencyFormatter().formatPriceForMessage(amountDecimal.doubleValue(), currency), "timeout", String.valueOf(timeoutSeconds)));
             // Schedule cleanup
             Bukkit.getScheduler().runTaskLater(plugin, () -> plugin.getPayFlowManager().removeIfExpired(from.getUniqueId()), timeoutSeconds * 20L);
@@ -118,7 +129,7 @@ public class PayCommand implements CommandExecutor {
         }
 
         // Support: /pay * <amount>  -> pay all accounts
-        if (args[0].equals("*")) {
+        if (operands[0].equals("*")) {
             StorageProvider storage = plugin.getStorageOrWarn();
             if (storage == null) return true;
 
@@ -221,7 +232,7 @@ public class PayCommand implements CommandExecutor {
             knownOffline = true;
         } else {
             // Use PlayerLookup to avoid expensive or blocking lookups.
-            var maybe = com.skyblockexp.ezeconomy.util.PlayerLookup.findByName(args[0]);
+            var maybe = com.skyblockexp.ezeconomy.util.PlayerLookup.findByName(operands[0]);
             if (maybe.isPresent()) {
                 OfflinePlayer sample = maybe.get();
                 if (sample.hasPlayedBefore()) {
@@ -244,11 +255,11 @@ public class PayCommand implements CommandExecutor {
 
         if (online != null) {
             // Execute immediately on current thread for online recipient (tests expect immediate result)
-            com.skyblockexp.ezeconomy.service.PaymentExecutor.execute(plugin, from, args[0], amountDecimal, currency, knownOffline);
+            com.skyblockexp.ezeconomy.service.PaymentExecutor.execute(plugin, from, operands[0], amountDecimal, currency, knownOffline);
         } else {
             boolean ko = knownOffline;
             plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
-                com.skyblockexp.ezeconomy.service.PaymentExecutor.execute(plugin, from, args[0], amountDecimal, currency, ko);
+                com.skyblockexp.ezeconomy.service.PaymentExecutor.execute(plugin, from, operands[0], amountDecimal, currency, ko);
             });
         }
         return true;

@@ -47,8 +47,16 @@ public class CommandsComponent implements BootstrapComponent {
                 } catch (Exception ignored) {}
             }
         }
-        plugin.getCommand("pay").setExecutor(new PayCommand(plugin));
-        plugin.getCommand("pay").setTabCompleter(new PayTabCompleter(plugin));
+        // Register pay and alias payall to the same executor
+        if (plugin.getCommand("pay") != null) {
+            var payCmd = new PayCommand(plugin);
+            plugin.getCommand("pay").setExecutor(payCmd);
+            plugin.getCommand("pay").setTabCompleter(new PayTabCompleter(plugin));
+            if (plugin.getCommand("payall") != null) {
+                plugin.getCommand("payall").setExecutor(payCmd);
+                plugin.getCommand("payall").setTabCompleter(new PayTabCompleter(plugin));
+            }
+        }
         plugin.getCommand("currency").setExecutor(new CurrencyCommand(plugin));
         plugin.getCommand("currency").setTabCompleter(new CurrencyTabCompleter(plugin));
         plugin.getCommand("ezeconomy").setExecutor(new EzEconomyCommand(plugin, plugin.getDailyRewardManager()));
