@@ -21,7 +21,12 @@ public class BalanceFormattingPreferenceFallbackTest {
 
     @BeforeEach
     public void setUp() {
-        MockBukkit.mock();
+        try {
+            MockBukkit.mock();
+        } catch (IllegalStateException e) {
+            MockBukkit.unmock();
+            MockBukkit.mock();
+        }
     }
 
     @Test

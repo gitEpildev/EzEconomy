@@ -9,7 +9,7 @@ Permissions shown in parentheses are required to run the command. Commands witho
 | `/balance <player>` | View another player's balance. | `ezeconomy.balance.others` |
 | `/balance <player> <currency>` | View another player's balance in the specified currency. | `ezeconomy.balance.others` |
 | `/baltop [amount]` | View the top balances. | — |
-| `/pay <player> <amount>` | Send money to another player. | `ezeconomy.pay` |
+| `/pay <player|*> <amount>` | Send money to another player or all players (`*`). | `ezeconomy.pay` (all: `ezeconomy.payall` if enabled) |
 | `/currency [currency]` | View or set your preferred currency.  | `ezeconomy.currency` |
 | `/currency convert <from> <to> <amount>` | Use  to convert between currencies. | `ezeconomy.currency` |
 | `/eco give <player> <amount>` | Add funds to a player. | `ezeconomy.eco` |
@@ -50,3 +50,25 @@ Permissions shown in parentheses are required to run the command. Commands witho
 
 - Use a permissions plugin to control which groups can access administrative commands.
 - For multi-currency servers, `/currency` controls each player’s preferred display currency.
+
+## Pay All (`/pay *`)
+
+Using `/pay * <amount>` sends the specified amount to multiple recipients at once. This feature is configurable and permission-gated.
+
+- **Default behavior:** Targets online players only.
+- **Config keys:**
+	- `pay.pay_all.enabled` (boolean, default: `true`) — enable/disable the pay-all feature.
+	- `pay.pay_all.require_permission` (boolean, default: `true`) — require `ezeconomy.payall` to use `/pay *`.
+	- `pay.pay_all.include_offline` (boolean, default: `false`) — when `true`, include stored offline players (server storage) in the recipient list; when `false` only currently online players are paid.
+- **Permissions:**
+	- `ezeconomy.pay` — standard pay permission for `/pay <player>`.
+	- `ezeconomy.payall` — (optional) grant access to `/pay *` when `pay.pay_all.require_permission` is `true`.
+	- `ezeconomy.payall.bypasswithdraw` — optional permission that lets the command credit recipients without withdrawing the total from the sender (useful for admin/gift operations).
+- **Behavior notes:**
+	- Unless `bypasswithdraw` is granted, the sender is charged the total amount (amount × recipients) before recipients are credited; failure to withdraw aborts the operation.
+	- Recipients are credited in their preferred currency (conversion applied where needed).
+	- By default the command enumerates online players via the server; enabling `pay.pay_all.include_offline` uses the storage provider to enumerate stored balances and may include offline-only accounts.
+	- A summary message (`paid_all_summary`) is sent to the sender after successful execution. Recipients receive the standard payment notification if they are online.
+	- Large recipient sets or mixed-currency conversions may increase execution time; consider enabling the feature only for trusted admins and ensure backup/monitoring is in place.
+
+If you'd like, I can also add a short example snippet and cross-link to the config defaults in `src/main/resources/config.yml`.
