@@ -7,22 +7,6 @@ import xml.etree.ElementTree as ET
 def find_jacoco_files(root: Path):
     return list(root.glob('**/target/site/jacoco/jacoco.xml'))
 
-def derive_module_name(f: Path) -> str:
-    """
-    Derive a stable module name from a JaCoCo report path.
-    Always return a single path component (directory name), never a full path.
-    """
-    try:
-        parts = f.parts
-        if 'target' in parts:
-            idx = parts.index('target')
-            if idx > 0:
-                return parts[idx - 1]
-        # Fallback when target is missing or malformed path shape
-        return f.parent.parent.name or f.parent.name or "unknown-module"
-    except Exception:
-        return f.parent.parent.name or f.parent.name or "unknown-module"
-
 def parse_files(files, metric='LINE'):
     total_missed = 0
     total_covered = 0
@@ -39,7 +23,16 @@ def parse_files(files, metric='LINE'):
                     covered += int(counter.get('covered', '0'))
             total_missed += missed
             total_covered += covered
-            module = derive_module_name(f)
+            # Derive a clean module name by taking the path segment before 'target'
+            try:
+                parts = f.parts
+                if 'target' in parts:
+                    idx = parts.index('target')
+                    module = parts[idx-1] if idx > 0 else str(f.parent.parent)
+                else:
+                    module = str(f.parent.parent.name)
+            except Exception:
+                module = str(f.parent.parent)
             per_module.append((module, missed, covered))
         except Exception:
             continue
