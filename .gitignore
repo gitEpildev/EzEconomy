@@ -1,0 +1,26 @@
+
+/**/target/
+# Ignore compiled classes directories
+**/classes/
+# Ignore module build outputs
+ezeconomy-bukkit/target/
+ezeconomy-papi/target/
+# Ignore IDE files
+/.idea/
+*.iml
+*.ipr
+*.iws
+# Ignore Eclipse files
+.classpath
+.project
+.settings/
+# Ignore OS files
+.DS_Store
+Thumbs.db
+# Ignore logs
+*.log
+# Ignore build tools
+/build/
+# Ignore other common files
+*.swp
+*.swo
