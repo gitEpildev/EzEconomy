@@ -17,16 +17,20 @@ daily-reward:
   sound: ENTITY_EXPERIENCE_ORB_PICKUP
   debug: false
 
-# When enabled, the storage provider will be asked to create/store a record
-# for each player when they join the server. This helps ensure player data
-# files/rows exist for admin reporting tools. Default: false
+# When enabled, the storage provider will create/store a record (UUID + name)
+# for each player when they join. Required for Velocity networks so that
+# cross-server commands (/bal, /pay) can resolve players on other backends.
+# Default: false (safe to leave off on single-server setups)
 store-on-join:
   enabled: false
 
-# Cross-server messaging support. Disable if running single-server only.
+# Cross-server messaging via the ezeconomy-velocity proxy plugin.
+# Requires: ezeconomy-velocity-*.jar on the Velocity proxy, storage: mysql
+# with all backends sharing the same database, and store-on-join.enabled: true.
+# Leave disabled (false) for single-server setups.
 cross-server:
   enabled: false
-  # Set to true only while troubleshooting cross-server messaging.
+  # Set to true only while troubleshooting cross-server messaging traffic.
   verbose-logging: false
 
 # Timeout used when async contexts must execute a sync payment event.

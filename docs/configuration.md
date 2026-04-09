@@ -47,16 +47,18 @@ Set `banking.enabled` to `false` if you prefer using a different bank plugin or 
 
 ### Store on join
 
-Control whether player metadata and initial storage records are written when a player joins.
+Control whether player metadata (UUID + name) is written to storage when a player joins.
 
 ```yaml
 store-on-join:
   enabled: false
 ```
 
-When disabled, EzEconomy avoids those join-time writes.
+When disabled, EzEconomy skips the join-time write. **On Velocity networks this should be `true`** so that every backend server populates the shared MySQL `players` table. Without it, cross-server commands like `/bal <player>` and `/pay <player>` cannot resolve players who have only joined a different backend.
 
-### Cross-server messaging
+### Cross-server messaging (Velocity)
+
+These settings control the plugin messaging channel used by the `ezeconomy-velocity` proxy module.
 
 ```yaml
 cross-server:
@@ -64,8 +66,10 @@ cross-server:
   verbose-logging: false
 ```
 
-- Set `enabled` to `false` to fully disable cross-server messaging startup.
-- Set `verbose-logging` to `true` temporarily for troubleshooting proxy/message flow.
+- `enabled` — set to `true` on every Paper backend that participates in the Velocity network. When `false` (the default for single-server setups), the plugin does not register the messaging channel and all cross-server features are disabled.
+- `verbose-logging` — set to `true` temporarily to see `PLAYER_LIST`, `NOTIFY`, and `RECIPIENT_OFFLINE` messages in the console. Useful for verifying that the Velocity plugin is broadcasting the player list and forwarding payment notifications.
+
+> **Requires**: the `ezeconomy-velocity-*.jar` plugin running on the Velocity proxy, `storage: mysql` with all backends pointing to the same database, and `store-on-join.enabled: true`.
 
 ### Payment sync timeout
 
@@ -108,18 +112,6 @@ locking:
 - `locking.retry-ms`: wait time between lock retries.
 - `locking.max-attempts`: maximum retry attempts before failing lock acquisition.
 - Legacy `redis.ttl-ms`, `redis.retry-ms`, and `redis.max-attempts` are still accepted as fallback values.
-
-### Cross-server messaging
-
-Cross-server plugin messaging is opt-in and disabled by default.
-
-```yaml
-cross-server:
-  enabled: false
-  verbose-logging: false
-```
-
-Set `cross-server.enabled` to `true` only when running a multi-server network that needs cross-server payment notifications.
 
 ### Notes
 

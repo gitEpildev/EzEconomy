@@ -182,27 +182,61 @@ mongodb:
 
 ## Velocity / Proxy Support
 
-This fork includes an `ezeconomy-velocity` module that enables cross-server economy features on Velocity networks.
+This fork includes a dedicated `ezeconomy-velocity` module that enables full cross-server economy on Velocity networks. Both the Velocity proxy plugin and the Bukkit plugin work together over a shared plugin messaging channel (`ezeconomy:notify`).
 
-**What it does:**
-- Forwards payment notifications between backend servers so recipients see "You received ..." regardless of which server they are on
-- Broadcasts a network-wide player list every 3 seconds, enabling `/pay` tab-completion and `/pay *` to target players across all servers
-- Queues notifications for offline recipients (MySQL: persistent table; other storage: in-memory until next login)
+### What it does
 
-**Setup:**
-1. Place `ezeconomy-velocity-*.jar` in your Velocity proxy's `plugins/` folder
-2. Place `ezeconomy-bukkit-*.jar` in each Paper backend's `plugins/` folder
-3. In each backend's `config.yml`, set:
-   ```yaml
-   cross-server:
-     enabled: true
-     verbose-logging: false   # enable temporarily for debugging
-   ```
-4. Use MySQL storage (`storage: mysql`) across all backends so balances are shared
-5. Restart the Velocity proxy and all backend servers
+| Feature | How it works |
+|---------|-------------|
+| **Cross-server `/pay`** | A player on Server A can `/pay PlayerB 100` even if PlayerB is on Server B. The Velocity plugin forwards the "You received ..." notification to the correct backend. |
+| **Cross-server `/bal`** | `/bal PlayerB` resolves players across all servers using the shared MySQL `players` table and the Velocity network player list. |
+| **`/pay *` (pay all)** | Pays every online player on every backend server, not just the local one. Remote recipients get notifications forwarded through Velocity. |
+| **Network player list** | The Velocity plugin broadcasts a UUID + name list of all connected players to every backend every 3 seconds. This powers tab-completion and cross-server player resolution. |
+| **Offline notification queue** | If a recipient is offline when payment arrives, the notification is queued. MySQL storage: persisted to a `pending_notifications` table. Other storage: held in-memory until the player next logs in. |
 
-**Cross-server `/pay *`:**
-When `cross-server.enabled` is `true`, `/pay * <amount>` includes players from all backend servers (not just the local one). Each remote recipient receives a notification forwarded through the Velocity proxy. The `pay.pay_all.include_offline` config key still applies and expands the recipient list to stored offline accounts when enabled.
+### Prerequisites
+
+- **Velocity proxy** (not BungeeCord — the velocity module uses the Velocity API)
+- **MySQL storage** (`storage: mysql`) configured identically on every backend server, pointing to the **same database**. This is required so all servers share balances and player records.
+- **`store-on-join: true`** recommended on every backend so player UUID/name records are persisted to MySQL when they join any server. Without this, cross-server lookups may fail for players who have never been seen by the database.
+
+### Setup
+
+1. **Velocity proxy** — place `ezeconomy-velocity-*.jar` in the proxy's `plugins/` folder.
+2. **Each Paper backend** — place `ezeconomy-bukkit-*.jar` in the server's `plugins/` folder.
+3. **Each backend `config.yml`** — set:
+
+```yaml
+storage: mysql
+
+store-on-join:
+  enabled: true
+
+cross-server:
+  enabled: true
+  verbose-logging: false   # set true temporarily for debugging
+```
+
+4. **Each backend `config-mysql.yml`** — point to the **same** MySQL database:
+
+```yaml
+mysql:
+  host: your-shared-db-host
+  port: 3306
+  database: ezeconomy
+  username: ezeconomy
+  password: your-password
+  table: balances
+```
+
+5. **Restart** the Velocity proxy first, then all backend servers.
+
+### Troubleshooting
+
+- **"Player not found" on cross-server `/pay` or `/bal`**: make sure `cross-server.enabled: true` and `store-on-join.enabled: true` are set on the backend where the command is run. The target player must have joined at least once since `store-on-join` was enabled.
+- **Enable verbose logging**: set `cross-server.verbose-logging: true` temporarily to see `PLAYER_LIST` and `NOTIFY` messages in the console.
+- **Command conflicts**: if another plugin intercepts `/pay` or `/payall`, use the built-in aliases `/ezpay` and `/ezpayall` instead.
+- **Vault required**: each Paper backend needs `Vault` (or `Vault-Updated`) installed so EzEconomy can register as the economy provider.
 
 ---
 
