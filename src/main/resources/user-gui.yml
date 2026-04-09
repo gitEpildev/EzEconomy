@@ -2,14 +2,6 @@
 # Enable opening the user GUI when players run /eco with no arguments
 open-on-eco: true
 
-# Per-action enable flags
-actions:
-  balance: true
-  pay: true
-  history: true
-
-# Additional options can be added here for future GUI customization
- 
 # Inventory titles (supports MiniMessage formatting)
 title:
   menu: "<green>EzEconomy</green> - <white>Menu"

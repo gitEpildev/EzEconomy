@@ -273,12 +273,21 @@ public class VaultEconomyImpl implements Economy {
             return new EconomyResponse(0, 0, EconomyResponse.ResponseType.FAILURE, BANK_DOES_NOT_EXIST);
         }
         String currency = plugin.getDefaultCurrency();
-        boolean success = storage.tryWithdrawBank(name, currency, amount);
-        double balance = storage.getBankBalance(name, currency);
-        if (!success) {
-            return new EconomyResponse(0, balance, EconomyResponse.ResponseType.FAILURE, INSUFFICIENT_FUNDS);
+        LockedOperation lock = lockFor(name);
+        try {
+            if (!lock.isAcquired()) {
+                double balance = storage.getBankBalance(name, currency);
+                return new EconomyResponse(0, balance, EconomyResponse.ResponseType.FAILURE, "Could not acquire lock");
+            }
+            boolean success = storage.tryWithdrawBank(name, currency, amount);
+            double balance = storage.getBankBalance(name, currency);
+            if (!success) {
+                return new EconomyResponse(0, balance, EconomyResponse.ResponseType.FAILURE, INSUFFICIENT_FUNDS);
+            }
+            return new EconomyResponse(amount, balance, EconomyResponse.ResponseType.SUCCESS, null);
+        } finally {
+            lock.close();
         }
-        return new EconomyResponse(amount, balance, EconomyResponse.ResponseType.SUCCESS, null);
     }
 
     @Override

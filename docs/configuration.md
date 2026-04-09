@@ -92,6 +92,35 @@ caching-strategy: LOCAL
 
 If `caching-strategy` is not present, the plugin will fallback to the older `locking-strategy` value for backward compatibility.
 
+### Lock timing
+
+Configure lock acquisition timing independently from the selected lock backend.
+
+```yaml
+locking-strategy: LOCAL
+locking:
+  ttl-ms: 5000
+  retry-ms: 50
+  max-attempts: 100
+```
+
+- `locking.ttl-ms`: lock lease duration in milliseconds.
+- `locking.retry-ms`: wait time between lock retries.
+- `locking.max-attempts`: maximum retry attempts before failing lock acquisition.
+- Legacy `redis.ttl-ms`, `redis.retry-ms`, and `redis.max-attempts` are still accepted as fallback values.
+
+### Cross-server messaging
+
+Cross-server plugin messaging is opt-in and disabled by default.
+
+```yaml
+cross-server:
+  enabled: false
+  verbose-logging: false
+```
+
+Set `cross-server.enabled` to `true` only when running a multi-server network that needs cross-server payment notifications.
+
 ### Notes
 
 - `storage` must match one of the supported providers: `yml`, `mysql`, `sqlite`, `mongodb`, or `custom`.

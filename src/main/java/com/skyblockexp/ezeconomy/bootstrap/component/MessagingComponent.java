@@ -22,7 +22,7 @@ public class MessagingComponent implements BootstrapComponent, Listener {
 
     @Override
     public void start() {
-        if (!plugin.getConfig().getBoolean("cross-server.enabled", true)) {
+        if (!plugin.getConfig().getBoolean("cross-server.enabled", false)) {
             plugin.setCrossServerMessenger(null);
             plugin.getLogger().info("Cross-server messaging is disabled in config.");
             return;

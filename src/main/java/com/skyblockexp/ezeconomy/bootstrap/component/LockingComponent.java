@@ -27,6 +27,7 @@ public class LockingComponent implements BootstrapComponent {
     public void start() {
         FileConfiguration cfg = plugin.getConfig();
         plugin.refreshEffectiveLockSettings();
+        warnLegacyLockTimingKeys(cfg);
         // Configure cache strategy early from config (backwards-compatible with 'caching-strategy')
         String caching = cfg.getString("caching-strategy", cfg.getString("locking-strategy", "LOCAL")).toUpperCase();
         try {
@@ -196,6 +197,18 @@ public class LockingComponent implements BootstrapComponent {
             plugin.getLogger().info("Using LocalLockManager for balance locking.");
         }
         plugin.setLockManager(this.manager);
+    }
+
+    private void warnLegacyLockTimingKeys(FileConfiguration cfg) {
+        if (!cfg.contains("locking.ttl-ms") && cfg.contains("redis.ttl-ms")) {
+            plugin.getLogger().warning("Config key redis.ttl-ms is deprecated for lock timing. Please migrate to locking.ttl-ms.");
+        }
+        if (!cfg.contains("locking.retry-ms") && cfg.contains("redis.retry-ms")) {
+            plugin.getLogger().warning("Config key redis.retry-ms is deprecated for lock timing. Please migrate to locking.retry-ms.");
+        }
+        if (!cfg.contains("locking.max-attempts") && cfg.contains("redis.max-attempts")) {
+            plugin.getLogger().warning("Config key redis.max-attempts is deprecated for lock timing. Please migrate to locking.max-attempts.");
+        }
     }
 
     @Override

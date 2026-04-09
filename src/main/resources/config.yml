@@ -73,6 +73,10 @@ multi-currency:
 # REDIS: uses a distributed Redis lock (requires ezeconomy-redis extension and redis.yml).
 # BUNGEECORD: use a proxy-backed lock transport via plugin messaging (requires bungeecord proxy component and bungeecord.yml).
 locking-strategy: LOCAL
+locking:
+  ttl-ms: 5000
+  retry-ms: 50
+  max-attempts: 100
 
 # Caching strategy used for in-memory / distributed caching. Options:
 #   LOCAL     - in-process memory cache only (default)
@@ -108,7 +112,13 @@ money-format:
     useColors: true
     positive: "&a"             # legacy color code prefix for positive values
     negative: "&c"             # legacy color code prefix for negative values
- 
+
+# Cross-server messaging support. Keep disabled unless running multi-server.
+cross-server:
+  enabled: false
+  # Set true only when debugging cross-server messaging traffic.
+  verbose-logging: false
+
 # Pay command settings
 pay:
   # Confirmation threshold (amount >= threshold requires /pay confirm)
