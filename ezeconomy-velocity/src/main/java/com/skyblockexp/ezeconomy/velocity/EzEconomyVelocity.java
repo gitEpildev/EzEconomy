@@ -109,6 +109,7 @@ public class EzEconomyVelocity {
             var allPlayers = server.getAllPlayers();
             out.writeInt(allPlayers.size());
             for (Player p : allPlayers) {
+                out.writeUTF(p.getUniqueId().toString());
                 out.writeUTF(p.getUsername());
             }
             byte[] data = bos.toByteArray();

@@ -42,9 +42,16 @@ public class PaymentExecutor {
         if (online != null) {
             toOffline = online;
         } else {
-            UUID dbUuid = storage.resolvePlayerByName(toName);
-            if (dbUuid != null) {
-                toOffline = Bukkit.getOfflinePlayer(dbUuid);
+            UUID resolvedUuid = null;
+            var messenger = plugin.getCrossServerMessenger();
+            if (messenger != null) {
+                resolvedUuid = messenger.getNetworkPlayerUuid(toName);
+            }
+            if (resolvedUuid == null) {
+                resolvedUuid = storage.resolvePlayerByName(toName);
+            }
+            if (resolvedUuid != null) {
+                toOffline = Bukkit.getOfflinePlayer(resolvedUuid);
                 knownOffline = true;
             } else {
                 var maybe = com.skyblockexp.ezeconomy.util.PlayerLookup.findByName(toName);

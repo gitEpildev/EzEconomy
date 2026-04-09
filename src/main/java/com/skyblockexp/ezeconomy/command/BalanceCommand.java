@@ -1,6 +1,5 @@
 package com.skyblockexp.ezeconomy.command;
 
-import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -11,6 +10,7 @@ import com.skyblockexp.ezeconomy.core.EzEconomyPlugin;
 import com.skyblockexp.ezeconomy.util.MessageUtils;
 import com.skyblockexp.ezeconomy.manager.CurrencyPreferenceManager;
 import com.skyblockexp.ezeconomy.api.storage.StorageProvider;
+import java.util.UUID;
 
 public class BalanceCommand implements CommandExecutor {
     private final EzEconomyPlugin plugin;
@@ -55,11 +55,9 @@ public class BalanceCommand implements CommandExecutor {
                 return true;
             }
 
-            // Otherwise treat as a player name. Check online players first to avoid Mojang lookups.
-            var maybe = com.skyblockexp.ezeconomy.util.PlayerLookup.findByName(args[0]);
-            OfflinePlayer target = maybe.orElse(null);
-
-            if (target == null || (!target.hasPlayedBefore() && !target.isOnline())) {
+            // Otherwise treat as a player name.
+            OfflinePlayer target = resolveOfflinePlayer(args[0], storage);
+            if (target == null) {
                 MessageUtils.send(sender, plugin, "player_not_found");
                 return true;
             }
@@ -71,7 +69,8 @@ public class BalanceCommand implements CommandExecutor {
             }
             String currency = preferenceManager.getPreferredCurrency(target.getUniqueId());
             double balance = storage != null ? storage.getBalance(target.getUniqueId(), currency) : plugin.getEconomy().getBalance(target);
-            MessageUtils.send(sender, plugin, "others_balance", java.util.Map.of("player", target.getName(), "balance", plugin.getCurrencyFormatter().formatPriceForMessage(balance, currency), "currency", currency));
+            String displayName = target.getName() != null ? target.getName() : args[0];
+            MessageUtils.send(sender, plugin, "others_balance", java.util.Map.of("player", displayName, "balance", plugin.getCurrencyFormatter().formatPriceForMessage(balance, currency), "currency", currency));
             return true;
         } else if (args.length == 2) {
             // /balance <player> <currency>
@@ -79,9 +78,7 @@ public class BalanceCommand implements CommandExecutor {
                 MessageUtils.send(sender, plugin, "no_permission_others_balance");
                 return true;
             }
-            // Use PlayerLookup to avoid expensive or blocking lookups.
-            var maybe2 = com.skyblockexp.ezeconomy.util.PlayerLookup.findByName(args[0]);
-            OfflinePlayer target = maybe2.orElse(null);
+            OfflinePlayer target = resolveOfflinePlayer(args[0], storage);
             if (target == null) {
                 MessageUtils.send(sender, plugin, "player_not_found");
                 return true;
@@ -92,10 +89,44 @@ public class BalanceCommand implements CommandExecutor {
                 return true;
             }
             double balance = storage != null ? storage.getBalance(target.getUniqueId(), currency) : plugin.getEconomy().getBalance(target);
-            MessageUtils.send(sender, plugin, "others_balance", java.util.Map.of("player", target.getName(), "balance", plugin.getCurrencyFormatter().formatPriceForMessage(balance, currency), "currency", currency));
+            String displayName2 = target.getName() != null ? target.getName() : args[0];
+            MessageUtils.send(sender, plugin, "others_balance", java.util.Map.of("player", displayName2, "balance", plugin.getCurrencyFormatter().formatPriceForMessage(balance, currency), "currency", currency));
             return true;
         }
         MessageUtils.send(sender, plugin, "usage_balance");
         return true;
+    }
+
+    private OfflinePlayer resolveOfflinePlayer(String name, StorageProvider storage) {
+        Player online = plugin.getServer().getPlayerExact(name);
+        if (online != null) return online;
+
+        UUID resolvedUuid = null;
+        if (storage != null) {
+            resolvedUuid = storage.resolvePlayerByName(name);
+        }
+        if (resolvedUuid == null) {
+            var messenger = plugin.getCrossServerMessenger();
+            if (messenger != null) {
+                resolvedUuid = messenger.getNetworkPlayerUuid(name);
+            }
+        }
+        if (resolvedUuid != null) {
+            return plugin.getServer().getOfflinePlayer(resolvedUuid);
+        }
+
+        var maybe = com.skyblockexp.ezeconomy.util.PlayerLookup.findByName(name);
+        if (maybe.isPresent()) return maybe.get();
+
+        @SuppressWarnings("deprecation")
+        OfflinePlayer stub = plugin.getServer().getOfflinePlayer(name);
+        if (stub != null && stub.hasPlayedBefore()) {
+            return stub;
+        }
+        if (stub != null && storage != null) {
+            double bal = storage.getBalance(stub.getUniqueId(), plugin.getDefaultCurrency());
+            if (bal > 0) return stub;
+        }
+        return null;
     }
 }

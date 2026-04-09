@@ -150,6 +150,10 @@ public class PayCommand implements CommandExecutor {
             UUID fromUuid = ((Player) sender).getUniqueId();
             List<UUID> recipients = new ArrayList<>();
             java.util.Set<UUID> localOnlineUuids = new java.util.HashSet<>();
+            plugin.getLogger().info("[PayAll] sender=" + sender.getName() + " uuid=" + fromUuid
+                + " onlinePlayers=" + Bukkit.getOnlinePlayers().size()
+                + " includeOffline=" + includeOffline
+                + " crossServer=" + (plugin.getCrossServerMessenger() != null));
             if (includeOffline) {
                 Map<UUID, Double> all = storage.getAllBalances(currency);
                 if (all == null || all.isEmpty()) {
@@ -173,21 +177,29 @@ public class PayCommand implements CommandExecutor {
                     for (String netPlayer : messenger.getNetworkPlayers()) {
                         if (netPlayer.equalsIgnoreCase(senderName)) continue;
                         if (Bukkit.getPlayerExact(netPlayer) != null) continue;
-                        var lookup = com.skyblockexp.ezeconomy.util.PlayerLookup.findByName(netPlayer);
-                        if (lookup.isPresent()) {
-                            UUID netUuid = lookup.get().getUniqueId();
-                            if (!netUuid.equals(fromUuid) && !localOnlineUuids.contains(netUuid)) {
-                                recipients.add(netUuid);
+                        UUID netUuid = messenger.getNetworkPlayerUuid(netPlayer);
+                        if (netUuid == null) {
+                            netUuid = storage.resolvePlayerByName(netPlayer);
+                        }
+                        if (netUuid == null) {
+                            var lookup = com.skyblockexp.ezeconomy.util.PlayerLookup.findByName(netPlayer);
+                            if (lookup.isPresent()) {
+                                netUuid = lookup.get().getUniqueId();
                             }
+                        }
+                        if (netUuid != null && !netUuid.equals(fromUuid) && !localOnlineUuids.contains(netUuid)) {
+                            recipients.add(netUuid);
                         }
                     }
                 }
+                plugin.getLogger().info("[PayAll] after enumeration: recipients=" + recipients.size() + " localOnline=" + localOnlineUuids.size());
                 if (recipients.isEmpty()) {
                     MessageUtils.send(sender, plugin, "player_not_found");
                     return true;
                 }
             }
             if (recipients.isEmpty()) {
+                plugin.getLogger().info("[PayAll] final recipients empty");
                 MessageUtils.send(sender, plugin, "player_not_found");
                 return true;
             }
@@ -256,23 +268,34 @@ public class PayCommand implements CommandExecutor {
         if (online != null) {
             knownOffline = true;
         } else {
-            // Use PlayerLookup to avoid expensive or blocking lookups.
-            var maybe = com.skyblockexp.ezeconomy.util.PlayerLookup.findByName(operands[0]);
-            if (maybe.isPresent()) {
-                OfflinePlayer sample = maybe.get();
-                if (sample.hasPlayedBefore()) {
+            var storage = plugin.getStorageOrWarn();
+            if (storage != null && storage.resolvePlayerByName(operands[0]) != null) {
+                knownOffline = true;
+            }
+            if (!knownOffline) {
+                var messenger = plugin.getCrossServerMessenger();
+                if (messenger != null && messenger.getNetworkPlayerUuid(operands[0]) != null) {
                     knownOffline = true;
-                } else {
-                    try {
-                        var storage = plugin.getStorageOrWarn();
-                        if (storage != null) {
-                            java.util.Map<java.util.UUID, Double> all = storage.getAllBalances(currency);
-                            if (all.containsKey(sample.getUniqueId())) {
-                                knownOffline = true;
+                }
+            }
+            // Use PlayerLookup to avoid expensive or blocking lookups.
+            if (!knownOffline) {
+                var maybe = com.skyblockexp.ezeconomy.util.PlayerLookup.findByName(operands[0]);
+                if (maybe.isPresent()) {
+                    OfflinePlayer sample = maybe.get();
+                    if (sample.hasPlayedBefore()) {
+                        knownOffline = true;
+                    } else {
+                        try {
+                            if (storage != null) {
+                                java.util.Map<java.util.UUID, Double> all = storage.getAllBalances(currency);
+                                if (all.containsKey(sample.getUniqueId())) {
+                                    knownOffline = true;
+                                }
                             }
+                        } catch (Exception ignored) {
+                            // swallow and treat as unknown
                         }
-                    } catch (Exception ignored) {
-                        // swallow and treat as unknown
                     }
                 }
             }

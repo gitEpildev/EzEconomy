@@ -15,6 +15,7 @@ public class CrossServerMessenger implements PluginMessageListener {
     public static final String CHANNEL = "ezeconomy:notify";
     private final EzEconomyPlugin plugin;
     private final Set<String> networkPlayers = ConcurrentHashMap.newKeySet();
+    private final Map<String, UUID> networkPlayerUuids = new ConcurrentHashMap<>();
     private final Map<UUID, List<String>> localPendingNotifications = new ConcurrentHashMap<>();
 
     public CrossServerMessenger(EzEconomyPlugin plugin) {
@@ -37,7 +38,12 @@ public class CrossServerMessenger implements PluginMessageListener {
     }
 
     public boolean isNetworkPlayer(String name) {
-        return networkPlayers.contains(name);
+        return name != null && networkPlayerUuids.containsKey(name.toLowerCase(Locale.ROOT));
+    }
+
+    public UUID getNetworkPlayerUuid(String name) {
+        if (name == null) return null;
+        return networkPlayerUuids.get(name.toLowerCase(Locale.ROOT));
     }
 
     public void sendPaymentNotification(UUID recipientUuid, String recipientName,
@@ -100,13 +106,42 @@ public class CrossServerMessenger implements PluginMessageListener {
             } else if ("PLAYER_LIST".equals(type)) {
                 int count = in.readInt();
                 Set<String> newList = ConcurrentHashMap.newKeySet();
+                Map<String, UUID> newUuidMap = new ConcurrentHashMap<>();
                 for (int i = 0; i < count; i++) {
-                    newList.add(in.readUTF());
+                    // Backward-compatible decode:
+                    // New format: [uuid, name]
+                    // Legacy format: [name]
+                    String first = in.readUTF();
+                    UUID uuid = null;
+                    String name;
+                    try {
+                        uuid = UUID.fromString(first);
+                        name = in.readUTF();
+                    } catch (IllegalArgumentException ignored) {
+                        name = first;
+                    }
+                    newList.add(name);
+                    if (uuid == null) {
+                        Player local = Bukkit.getPlayerExact(name);
+                        if (local != null) {
+                            uuid = local.getUniqueId();
+                        } else {
+                            StorageProvider storage = plugin.getStorageOrWarn();
+                            if (storage != null) {
+                                uuid = storage.resolvePlayerByName(name);
+                            }
+                        }
+                    }
+                    if (uuid != null) {
+                        newUuidMap.put(name.toLowerCase(Locale.ROOT), uuid);
+                    }
                 }
                 networkPlayers.clear();
                 networkPlayers.addAll(newList);
+                networkPlayerUuids.clear();
+                networkPlayerUuids.putAll(newUuidMap);
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             plugin.getLogger().warning("Failed to read cross-server message: " + e.getMessage());
         }
     }
