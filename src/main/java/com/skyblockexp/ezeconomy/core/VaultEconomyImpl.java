@@ -273,12 +273,9 @@ public class VaultEconomyImpl implements Economy {
             return new EconomyResponse(0, 0, EconomyResponse.ResponseType.FAILURE, BANK_DOES_NOT_EXIST);
         }
         String currency = plugin.getDefaultCurrency();
-        LockedOperation lock = lockFor(name);
+        UUID bankLockKey = UUID.nameUUIDFromBytes(("bank:" + name + ":" + currency).getBytes(StandardCharsets.UTF_8));
+        LockedOperation lock = lockFor(bankLockKey);
         try {
-            if (!lock.isAcquired()) {
-                double balance = storage.getBankBalance(name, currency);
-                return new EconomyResponse(0, balance, EconomyResponse.ResponseType.FAILURE, "Could not acquire lock");
-            }
             boolean success = storage.tryWithdrawBank(name, currency, amount);
             double balance = storage.getBankBalance(name, currency);
             if (!success) {

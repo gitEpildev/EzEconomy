@@ -25,7 +25,7 @@ store-on-join:
 
 # Cross-server messaging support. Disable if running single-server only.
 cross-server:
-  enabled: true
+  enabled: false
   # Set to true only while troubleshooting cross-server messaging.
   verbose-logging: false
 
@@ -112,12 +112,6 @@ money-format:
     useColors: true
     positive: "&a"             # legacy color code prefix for positive values
     negative: "&c"             # legacy color code prefix for negative values
-
-# Cross-server messaging support. Keep disabled unless running multi-server.
-cross-server:
-  enabled: false
-  # Set true only when debugging cross-server messaging traffic.
-  verbose-logging: false
 
 # Pay command settings
 pay:

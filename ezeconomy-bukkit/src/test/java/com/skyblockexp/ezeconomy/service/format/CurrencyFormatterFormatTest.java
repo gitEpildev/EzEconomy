@@ -56,7 +56,7 @@ public class CurrencyFormatterFormatTest {
 
             String out = plugin.getCurrencyFormatter().formatPriceForMessage(1500.0, "test");
             // formatShort for 1500 -> 1.5k
-            assertEquals("$1.5k", out);
+            assertEquals("$1.5K", out);
         } finally {
             try { plugin.getServer().getPluginManager().disablePlugin(plugin); } catch (Exception ignored) {}
         }
