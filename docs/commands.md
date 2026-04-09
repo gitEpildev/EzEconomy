@@ -70,5 +70,4 @@ Using `/pay * <amount>` sends the specified amount to multiple recipients at onc
 	- By default the command enumerates online players via the server; enabling `pay.pay_all.include_offline` uses the storage provider to enumerate stored balances and may include offline-only accounts.
 	- A summary message (`paid_all_summary`) is sent to the sender after successful execution. Recipients receive the standard payment notification if they are online.
 	- Large recipient sets or mixed-currency conversions may increase execution time; consider enabling the feature only for trusted admins and ensure backup/monitoring is in place.
-
-If you'd like, I can also add a short example snippet and cross-link to the config defaults in `src/main/resources/config.yml`.
+	- On Velocity networks with `cross-server.enabled: true`, `/pay *` includes players from all backend servers. Each remote recipient receives a notification forwarded through the proxy.

@@ -149,6 +149,7 @@ public class PayCommand implements CommandExecutor {
             boolean includeOffline = plugin.getConfig().getBoolean("pay.pay_all.include_offline", false);
             UUID fromUuid = ((Player) sender).getUniqueId();
             List<UUID> recipients = new ArrayList<>();
+            java.util.Set<UUID> localOnlineUuids = new java.util.HashSet<>();
             if (includeOffline) {
                 Map<UUID, Double> all = storage.getAllBalances(currency);
                 if (all == null || all.isEmpty()) {
@@ -159,9 +160,27 @@ public class PayCommand implements CommandExecutor {
                     if (!u.equals(fromUuid)) recipients.add(u);
                 }
             } else {
-                // default: only online players
                 for (Player p : Bukkit.getOnlinePlayers()) {
-                    if (!p.getUniqueId().equals(fromUuid)) recipients.add(p.getUniqueId());
+                    if (!p.getUniqueId().equals(fromUuid)) {
+                        recipients.add(p.getUniqueId());
+                        localOnlineUuids.add(p.getUniqueId());
+                    }
+                }
+                // Include players from other servers via Velocity network list
+                var messenger = plugin.getCrossServerMessenger();
+                if (messenger != null) {
+                    String senderName = ((Player) sender).getName();
+                    for (String netPlayer : messenger.getNetworkPlayers()) {
+                        if (netPlayer.equalsIgnoreCase(senderName)) continue;
+                        if (Bukkit.getPlayerExact(netPlayer) != null) continue;
+                        var lookup = com.skyblockexp.ezeconomy.util.PlayerLookup.findByName(netPlayer);
+                        if (lookup.isPresent()) {
+                            UUID netUuid = lookup.get().getUniqueId();
+                            if (!netUuid.equals(fromUuid) && !localOnlineUuids.contains(netUuid)) {
+                                recipients.add(netUuid);
+                            }
+                        }
+                    }
                 }
                 if (recipients.isEmpty()) {
                     MessageUtils.send(sender, plugin, "player_not_found");
@@ -203,11 +222,17 @@ public class PayCommand implements CommandExecutor {
                     }
                     storage.deposit(recip, recipPref, credit);
                 }
-                // Notify online recipients
+                // Notify recipients: local or cross-server
+                String amountStr = plugin.getCurrencyFormatter().formatPriceForMessage(amountDecimal.doubleValue(), currency);
                 OfflinePlayer op = Bukkit.getOfflinePlayer(recip);
                 if (op != null && op.isOnline() && op.getPlayer() != null) {
-                    String amountStr = plugin.getCurrencyFormatter().formatPriceForMessage(amountDecimal.doubleValue(), currency);
                     MessageUtils.send(op.getPlayer(), plugin, "received", java.util.Map.of("player", ((Player) sender).getName(), "amount", amountStr));
+                } else {
+                    var messenger = plugin.getCrossServerMessenger();
+                    if (messenger != null) {
+                        String recipName = (op != null && op.getName() != null) ? op.getName() : recip.toString();
+                        messenger.sendPaymentNotification(recip, recipName, ((Player) sender).getName(), amountStr, currency);
+                    }
                 }
             }
 

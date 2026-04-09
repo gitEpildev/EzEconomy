@@ -36,6 +36,10 @@ public class CrossServerMessenger implements PluginMessageListener {
         return Collections.unmodifiableSet(networkPlayers);
     }
 
+    public boolean isNetworkPlayer(String name) {
+        return networkPlayers.contains(name);
+    }
+
     public void sendPaymentNotification(UUID recipientUuid, String recipientName,
                                          String senderName, String amount, String currency) {
         Player relay = findRelayPlayer();

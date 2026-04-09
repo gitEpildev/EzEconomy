@@ -10,7 +10,7 @@
 **EzEconomy** is a professional-grade Vault economy provider for Minecraft servers. Choose from YML, MySQL, SQLite, MongoDB, or custom storage with multi-currency support, async caching, and thorough permission controls.
 
 > **Original plugin by [@ez-plugins](https://github.com/ez-plugins) — [ez-plugins/EzEconomy](https://github.com/ez-plugins/EzEconomy)**
-> This fork includes additional community improvements by [@GitEpildev](https://github.com/gitEpildev), listed in [docs/changelog.md](docs/changelog.md).
+> This fork adds Velocity proxy support, HikariCP connection pooling, cross-server payments, and other improvements by [@GitEpildev](https://github.com/gitEpildev).
 
 ---
 
@@ -29,7 +29,6 @@
 - [Caching strategy](docs/feature/caching-strategy.md): `LOCAL`, `REDIS`, `BUNGEECORD`, `DATABASE` options
 - [Locking strategy and options](docs/feature/locking-strategy.md): How to choose `LOCAL` vs `REDIS` and what each means
 - [Proxy & Redis notes](docs/integration/redis.md): Redis and proxy operational notes
-- [Changelog](docs/changelog.md): Release and fork change history
 
 > Do you get the message "Missing message: ..."? Please check the latest available translations: https://github.com/ez-plugins/EzEconomy/tree/main/src/main/resources/languages
 
@@ -46,6 +45,7 @@ EzEconomy is designed for performance, reliability, and operational clarity. Hig
 - **Async caching**: Optimized for large servers
 - **Comprehensive commands**: `/balance`, `/eco`, `/baltop`, `/bank`, `/pay`, `/currency`
 - **Granular permissions**: Per-command and per-bank action
+- **Velocity proxy support**: Cross-server payments, network-wide player list, and offline notification queuing
 
 ---
 
@@ -67,6 +67,8 @@ EzEconomy is designed for performance, reliability, and operational clarity. Hig
 - `ezeconomy.balance.others`: View other players' balances
 - `ezeconomy.eco`: Use /eco admin command
 - `ezeconomy.pay`: Use /pay command
+- `ezeconomy.payall`: Use /pay * to pay all players
+- `ezeconomy.payall.bypasswithdraw`: Pay all without deducting from sender balance
 - `ezeconomy.currency`: Use /currency command
 - **Bank Permissions**:
   - `ezeconomy.bank.create`: Create a new bank
@@ -172,9 +174,35 @@ mongodb:
 
 ## ⬇️ Installation
 
-1. Place `EzEconomy.jar` in your plugins folder
+1. Place `ezeconomy-bukkit-*.jar` in your Paper/Spigot server's `plugins/` folder
 2. Configure `config.yml` and the appropriate `config-*.yml` file for your storage type
 3. Restart your server
+
+---
+
+## Velocity / Proxy Support
+
+This fork includes an `ezeconomy-velocity` module that enables cross-server economy features on Velocity networks.
+
+**What it does:**
+- Forwards payment notifications between backend servers so recipients see "You received ..." regardless of which server they are on
+- Broadcasts a network-wide player list every 3 seconds, enabling `/pay` tab-completion and `/pay *` to target players across all servers
+- Queues notifications for offline recipients (MySQL: persistent table; other storage: in-memory until next login)
+
+**Setup:**
+1. Place `ezeconomy-velocity-*.jar` in your Velocity proxy's `plugins/` folder
+2. Place `ezeconomy-bukkit-*.jar` in each Paper backend's `plugins/` folder
+3. In each backend's `config.yml`, set:
+   ```yaml
+   cross-server:
+     enabled: true
+     verbose-logging: false   # enable temporarily for debugging
+   ```
+4. Use MySQL storage (`storage: mysql`) across all backends so balances are shared
+5. Restart the Velocity proxy and all backend servers
+
+**Cross-server `/pay *`:**
+When `cross-server.enabled` is `true`, `/pay * <amount>` includes players from all backend servers (not just the local one). Each remote recipient receives a notification forwarded through the Velocity proxy. The `pay.pay_all.include_offline` config key still applies and expands the recipient list to stored offline accounts when enabled.
 
 ---
 
