@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.github.ez-plugins</groupId>
     <artifactId>ezeconomy-parent</artifactId>
-    <version>2.6.0</version>
+    <version>2.5.1</version>
     <packaging>pom</packaging>
     <name>EzEconomy</name>
     <description>Vault-compatible economy provider with YML and MySQL support</description>
@@ -85,10 +85,6 @@
                                     <pattern>net.kyori</pattern>
                                     <shadedPattern>com.skyblockexp.ezeconomy.shaded.net.kyori</shadedPattern>
                                 </relocation>
-                                <relocation>
-                                    <pattern>com.zaxxer.hikari</pattern>
-                                    <shadedPattern>com.skyblockexp.ezeconomy.shaded.hikari</shadedPattern>
-                                </relocation>
                             </relocations>
                         </configuration>
                     </execution>
@@ -115,7 +111,7 @@
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
-                <version>0.8.10</version>
+                <version>0.8.14</version>
                 <executions>
                     <execution>
                         <id>prepare-agent</id>
@@ -218,7 +214,7 @@
         <dependency>
             <groupId>org.mongodb</groupId>
             <artifactId>mongodb-driver-sync</artifactId>
-            <version>5.6.4</version>
+            <version>5.6.5</version>
         </dependency>
         <dependency>
             <groupId>${mockbukkit.groupId}</groupId>
