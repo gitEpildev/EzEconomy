@@ -49,7 +49,7 @@ public class PayCommand implements CommandExecutor {
     }
 
     /** Package-visible helpers for tests. */
-    static void createPendingTransfer(UUID source, UUID toUuid, String toName, Money amount, String currency, long expiresAtMillis) {
+    public static void createPendingTransfer(UUID source, UUID toUuid, String toName, Money amount, String currency, long expiresAtMillis) {
         PENDING.put(source, new PendingTransfer(toUuid, toName, amount, currency, expiresAtMillis));
     }
 
@@ -57,7 +57,7 @@ public class PayCommand implements CommandExecutor {
         return PENDING.remove(source);
     }
 
-    static boolean isPendingConfirm(UUID source) {
+    public static boolean isPendingConfirm(UUID source) {
         PendingTransfer pt = PENDING.get(source);
         return pt != null && pt.amount != null;
     }

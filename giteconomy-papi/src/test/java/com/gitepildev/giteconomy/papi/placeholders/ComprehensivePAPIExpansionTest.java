@@ -41,7 +41,6 @@ public class ComprehensivePAPIExpansionTest {
         UUID b = UUID.randomUUID();
         sp.setBalance(a, "dollar", 1500.0);
         sp.setBalance(b, "dollar", 200.0);
-        sp.setBankBalance("mainbank", "dollar", 9999.99);
         // provide player names so top placeholder can render names without calling Bukkit
         sp.putPlayer(a, new com.gitepildev.giteconomy.dto.EconomyPlayer(a, "Alice", null));
         sp.putPlayer(b, new com.gitepildev.giteconomy.dto.EconomyPlayer(b, "Bob", null));
@@ -64,9 +63,6 @@ public class ComprehensivePAPIExpansionTest {
 
         String shortForm = expansion.onPlaceholderRequest(offA, "balance_short");
         assertTrue(shortForm.contains("1.5K") || shortForm.contains("1500.00"));
-
-        String bank = expansion.onPlaceholderRequest(null, "bank_mainbank_dollar");
-        assertTrue(bank.contains("9999.99"));
 
         // top: exercise the code path (other tests may influence cache); ensure no exceptions
         expansion.onPlaceholderRequest(null, "top_2_dollar");

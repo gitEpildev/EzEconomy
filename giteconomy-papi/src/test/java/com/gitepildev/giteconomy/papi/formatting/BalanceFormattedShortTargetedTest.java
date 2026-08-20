@@ -20,6 +20,7 @@ public class BalanceFormattedShortTargetedTest {
 
     @Test
     public void balance_formatted_with_blank_suffix_uses_default_currency_and_formats() throws Exception {
+        try { MockBukkit.unmock(); } catch (Exception ignored) {}
         MockBukkit.mock();
         com.gitepildev.giteconomy.papi.GitEconomyPapiPlugin papi = (com.gitepildev.giteconomy.papi.GitEconomyPapiPlugin) MockBukkit.load(com.gitepildev.giteconomy.papi.GitEconomyPapiPlugin.class);
 
@@ -41,6 +42,7 @@ public class BalanceFormattedShortTargetedTest {
 
     @Test
     public void balance_short_large_amount_uses_short_formatter() throws Exception {
+        try { MockBukkit.unmock(); } catch (Exception ignored) {}
         MockBukkit.mock();
         com.gitepildev.giteconomy.papi.GitEconomyPapiPlugin papi = (com.gitepildev.giteconomy.papi.GitEconomyPapiPlugin) MockBukkit.load(com.gitepildev.giteconomy.papi.GitEconomyPapiPlugin.class);
 
@@ -61,6 +63,7 @@ public class BalanceFormattedShortTargetedTest {
 
     @Test
     public void balance_formatted_explicit_currency_respected() throws Exception {
+        try { MockBukkit.unmock(); } catch (Exception ignored) {}
         MockBukkit.mock();
         com.gitepildev.giteconomy.papi.GitEconomyPapiPlugin papi = (com.gitepildev.giteconomy.papi.GitEconomyPapiPlugin) MockBukkit.load(com.gitepildev.giteconomy.papi.GitEconomyPapiPlugin.class);
 
@@ -81,6 +84,7 @@ public class BalanceFormattedShortTargetedTest {
 
     @Test
     public void symbol_currency_throwing_methods_fallback_to_dollar() throws Exception {
+        try { MockBukkit.unmock(); } catch (Exception ignored) {}
         MockBukkit.mock();
         com.gitepildev.giteconomy.papi.GitEconomyPapiPlugin papi = (com.gitepildev.giteconomy.papi.GitEconomyPapiPlugin) MockBukkit.load(com.gitepildev.giteconomy.papi.GitEconomyPapiPlugin.class);
 

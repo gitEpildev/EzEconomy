@@ -68,19 +68,6 @@ public class FocusedExpansionCoverageTest {
     }
 
     @Test
-    public void bank_balance_returns_formatted_value() {
-        TestGitEconomyStubs.SimpleStorageProvider sp = new TestGitEconomyStubs.SimpleStorageProvider();
-        sp.setBankBalance("vault", "dollar", 5.0);
-
-        com.gitepildev.giteconomy.papi.GitEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = new TestGitEconomyStubs.SimpleTestEz(sp, "dollar");
-
-        com.gitepildev.giteconomy.papi.GitEconomyPAPIExpansion expansion = new com.gitepildev.giteconomy.papi.GitEconomyPAPIExpansion(null);
-
-        String out = expansion.onPlaceholderRequest(null, "bank_vault_dollar");
-        assertEquals("5.00 dollar", out);
-    }
-
-    @Test
     public void top_with_empty_allbalances_sets_empty_cache() {
         TestGitEconomyStubs.SimpleStorageProvider sp = new TestGitEconomyStubs.SimpleStorageProvider();
         // no balances added -> getAllBalances returns empty map

@@ -224,7 +224,17 @@ public class GitEconomyPAPIExpansion extends PlaceholderExpansion {
                                         StorageProvider sp = testEz.getStorageOrWarn();
                                         ep = sp == null ? null : sp.getPlayer(e.getKey());
                                     } catch (Throwable ignored) {}
-                                    String name = ep == null ? (Bukkit.getOfflinePlayer(e.getKey()).getName() == null ? e.getKey().toString() : Bukkit.getOfflinePlayer(e.getKey()).getName()) : (ep.getDisplayName() == null ? ep.getName() : ep.getDisplayName());
+                                    String name;
+                                    if (ep != null) {
+                                        name = ep.getDisplayName() == null ? ep.getName() : ep.getDisplayName();
+                                    } else {
+                                        name = e.getKey().toString();
+                                        try {
+                                            String offline = Bukkit.getOfflinePlayer(e.getKey()).getName();
+                                            if (offline != null) name = offline;
+                                        } catch (Throwable ignored) {}
+                                    }
+                                    if (name == null || name.isEmpty()) name = e.getKey().toString();
                                     return name + " - " + testEz.format(e.getValue(), currency);
                                 }).collect(Collectors.joining(", "));
                                 topCache.put(cacheKey, result, TOP_CACHE_TTL_MS);

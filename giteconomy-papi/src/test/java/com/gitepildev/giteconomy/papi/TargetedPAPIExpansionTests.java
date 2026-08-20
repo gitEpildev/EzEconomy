@@ -52,15 +52,6 @@ public class TargetedPAPIExpansionTests {
     }
 
     @Test
-    public void bank_withNullStorage_returnsEmpty() {
-        GitEconomyPAPIExpansion expansion = new GitEconomyPAPIExpansion(null);
-        GitEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = com.gitepildev.giteconomy.papi.testhelpers.TestGitEconomyHelpers.formatting("dollar", "$");
-
-        String out = expansion.onPlaceholderRequest(null, "bank_test_dollar");
-        assertEquals("", out);
-    }
-
-    @Test
     public void symbol_emptyString_returnsDollarFallback() {
         GitEconomyPAPIExpansion expansion = new GitEconomyPAPIExpansion(null);
         GitEconomyPAPIExpansion.TEST_ECONOMY_FOR_TESTS = com.gitepildev.giteconomy.papi.testhelpers.TestGitEconomyHelpers.emptyFormatting("dollar");

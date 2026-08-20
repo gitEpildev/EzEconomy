@@ -45,9 +45,6 @@ public class ExhaustiveExpansionPathsTest {
         assertNotNull(sym);
 
         // bank path with existing bank
-        sp.setBankBalance("vault", "dollar", 5.5);
-        String bank = expansion.onPlaceholderRequest(null, "bank_vault_dollar");
-        assertTrue(bank.contains("5.50") || bank.length() > 0);
 
         // top variants: clear cache then invoke
         String cacheKey = "top:dollar:2";

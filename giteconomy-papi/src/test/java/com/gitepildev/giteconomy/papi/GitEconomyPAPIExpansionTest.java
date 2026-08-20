@@ -85,6 +85,7 @@ public class GitEconomyPAPIExpansionTest {
 
     @Test
     public void top_buildsAndCachesResult() {
+        com.gitepildev.giteconomy.cache.CacheManager.setStrategy(com.gitepildev.giteconomy.cache.CachingStrategy.LOCAL);
         GitEconomyPAPIExpansion expansion = new GitEconomyPAPIExpansion(null);
 
         UUID a = UUID.randomUUID();

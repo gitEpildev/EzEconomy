@@ -6,6 +6,9 @@
     <artifactId>giteconomy-parent</artifactId>
     <version>2.6.0</version>
     <packaging>pom</packaging>
+    <name>GitEconomy</name>
+    <description>Vault-compatible economy provider with YML and MySQL support</description>
+
     <organization>
         <name>Epildevconnect Ltd</name>
         <url>https://github.com/gitEpildev</url>
@@ -17,8 +20,6 @@
             <organization>Epildevconnect Ltd</organization>
         </developer>
     </developers>
-    <name>GitEconomy</name>
-    <description>Vault-compatible economy provider with YML and MySQL support</description>
     <modules>
         <module>giteconomy-bukkit</module>
         <module>giteconomy-redis</module>
