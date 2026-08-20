@@ -63,19 +63,6 @@ class PaymentExecutorEventCancelTest {
                 @Override public java.util.List<com.skyblockexp.ezeconomy.api.storage.models.Transaction> getTransactions(UUID uuid, String currency) { return java.util.Collections.emptyList(); }
                 @Override public com.skyblockexp.ezeconomy.storage.TransferResult transfer(UUID fromUuid, UUID toUuid, String currency, double debitAmount, double creditAmount) { return com.skyblockexp.ezeconomy.storage.TransferResult.success(0,0); }
                 @Override public void shutdown() {}
-                @Override public boolean createBank(String name, UUID owner) { return false; }
-                @Override public boolean deleteBank(String name) { return false; }
-                @Override public boolean bankExists(String name) { return false; }
-                @Override public double getBankBalance(String name, String currency) { return 0; }
-                @Override public void setBankBalance(String name, String currency, double amount) {}
-                @Override public boolean tryWithdrawBank(String name, String currency, double amount) { return false; }
-                @Override public void depositBank(String name, String currency, double amount) {}
-                @Override public java.util.Set<UUID> getBankMembers(String name) { return java.util.Collections.emptySet(); }
-                @Override public boolean isBankOwner(String name, UUID uuid) { return false; }
-                @Override public boolean isBankMember(String name, UUID uuid) { return false; }
-                @Override public boolean addBankMember(String name, UUID uuid) { return false; }
-                @Override public boolean removeBankMember(String name, UUID uuid) { return false; }
-                @Override public java.util.Set<String> getBanks() { return java.util.Collections.emptySet(); }
             };
             plugin.setStorage(storage);
 

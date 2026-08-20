@@ -37,13 +37,6 @@ cross-server:
 payment:
   sync-event-timeout-ms: 5000
 
-# Banking feature toggle: set to `false` to disable built-in bank subsystem
-# (commands, GUIs, Vault bank methods, and bank PAPI placeholders).
-banking:
-  enabled: true
-
-bank-interest-interval-ticks: 72000 # How often (in ticks) to pay bank interest (default: 1 hour)
-
 # Multi-currency support (optional)
 multi-currency:
   enabled: false

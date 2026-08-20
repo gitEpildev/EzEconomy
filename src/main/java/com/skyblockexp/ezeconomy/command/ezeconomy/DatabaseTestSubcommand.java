@@ -59,28 +59,6 @@ public class DatabaseTestSubcommand implements Subcommand {
 
             sender.sendMessage(com.skyblockexp.ezeconomy.util.MessageUtils.color(plugin, "&aPlayer balance operations: &2PASS"));
 
-            // Test bank operations
-            sender.sendMessage(com.skyblockexp.ezeconomy.util.MessageUtils.color(plugin, "&eTesting bank operations..."));
-            boolean bankCreated = storage.createBank("testbank", testUUID);
-            if (!bankCreated) {
-                throw new Exception("Bank creation failed");
-            }
-            storage.setBankBalance("testbank", "dollar", 200.0);
-            double bankBalance = storage.getBankBalance("testbank", "dollar");
-            if (bankBalance != 200.0) {
-                throw new Exception("Bank balance set/get failed: expected 200.0, got " + bankBalance);
-            }
-
-            boolean memberAdded = storage.addBankMember("testbank", UUID.randomUUID());
-            if (!memberAdded) {
-                throw new Exception("Bank member addition failed");
-            }
-            if (storage.getBankMembers("testbank").size() != 1) {
-                throw new Exception("Bank member operations failed");
-            }
-
-            sender.sendMessage(com.skyblockexp.ezeconomy.util.MessageUtils.color(plugin, "&aBank operations: &2PASS"));
-
             sender.sendMessage(com.skyblockexp.ezeconomy.util.MessageUtils.color(plugin, "&aAll tests passed! Resetting database..."));
 
             // Reset database

@@ -44,9 +44,9 @@ public class PayCommandEdgeCasesTest {
         storage.setBalance(sender.getUniqueId(), CURRENCY, 10.0);
         storage.setBalance(recipient.getUniqueId(), CURRENCY, 0.0);
 
-        // Create pending transfer via PayFlowManager
+        // Create pending transfer via PayCommand confirmation store
         long expires = System.currentTimeMillis() + 60000L;
-        plugin.getPayFlowManager().createPendingTransfer(sender.getUniqueId(), recipient.getUniqueId(), "payeeC", Money.of(BigDecimal.valueOf(5), CURRENCY), CURRENCY, expires);
+        com.skyblockexp.ezeconomy.command.PayCommand.createPendingTransfer(sender.getUniqueId(), recipient.getUniqueId(), "payeeC", Money.of(BigDecimal.valueOf(5), CURRENCY), CURRENCY, expires);
 
         // Execute confirm
         sender.performCommand("pay confirm");
@@ -135,7 +135,7 @@ public class PayCommandEdgeCasesTest {
         sender.performCommand("pay payeeH 10");
 
         // Payment should be pending confirmation (no balance change yet)
-        assertTrue(plugin.getPayFlowManager().isPendingConfirm(sender.getUniqueId()));
+        assertTrue(com.skyblockexp.ezeconomy.command.PayCommand.isPendingConfirm(sender.getUniqueId()));
         assertEquals(100.0, storage.getBalance(sender.getUniqueId(), CURRENCY), 0.0001);
     }
 }

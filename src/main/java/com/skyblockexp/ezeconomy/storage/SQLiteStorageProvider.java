@@ -19,15 +19,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.logging.Level;
-import java.math.BigDecimal;
-import com.skyblockexp.ezeconomy.api.events.BankPreTransactionEvent;
-import com.skyblockexp.ezeconomy.api.events.BankPostTransactionEvent;
-import com.skyblockexp.ezeconomy.api.events.TransactionType;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 /**
  * SQLite implementation of the StorageProvider interface for EzEconomy.
- * Handles player and bank balances using a local SQLite database.
+ * Handles player balances using a local SQLite database.
  * Thread-safe and ready for open-source use.
  *
  * <p>Usage: Instantiate with plugin and config, or call init() if using the default constructor.</p>
@@ -38,7 +34,6 @@ public class SQLiteStorageProvider implements StorageProvider {
     private final EzEconomyPlugin plugin;
     private Connection connection;
     private String table;
-    private String banksTable;
     private final Object lock = new Object();
     private final YamlConfiguration dbConfig;
 
@@ -51,7 +46,6 @@ public class SQLiteStorageProvider implements StorageProvider {
         this.dbConfig = null;
         this.fileName = "economy.db";
         this.table = "balances";
-        this.banksTable = "banks";
     }
 
     /**
@@ -66,13 +60,11 @@ public class SQLiteStorageProvider implements StorageProvider {
         if (dbConfig == null) throw new IllegalArgumentException("SQLite config is missing!");
         this.fileName = dbConfig.getString("sqlite.file", "ezeconomy.db");
         this.table = dbConfig.getString("sqlite.table", "balances");
-        this.banksTable = dbConfig.getString("sqlite.banksTable", "banks");
         try {
             File file = new File(plugin.getDataFolder(), this.fileName);
             connection = DriverManager.getConnection("jdbc:sqlite:" + file.getAbsolutePath());
             Statement stmt = connection.createStatement();
             stmt.executeUpdate("CREATE TABLE IF NOT EXISTS '" + table + "' (uuid TEXT, currency TEXT, balance DOUBLE, PRIMARY KEY (uuid, currency))");
-            stmt.executeUpdate("CREATE TABLE IF NOT EXISTS '" + banksTable + "' (name TEXT PRIMARY KEY, owner TEXT, members TEXT, balances TEXT)");
             // Optional players table to persist last-known name/displayName
             stmt.executeUpdate("CREATE TABLE IF NOT EXISTS players (uuid TEXT PRIMARY KEY, name TEXT, displayName TEXT)");
         } catch (SQLException e) {
@@ -159,7 +151,6 @@ public class SQLiteStorageProvider implements StorageProvider {
         return "SQLiteStorageProvider{" +
                 "fileName='" + fileName + '\'' +
                 ", table='" + table + '\'' +
-                ", banksTable='" + banksTable + '\'' +
                 '}';
     }
 
@@ -621,447 +612,6 @@ public class SQLiteStorageProvider implements StorageProvider {
     }
 
     @Override
-    public boolean createBank(String name, UUID owner) {
-        com.skyblockexp.ezeconomy.lock.LockManager lm = plugin.getLockManager();
-        UUID bankId = UUID.nameUUIDFromBytes(name.getBytes());
-        if (lm != null) {
-            String token = null;
-            try {
-                token = lm.acquire(bankId, plugin.getConfig().getLong("redis.ttl-ms", 5000), plugin.getConfig().getLong("redis.retry-ms", 50), plugin.getConfig().getInt("redis.max-attempts", 100));
-                if (token != null) {
-                    if (bankExists(name)) return false;
-                    try {
-                        String members = owner.toString();
-                        String balances = "{}";
-                        PreparedStatement ps = connection.prepareStatement("INSERT INTO '" + banksTable + "' (name, owner, members, balances) VALUES (?, ?, ?, ?)");
-                        ps.setString(1, name);
-                        ps.setString(2, owner.toString());
-                        ps.setString(3, members);
-                        ps.setString(4, balances);
-                        ps.executeUpdate();
-                        return true;
-                    } catch (SQLException e) {
-                        plugin.getLogger().severe("[EzEconomy] SQLite createBank failed: " + e.getMessage());
-                        return false;
-                    }
-                }
-            } catch (InterruptedException ex) {
-                Thread.currentThread().interrupt();
-            } finally {
-                if (token != null) lm.release(bankId, token);
-            }
-        }
-        synchronized (lock) {
-            if (bankExists(name)) return false;
-            try {
-                String members = owner.toString();
-                String balances = "{}";
-                PreparedStatement ps = connection.prepareStatement("INSERT INTO '" + banksTable + "' (name, owner, members, balances) VALUES (?, ?, ?, ?)");
-                ps.setString(1, name);
-                ps.setString(2, owner.toString());
-                ps.setString(3, members);
-                ps.setString(4, balances);
-                ps.executeUpdate();
-                return true;
-            } catch (SQLException e) {
-                plugin.getLogger().severe("[EzEconomy] SQLite createBank failed: " + e.getMessage());
-                return false;
-            }
-        }
-    }
-    @Override
-    public boolean deleteBank(String name) {
-        com.skyblockexp.ezeconomy.lock.LockManager lm = plugin.getLockManager();
-        UUID bankId = UUID.nameUUIDFromBytes(name.getBytes());
-        if (lm != null) {
-            String token = null;
-            try {
-                token = lm.acquire(bankId, plugin.getConfig().getLong("redis.ttl-ms", 5000), plugin.getConfig().getLong("redis.retry-ms", 50), plugin.getConfig().getInt("redis.max-attempts", 100));
-                if (token != null) {
-                    try {
-                        PreparedStatement ps = connection.prepareStatement("DELETE FROM '" + banksTable + "' WHERE name=?");
-                        ps.setString(1, name);
-                        return ps.executeUpdate() > 0;
-                    } catch (SQLException e) {
-                        plugin.getLogger().severe("[EzEconomy] SQLite deleteBank failed: " + e.getMessage());
-                        return false;
-                    }
-                }
-            } catch (InterruptedException ex) {
-                Thread.currentThread().interrupt();
-            } finally {
-                if (token != null) lm.release(bankId, token);
-            }
-        }
-        synchronized (lock) {
-            try {
-                PreparedStatement ps = connection.prepareStatement("DELETE FROM '" + banksTable + "' WHERE name=?");
-                ps.setString(1, name);
-                return ps.executeUpdate() > 0;
-            } catch (SQLException e) {
-                plugin.getLogger().severe("[EzEconomy] SQLite deleteBank failed: " + e.getMessage());
-                return false;
-            }
-        }
-    }
-    @Override
-    public boolean bankExists(String name) {
-        com.skyblockexp.ezeconomy.lock.LockManager lm = plugin.getLockManager();
-        UUID bankId = UUID.nameUUIDFromBytes(name.getBytes());
-        if (lm != null) {
-            String token = null;
-            try {
-                token = lm.acquire(bankId, plugin.getConfig().getLong("redis.ttl-ms", 5000), plugin.getConfig().getLong("redis.retry-ms", 50), plugin.getConfig().getInt("redis.max-attempts", 100));
-                if (token != null) {
-                    try {
-                        PreparedStatement ps = connection.prepareStatement("SELECT 1 FROM '" + banksTable + "' WHERE name=?");
-                        ps.setString(1, name);
-                        ResultSet rs = ps.executeQuery();
-                        return rs.next();
-                    } catch (SQLException e) {
-                        plugin.getLogger().severe("[EzEconomy] SQLite bankExists failed: " + e.getMessage());
-                        return false;
-                    }
-                }
-            } catch (InterruptedException ex) {
-                Thread.currentThread().interrupt();
-            } finally {
-                if (token != null) lm.release(bankId, token);
-            }
-        }
-        synchronized (lock) {
-            try {
-                PreparedStatement ps = connection.prepareStatement("SELECT 1 FROM '" + banksTable + "' WHERE name=?");
-                ps.setString(1, name);
-                ResultSet rs = ps.executeQuery();
-                return rs.next();
-            } catch (SQLException e) {
-                plugin.getLogger().severe("[EzEconomy] SQLite bankExists failed: " + e.getMessage());
-                return false;
-            }
-        }
-    }
-    @Override
-    public double getBankBalance(String name, String currency) {
-        com.skyblockexp.ezeconomy.lock.LockManager lm = plugin.getLockManager();
-        UUID bankId = UUID.nameUUIDFromBytes(name.getBytes());
-        if (lm != null) {
-            String token = null;
-            try {
-                token = lm.acquire(bankId, plugin.getConfig().getLong("redis.ttl-ms", 5000), plugin.getConfig().getLong("redis.retry-ms", 50), plugin.getConfig().getInt("redis.max-attempts", 100));
-                if (token != null) {
-                    try {
-                        PreparedStatement ps = connection.prepareStatement("SELECT balances FROM '" + banksTable + "' WHERE name=?");
-                        ps.setString(1, name);
-                        ResultSet rs = ps.executeQuery();
-                        if (rs.next()) {
-                            String balancesJson = rs.getString(1);
-                            Map<String, Double> balances = parseBalances(balancesJson);
-                            return balances.getOrDefault(currency, 0.0);
-                        }
-                    } catch (SQLException e) {
-                        plugin.getLogger().severe("[EzEconomy] SQLite getBankBalance failed: " + e.getMessage());
-                    }
-                    return 0.0;
-                }
-            } catch (InterruptedException ex) {
-                Thread.currentThread().interrupt();
-            } finally {
-                if (token != null) lm.release(bankId, token);
-            }
-        }
-        synchronized (lock) {
-            try {
-                PreparedStatement ps = connection.prepareStatement("SELECT balances FROM '" + banksTable + "' WHERE name=?");
-                ps.setString(1, name);
-                ResultSet rs = ps.executeQuery();
-                if (rs.next()) {
-                    String balancesJson = rs.getString(1);
-                    Map<String, Double> balances = parseBalances(balancesJson);
-                    return balances.getOrDefault(currency, 0.0);
-                }
-            } catch (SQLException e) {
-                plugin.getLogger().severe("[EzEconomy] SQLite getBankBalance failed: " + e.getMessage());
-            }
-            return 0.0;
-        }
-    }
-    @Override
-    public void setBankBalance(String name, String currency, double amount) {
-        com.skyblockexp.ezeconomy.lock.LockManager lm = plugin.getLockManager();
-        UUID bankId = UUID.nameUUIDFromBytes(name.getBytes());
-        if (lm != null) {
-            String token = null;
-            try {
-                token = lm.acquire(bankId, plugin.getConfig().getLong("redis.ttl-ms", 5000), plugin.getConfig().getLong("redis.retry-ms", 50), plugin.getConfig().getInt("redis.max-attempts", 100));
-                if (token != null) {
-                    try {
-                        PreparedStatement ps = connection.prepareStatement("SELECT balances FROM '" + banksTable + "' WHERE name=?");
-                        ps.setString(1, name);
-                        ResultSet rs = ps.executeQuery();
-                        Map<String, Double> balances = new HashMap<>();
-                        if (rs.next()) {
-                            balances = parseBalances(rs.getString(1));
-                        }
-                        balances.put(currency, amount);
-                        String newJson = toJson(balances);
-                        PreparedStatement ps2 = connection.prepareStatement("UPDATE '" + banksTable + "' SET balances=? WHERE name=?");
-                        ps2.setString(1, newJson);
-                        ps2.setString(2, name);
-                        ps2.executeUpdate();
-                        return;
-                    } catch (SQLException e) {
-                        plugin.getLogger().severe("[EzEconomy] SQLite setBankBalance failed: " + e.getMessage());
-                        return;
-                    }
-                }
-            } catch (InterruptedException ex) {
-                Thread.currentThread().interrupt();
-            } finally {
-                if (token != null) lm.release(bankId, token);
-            }
-        }
-        synchronized (lock) {
-            try {
-                PreparedStatement ps = connection.prepareStatement("SELECT balances FROM '" + banksTable + "' WHERE name=?");
-                ps.setString(1, name);
-                ResultSet rs = ps.executeQuery();
-                Map<String, Double> balances = new HashMap<>();
-                if (rs.next()) {
-                    balances = parseBalances(rs.getString(1));
-                }
-                balances.put(currency, amount);
-                String newJson = toJson(balances);
-                PreparedStatement ps2 = connection.prepareStatement("UPDATE '" + banksTable + "' SET balances=? WHERE name=?");
-                ps2.setString(1, newJson);
-                ps2.setString(2, name);
-                ps2.executeUpdate();
-            } catch (SQLException e) {
-                plugin.getLogger().severe("[EzEconomy] SQLite setBankBalance failed: " + e.getMessage());
-            }
-        }
-    }
-
-    @Override
-    public boolean tryWithdrawBank(String name, String currency, double amount) {
-        synchronized (lock) {
-            try {
-                PreparedStatement ps = connection.prepareStatement("SELECT balances FROM '" + banksTable + "' WHERE name=?");
-                ps.setString(1, name);
-                ResultSet rs = ps.executeQuery();
-                if (!rs.next()) {
-                    return false;
-                }
-                Map<String, Double> balances = parseBalances(rs.getString(1));
-                double current = balances.getOrDefault(currency, 0.0);
-                BankPreTransactionEvent pre = new BankPreTransactionEvent(name, null, BigDecimal.valueOf(amount), TransactionType.BANK_WITHDRAW);
-                if (plugin.getServer().isPrimaryThread()) {
-                    plugin.getServer().getPluginManager().callEvent(pre);
-                } else {
-                    try {
-                        plugin.getServer().getScheduler().callSyncMethod(plugin, () -> {
-                            plugin.getServer().getPluginManager().callEvent(pre);
-                            return null;
-                        }).get();
-                    } catch (Exception e) {
-                        plugin.getLogger().warning("[EzEconomy] Failed to fire BankPreTransactionEvent: " + e.getMessage());
-                    }
-                }
-                if (pre.isCancelled()) {
-                    return false;
-                }
-                if (current < amount) {
-                    return false;
-                }
-                balances.put(currency, current - amount);
-                String newJson = toJson(balances);
-                PreparedStatement ps2 = connection.prepareStatement("UPDATE '" + banksTable + "' SET balances=? WHERE name=?");
-                ps2.setString(1, newJson);
-                ps2.setString(2, name);
-                ps2.executeUpdate();
-                // Fire post event
-                BankPostTransactionEvent post = new BankPostTransactionEvent(name, null, BigDecimal.valueOf(amount), TransactionType.BANK_WITHDRAW, true, BigDecimal.valueOf(current), BigDecimal.valueOf(current - amount));
-                if (plugin.getServer().isPrimaryThread()) {
-                    plugin.getServer().getPluginManager().callEvent(post);
-                } else {
-                    try {
-                        plugin.getServer().getScheduler().callSyncMethod(plugin, () -> {
-                            plugin.getServer().getPluginManager().callEvent(post);
-                            return null;
-                        }).get();
-                    } catch (Exception e) {
-                        plugin.getLogger().warning("[EzEconomy] Failed to fire BankPostTransactionEvent: " + e.getMessage());
-                    }
-                }
-                return true;
-            } catch (SQLException e) {
-                plugin.getLogger().severe("[EzEconomy] SQLite tryWithdrawBank failed: " + e.getMessage());
-                return false;
-            }
-        }
-    }
-
-    @Override
-    public void depositBank(String name, String currency, double amount) {
-        synchronized (lock) {
-            try {
-                PreparedStatement ps = connection.prepareStatement("SELECT balances FROM '" + banksTable + "' WHERE name=?");
-                ps.setString(1, name);
-                ResultSet rs = ps.executeQuery();
-                if (!rs.next()) {
-                    return;
-                }
-                Map<String, Double> balances = parseBalances(rs.getString(1));
-                double before = balances.getOrDefault(currency, 0.0);
-
-                BankPreTransactionEvent pre = new BankPreTransactionEvent(name, null, BigDecimal.valueOf(amount), TransactionType.BANK_DEPOSIT);
-                try {
-                    plugin.getServer().getScheduler().callSyncMethod(plugin, () -> {
-                        plugin.getServer().getPluginManager().callEvent(pre);
-                        return null;
-                    }).get();
-                } catch (Exception e) {
-                    plugin.getLogger().warning("[EzEconomy] Failed to fire BankPreTransactionEvent: " + e.getMessage());
-                }
-                if (pre.isCancelled()) {
-                    return;
-                }
-
-                balances.put(currency, before + amount);
-                String newJson = toJson(balances);
-                PreparedStatement ps2 = connection.prepareStatement("UPDATE '" + banksTable + "' SET balances=? WHERE name=?");
-                ps2.setString(1, newJson);
-                ps2.setString(2, name);
-                ps2.executeUpdate();
-
-                // Fire post event
-                BankPostTransactionEvent post = new BankPostTransactionEvent(name, null, BigDecimal.valueOf(amount), TransactionType.BANK_DEPOSIT, true, BigDecimal.valueOf(before), BigDecimal.valueOf(before + amount));
-                try {
-                    plugin.getServer().getScheduler().callSyncMethod(plugin, () -> {
-                        plugin.getServer().getPluginManager().callEvent(post);
-                        return null;
-                    }).get();
-                } catch (Exception e) {
-                    plugin.getLogger().warning("[EzEconomy] Failed to fire BankPostTransactionEvent: " + e.getMessage());
-                }
-            } catch (SQLException e) {
-                plugin.getLogger().severe("[EzEconomy] SQLite depositBank failed: " + e.getMessage());
-            }
-        }
-    }
-    @Override
-    public Set<String> getBanks() {
-        Set<String> set = new HashSet<>();
-        synchronized (lock) {
-            try {
-                Statement stmt = connection.createStatement();
-                ResultSet rs = stmt.executeQuery("SELECT name FROM '" + banksTable + "'");
-                while (rs.next()) set.add(rs.getString(1));
-            } catch (SQLException e) {
-                plugin.getLogger().severe("[EzEconomy] SQLite getBanks failed: " + e.getMessage());
-            }
-        }
-        return set;
-    }
-    @Override
-    public boolean isBankOwner(String name, UUID uuid) {
-        synchronized (lock) {
-            try {
-                PreparedStatement ps = connection.prepareStatement("SELECT owner FROM '" + banksTable + "' WHERE name=?");
-                ps.setString(1, name);
-                ResultSet rs = ps.executeQuery();
-                if (rs.next()) return uuid.toString().equals(rs.getString(1));
-            } catch (SQLException e) {
-                plugin.getLogger().severe("[EzEconomy] SQLite isBankOwner failed: " + e.getMessage());
-            }
-            return false;
-        }
-    }
-    @Override
-    public boolean isBankMember(String name, UUID uuid) {
-        synchronized (lock) {
-            try {
-                PreparedStatement ps = connection.prepareStatement("SELECT members FROM '" + banksTable + "' WHERE name=?");
-                ps.setString(1, name);
-                ResultSet rs = ps.executeQuery();
-                if (rs.next()) {
-                    Set<String> members = parseMembers(rs.getString(1));
-                    return members.contains(uuid.toString());
-                }
-            } catch (SQLException e) {
-                plugin.getLogger().severe("[EzEconomy] SQLite isBankMember failed: " + e.getMessage());
-            }
-            return false;
-        }
-    }
-    @Override
-    public boolean addBankMember(String name, UUID uuid) {
-        synchronized (lock) {
-            try {
-                PreparedStatement ps = connection.prepareStatement("SELECT members FROM '" + banksTable + "' WHERE name=?");
-                ps.setString(1, name);
-                ResultSet rs = ps.executeQuery();
-                Set<String> members = new HashSet<>();
-                if (rs.next()) {
-                    members = parseMembers(rs.getString(1));
-                }
-                if (!members.add(uuid.toString())) return false;
-                PreparedStatement ps2 = connection.prepareStatement("UPDATE '" + banksTable + "' SET members=? WHERE name=?");
-                ps2.setString(1, toMemberString(members));
-                ps2.setString(2, name);
-                ps2.executeUpdate();
-                return true;
-            } catch (SQLException e) {
-                plugin.getLogger().severe("[EzEconomy] SQLite addBankMember failed: " + e.getMessage());
-                return false;
-            }
-        }
-    }
-    @Override
-    public boolean removeBankMember(String name, UUID uuid) {
-        synchronized (lock) {
-            try {
-                PreparedStatement ps = connection.prepareStatement("SELECT members FROM '" + banksTable + "' WHERE name=?");
-                ps.setString(1, name);
-                ResultSet rs = ps.executeQuery();
-                Set<String> members = new HashSet<>();
-                if (rs.next()) {
-                    members = parseMembers(rs.getString(1));
-                }
-                if (!members.remove(uuid.toString())) return false;
-                PreparedStatement ps2 = connection.prepareStatement("UPDATE '" + banksTable + "' SET members=? WHERE name=?");
-                ps2.setString(1, toMemberString(members));
-                ps2.setString(2, name);
-                ps2.executeUpdate();
-                return true;
-            } catch (SQLException e) {
-                plugin.getLogger().severe("[EzEconomy] SQLite removeBankMember failed: " + e.getMessage());
-                return false;
-            }
-        }
-    }
-    @Override
-    public Set<UUID> getBankMembers(String name) {
-        Set<UUID> set = new HashSet<>();
-        synchronized (lock) {
-            try {
-                PreparedStatement ps = connection.prepareStatement("SELECT members FROM '" + banksTable + "' WHERE name=?");
-                ps.setString(1, name);
-                ResultSet rs = ps.executeQuery();
-                if (rs.next()) {
-                    Set<String> members = parseMembers(rs.getString(1));
-                    for (String s : members) {
-                        try { set.add(UUID.fromString(s)); } catch (Exception ignored) {}
-                    }
-                }
-            } catch (SQLException e) {
-                plugin.getLogger().severe("[EzEconomy] SQLite getBankMembers failed: " + e.getMessage());
-            }
-        }
-        return set;
-    }
-    
-    @Override
     public void logTransaction(Transaction tx) {
         synchronized (lock) {
             try {
@@ -1134,51 +684,6 @@ public class SQLiteStorageProvider implements StorageProvider {
         return orphaned;
     }
 
-    // --- Helper methods for bank serialization ---
-    private Map<String, Double> parseBalances(String json) {
-        Map<String, Double> map = new HashMap<>();
-        if (json == null || json.isEmpty() || json.equals("{}")) return map;
-        // Simple format: {"USD":100.0,"EUR":50.0}
-        json = json.trim();
-        if (json.startsWith("{") && json.endsWith("}")) {
-            json = json.substring(1, json.length() - 1);
-            String[] entries = json.split(",");
-            for (String entry : entries) {
-                String[] kv = entry.split(":");
-                if (kv.length == 2) {
-                    String k = kv[0].replaceAll("[\"{}]", "").trim();
-                    try { map.put(k, Double.parseDouble(kv[1])); } catch (Exception ignored) {}
-                }
-            }
-        }
-        return map;
-    }
-
-    private String toJson(Map<String, Double> map) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("{");
-        boolean first = true;
-        for (Map.Entry<String, Double> e : map.entrySet()) {
-            if (!first) sb.append(",");
-            sb.append("\"").append(e.getKey()).append("\":").append(e.getValue());
-            first = false;
-        }
-        sb.append("}");
-        return sb.toString();
-    }
-
-    private Set<String> parseMembers(String s) {
-        Set<String> set = new HashSet<>();
-        if (s == null || s.isEmpty()) return set;
-        // Members are stored as comma-separated UUIDs
-        for (String part : s.split(",")) {
-            String trimmed = part.trim();
-            if (!trimmed.isEmpty()) set.add(trimmed);
-        }
-        return set;
-    }
-
-    private String toMemberString(Set<String> set) {
-        return String.join(",", set);
-    }
+    // --- Helper methods ---
 }
+

@@ -58,8 +58,6 @@ public class MySQLPayFeatureTest {
         Connection conn = DriverManager.getConnection("jdbc:h2:mem:test;DB_CLOSE_DELAY=-1;MODE=MySQL", "sa", "");
         try (Statement s = conn.createStatement()) {
             s.executeUpdate("CREATE TABLE IF NOT EXISTS `balances` (uuid VARCHAR(36), currency VARCHAR(32), balance DOUBLE, PRIMARY KEY (uuid, currency))");
-            s.executeUpdate("CREATE TABLE IF NOT EXISTS banks (name VARCHAR(64), currency VARCHAR(32), balance DOUBLE, PRIMARY KEY (name, currency))");
-            s.executeUpdate("CREATE TABLE IF NOT EXISTS bank_members (bank VARCHAR(64), uuid VARCHAR(36), owner BOOLEAN, PRIMARY KEY (bank, uuid))");
             s.executeUpdate("CREATE TABLE IF NOT EXISTS transactions (uuid VARCHAR(36), currency VARCHAR(32), amount DOUBLE, timestamp BIGINT)");
         }
 

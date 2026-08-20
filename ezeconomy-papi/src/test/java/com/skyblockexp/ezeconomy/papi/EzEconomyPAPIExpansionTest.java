@@ -119,7 +119,6 @@ public class EzEconomyPAPIExpansionTest {
     static class SimpleStorageProvider implements StorageProvider {
         private final Map<UUID, Map<String, Double>> balances = new ConcurrentHashMap<>();
         private final Map<UUID, EconomyPlayer> players = new ConcurrentHashMap<>();
-        private final Map<String, Double> banks = new ConcurrentHashMap<>();
 
         public void putPlayer(UUID id, EconomyPlayer p) { players.put(id, p); }
 
@@ -150,19 +149,6 @@ public class EzEconomyPAPIExpansionTest {
 
         @Override public void shutdown() {}
         @Override public EconomyPlayer getPlayer(UUID uuid) { return players.get(uuid); }
-        @Override public boolean createBank(String name, UUID owner) { banks.putIfAbsent(name, 0d); return true; }
-        @Override public boolean deleteBank(String name) { return banks.remove(name) != null; }
-        @Override public boolean bankExists(String name) { return banks.containsKey(name); }
-        @Override public double getBankBalance(String name, String currency) { return banks.getOrDefault(name, 0d); }
-        @Override public void setBankBalance(String name, String currency, double amount) { banks.put(name, amount); }
-        @Override public boolean tryWithdrawBank(String name, String currency, double amount) { double cur = getBankBalance(name, currency); if (cur < amount) return false; banks.put(name, cur - amount); return true; }
-        @Override public void depositBank(String name, String currency, double amount) { banks.put(name, getBankBalance(name, currency) + amount); }
-        @Override public java.util.Set<String> getBanks() { return banks.keySet(); }
-        @Override public boolean isBankOwner(String name, UUID uuid) { return false; }
-        @Override public boolean isBankMember(String name, UUID uuid) { return false; }
-        @Override public boolean addBankMember(String name, UUID uuid) { return false; }
-        @Override public boolean removeBankMember(String name, UUID uuid) { return false; }
-        @Override public java.util.Set<UUID> getBankMembers(String name) { return Collections.emptySet(); }
     }
 }
 

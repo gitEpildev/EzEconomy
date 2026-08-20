@@ -9,17 +9,13 @@ import com.skyblockexp.ezeconomy.api.storage.StorageProvider;
 import com.skyblockexp.ezeconomy.api.storage.models.Transaction;
 import com.skyblockexp.ezeconomy.storage.TransferResult;
 import com.skyblockexp.ezeconomy.service.PlayerEconomyService;
-import com.skyblockexp.ezeconomy.service.BankEconomyService;
 import com.skyblockexp.ezeconomy.service.CurrencyService;
 import com.skyblockexp.ezeconomy.dto.PlayerBalanceDTO;
-import com.skyblockexp.ezeconomy.dto.BankDTO;
-import com.skyblockexp.ezeconomy.dto.CurrencyDTO;
-import java.util.Optional;
 
 /**
  * EzEconomyAPI v2 - Standalone, not Minecraft/Bukkit dependent.
  * <p>
- * Provides a complete, versioned API for player and bank economy operations, supporting multi-currency and transaction history.
+ * Provides a complete, versioned API for player economy operations, supporting multi-currency and transaction history.
  * All operations use UUIDs and currency codes for maximum compatibility and modularity.
  * </p>
  * <p>
@@ -38,7 +34,6 @@ public class EzEconomyAPI {
     public static final String VERSION = "2.0.0";
 
     private final PlayerEconomyService playerService;
-    private final BankEconomyService bankService;
     private final CurrencyService currencyService;
 
     /**
@@ -47,7 +42,6 @@ public class EzEconomyAPI {
      */
     public EzEconomyAPI(StorageProvider storageProvider) {
         this.playerService = new PlayerEconomyService(storageProvider);
-        this.bankService = new BankEconomyService(storageProvider);
         this.currencyService = new CurrencyService(storageProvider);
     }
 
@@ -136,134 +130,6 @@ public class EzEconomyAPI {
      */
     public TransferResult transfer(UUID fromUuid, UUID toUuid, String currency, double debitAmount, double creditAmount) {
         return playerService.transfer(fromUuid, toUuid, currency, debitAmount, creditAmount);
-    }
-
-    // --- Bank Support ---
-
-    /**
-     * Create a new bank with the given name and owner.
-     * @param name Bank name
-     * @param owner Owner UUID
-     * @return true if created, false if already exists
-     */
-    public boolean createBank(String name, UUID owner) {
-        return bankService.createBank(name, owner);
-    }
-
-    /**
-     * Delete a bank by name.
-     * @param name Bank name
-     * @return true if deleted, false if not found
-     */
-    public boolean deleteBank(String name) {
-        return bankService.deleteBank(name);
-    }
-
-    /**
-     * Check if a bank exists by name.
-     * @param name Bank name
-     * @return true if exists, false otherwise
-     */
-    public boolean bankExists(String name) {
-        return bankService.bankExists(name);
-    }
-
-    /**
-     * Get the balance for a bank and currency.
-     * @param name Bank name
-     * @param currency Currency code
-     * @return Bank's balance
-     */
-    public double getBankBalance(String name, String currency) {
-        return bankService.getBankBalance(name, currency);
-    }
-
-    /**
-     * Set the balance for a bank and currency.
-     * @param name Bank name
-     * @param currency Currency code
-     * @param amount New balance
-     */
-    public void setBankBalance(String name, String currency, double amount) {
-        bankService.setBankBalance(name, currency, amount);
-    }
-
-    /**
-     * Attempt to withdraw from a bank for a currency.
-     * @param name Bank name
-     * @param currency Currency code
-     * @param amount Amount to withdraw
-     * @return true if successful, false if insufficient funds
-     */
-    public boolean tryWithdrawBank(String name, String currency, double amount) {
-        return bankService.tryWithdrawBank(name, currency, amount);
-    }
-
-    /**
-     * Deposit to a bank for a currency.
-     * @param name Bank name
-     * @param currency Currency code
-     * @param amount Amount to deposit
-     */
-    public void depositBank(String name, String currency, double amount) {
-        bankService.depositBank(name, currency, amount);
-    }
-
-    /**
-     * Get all bank names.
-     * @return Set of bank names
-     */
-    public Set<String> getBanks() {
-        return bankService.getBanks();
-    }
-
-    /**
-     * Check if a UUID is the owner of a bank.
-     * @param name Bank name
-     * @param uuid Player UUID
-     * @return true if owner, false otherwise
-     */
-    public boolean isBankOwner(String name, UUID uuid) {
-        return bankService.isBankOwner(name, uuid);
-    }
-
-    /**
-     * Check if a UUID is a member of a bank.
-     * @param name Bank name
-     * @param uuid Player UUID
-     * @return true if member, false otherwise
-     */
-    public boolean isBankMember(String name, UUID uuid) {
-        return bankService.isBankMember(name, uuid);
-    }
-
-    /**
-     * Add a member to a bank.
-     * @param name Bank name
-     * @param uuid Player UUID
-     * @return true if added, false if already a member
-     */
-    public boolean addBankMember(String name, UUID uuid) {
-        return bankService.addBankMember(name, uuid);
-    }
-
-    /**
-     * Remove a member from a bank.
-     * @param name Bank name
-     * @param uuid Player UUID
-     * @return true if removed, false if not a member
-     */
-    public boolean removeBankMember(String name, UUID uuid) {
-        return bankService.removeBankMember(name, uuid);
-    }
-
-    /**
-     * Get all member UUIDs of a bank.
-     * @param name Bank name
-     * @return Set of member UUIDs
-     */
-    public Set<UUID> getBankMembers(String name) {
-        return bankService.getBankMembers(name);
     }
 
     // --- Multi-Currency Support ---

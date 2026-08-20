@@ -1,10 +1,8 @@
 package com.skyblockexp.ezeconomy.core;
 
 import com.skyblockexp.ezeconomy.api.storage.StorageProvider;
-import com.skyblockexp.ezeconomy.manager.BankInterestManager;
 import com.skyblockexp.ezeconomy.manager.CurrencyManager;
 import com.skyblockexp.ezeconomy.manager.CurrencyPreferenceManager;
-import com.skyblockexp.ezeconomy.manager.DailyRewardManager;
 import com.skyblockexp.ezeconomy.update.SpigotUpdateChecker;
 import java.io.File;
 import java.util.List;
@@ -17,7 +15,6 @@ import java.util.Locale;
 
 public class EzEconomyPlugin extends JavaPlugin {
     private static final int SPIGOT_RESOURCE_ID = 130975;
-    private static final long DEFAULT_INTEREST_INTERVAL_TICKS = 72_000L;
         private static final List<String> DEFAULT_CONFIGS = List.of(
             "config-yml.yml",
             "config-mysql.yml",
@@ -27,8 +24,7 @@ public class EzEconomyPlugin extends JavaPlugin {
             "languages/nl.yml",
             "languages/es.yml",
             "languages/fr.yml",
-            "languages/zh.yml",
-            "user-gui.yml"
+            "languages/zh.yml"
         );
 
     private StorageProvider storage;
@@ -36,13 +32,9 @@ public class EzEconomyPlugin extends JavaPlugin {
     private CurrencyPreferenceManager currencyPreferenceManager;
     private CurrencyManager currencyManager;
     private EzEconomyMetrics metrics;
-    private BankInterestManager bankInterestManager;
-    private DailyRewardManager dailyRewardManager;
     private MessageProvider messageProvider;
     private VaultEconomyImpl vaultEconomy;
     private FileConfiguration messagesConfig;
-    private FileConfiguration userGuiConfig;
-    private com.skyblockexp.ezeconomy.gui.PayFlowManager payFlowManager;
     private com.skyblockexp.ezeconomy.bootstrap.Bootstrap bootstrap;
     private com.skyblockexp.ezeconomy.lock.LockManager lockManager;
     private static EzEconomyPlugin INSTANCE;
@@ -109,10 +101,6 @@ public class EzEconomyPlugin extends JavaPlugin {
 
     public VaultEconomyImpl getVaultEconomy() {
         return vaultEconomy;
-    }
-    
-    public BankInterestManager getBankInterestManager() {
-        return bankInterestManager;
     }
 
     /**
@@ -186,26 +174,6 @@ public class EzEconomyPlugin extends JavaPlugin {
         this.currencyManager = m;
     }
 
-    public void setBankInterestManager(BankInterestManager m) {
-        this.bankInterestManager = m;
-    }
-
-    public void setDailyRewardManager(DailyRewardManager m) {
-        this.dailyRewardManager = m;
-    }
-
-    public void setPayFlowManager(com.skyblockexp.ezeconomy.gui.PayFlowManager m) {
-        this.payFlowManager = m;
-    }
-
-    public com.skyblockexp.ezeconomy.gui.PayFlowManager getPayFlowManager() {
-        return this.payFlowManager;
-    }
-
-    public DailyRewardManager getDailyRewardManager() {
-        return this.dailyRewardManager;
-    }
-
     public void setMetrics(EzEconomyMetrics metrics) {
         this.metrics = metrics;
     }
@@ -221,14 +189,6 @@ public class EzEconomyPlugin extends JavaPlugin {
     @Deprecated
     public void registerEconomy() {
         new com.skyblockexp.ezeconomy.bootstrap.component.EconomyComponent(this).start();
-    }
-
-    public FileConfiguration getUserGuiConfig() {
-        return this.userGuiConfig == null ? YamlConfiguration.loadConfiguration(new File(getDataFolder(), "user-gui.yml")) : this.userGuiConfig;
-    }
-
-    public void setUserGuiConfig(FileConfiguration cfg) {
-        this.userGuiConfig = cfg;
     }
 
     public com.skyblockexp.ezeconomy.lock.LockManager getLockManager() {

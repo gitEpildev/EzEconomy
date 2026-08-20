@@ -1,4 +1,3 @@
-
 package com.skyblockexp.ezeconomy.command;
 
 import com.skyblockexp.ezeconomy.util.MessageUtils;
@@ -12,18 +11,63 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.math.BigDecimal;
+import java.util.concurrent.ConcurrentHashMap;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
- 
+
 
 public class PayCommand implements CommandExecutor {
     private final EzEconomyPlugin plugin;
-    // Pending confirmation transfers are managed by PayFlowManager
+
+    /** Pending confirmation transfers keyed by payer UUID. */
+    private static final Map<UUID, PendingTransfer> PENDING = new ConcurrentHashMap<>();
+
+    static final class PendingTransfer {
+        private final UUID toUuid;
+        private final String toName;
+        private final Money amount;
+        private final String currency;
+        private final long expiresAtMillis;
+
+        PendingTransfer(UUID toUuid, String toName, Money amount, String currency, long expiresAtMillis) {
+            this.toUuid = toUuid;
+            this.toName = toName;
+            this.amount = amount;
+            this.currency = currency;
+            this.expiresAtMillis = expiresAtMillis;
+        }
+
+        UUID getToUuid() { return toUuid; }
+        String getToName() { return toName; }
+        Money getAmount() { return amount; }
+        String getCurrency() { return currency; }
+        long getExpiresAtMillis() { return expiresAtMillis; }
+    }
+
+    /** Package-visible helpers for tests. */
+    static void createPendingTransfer(UUID source, UUID toUuid, String toName, Money amount, String currency, long expiresAtMillis) {
+        PENDING.put(source, new PendingTransfer(toUuid, toName, amount, currency, expiresAtMillis));
+    }
+
+    static PendingTransfer pollPendingTransfer(UUID source) {
+        return PENDING.remove(source);
+    }
+
+    static boolean isPendingConfirm(UUID source) {
+        PendingTransfer pt = PENDING.get(source);
+        return pt != null && pt.amount != null;
+    }
+
+    static void removeIfExpired(UUID source) {
+        PendingTransfer pt = PENDING.get(source);
+        if (pt != null && pt.expiresAtMillis <= System.currentTimeMillis()) {
+            PENDING.remove(source);
+        }
+    }
 
     public PayCommand(EzEconomyPlugin plugin) {
         this.plugin = plugin;
@@ -57,7 +101,7 @@ public class PayCommand implements CommandExecutor {
                 return true;
             }
             Player p = (Player) sender;
-            var pt = plugin.getPayFlowManager().pollPendingTransfer(p.getUniqueId());
+            PendingTransfer pt = pollPendingTransfer(p.getUniqueId());
             if (pt == null || System.currentTimeMillis() > pt.getExpiresAtMillis()) {
                 MessageUtils.send(sender, plugin, "no_pending_payment");
                 return true;
@@ -111,20 +155,15 @@ public class PayCommand implements CommandExecutor {
             return true;
         }
 
-        // Legacy validations removed; using Money/BigDecimal checks above
-
-
         // Confirmation threshold check: if configured and amount >= threshold, create pending transfer
         double threshold = plugin.getConfig().getDouble("pay.confirmation.threshold", -1.0);
         int timeoutSeconds = plugin.getConfig().getInt("pay.confirmation.timeout_seconds", 30);
         boolean requireConfirm = threshold >= 0 && amountDecimal.compareTo(java.math.BigDecimal.valueOf(threshold)) >= 0;
         if (requireConfirm && !operands[1].equalsIgnoreCase("confirm")) {
-            // Store pending transfer via PayFlowManager and instruct user to confirm
             long expiresAt = System.currentTimeMillis() + (timeoutSeconds * 1000L);
-            plugin.getPayFlowManager().createPendingTransfer(from.getUniqueId(), to == null ? null : to.getUniqueId(), operands[0], money, currency, expiresAt);
+            createPendingTransfer(from.getUniqueId(), to == null ? null : to.getUniqueId(), operands[0], money, currency, expiresAt);
             MessageUtils.send(sender, plugin, "payment_confirm_required", java.util.Map.of("amount", plugin.getCurrencyFormatter().formatPriceForMessage(amountDecimal.doubleValue(), currency), "timeout", String.valueOf(timeoutSeconds)));
-            // Schedule cleanup
-            Bukkit.getScheduler().runTaskLater(plugin, () -> plugin.getPayFlowManager().removeIfExpired(from.getUniqueId()), timeoutSeconds * 20L);
+            Bukkit.getScheduler().runTaskLater(plugin, () -> removeIfExpired(from.getUniqueId()), timeoutSeconds * 20L);
             return true;
         }
 

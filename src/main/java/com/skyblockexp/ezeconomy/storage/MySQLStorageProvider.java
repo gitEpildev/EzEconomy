@@ -14,12 +14,8 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
-import java.math.BigDecimal;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
-import com.skyblockexp.ezeconomy.api.events.BankPreTransactionEvent;
-import com.skyblockexp.ezeconomy.api.events.BankPostTransactionEvent;
-import com.skyblockexp.ezeconomy.api.events.TransactionType;
 
 /**
  * MySQL implementation of the StorageProvider interface for EzEconomy.
@@ -53,8 +49,6 @@ public class MySQLStorageProvider implements StorageProvider {
                     dbConfig.getString("mysql.username"), dbConfig.getString("mysql.password"))) {
             Statement stmt = conn.createStatement();
             stmt.executeUpdate("CREATE TABLE IF NOT EXISTS `" + table + "` (uuid VARCHAR(36), currency VARCHAR(32), balance DOUBLE, PRIMARY KEY (uuid, currency))");
-            stmt.executeUpdate("CREATE TABLE IF NOT EXISTS banks (name VARCHAR(64), currency VARCHAR(32), balance DOUBLE, PRIMARY KEY (name, currency))");
-            stmt.executeUpdate("CREATE TABLE IF NOT EXISTS bank_members (bank VARCHAR(64), uuid VARCHAR(36), owner BOOLEAN, PRIMARY KEY (bank, uuid))");
             stmt.executeUpdate("CREATE TABLE IF NOT EXISTS players (uuid VARCHAR(36) PRIMARY KEY, name VARCHAR(64), displayName VARCHAR(128))");
             stmt.executeUpdate("CREATE TABLE IF NOT EXISTS transactions (id BIGINT AUTO_INCREMENT PRIMARY KEY, uuid VARCHAR(36), currency VARCHAR(32), amount DOUBLE, timestamp BIGINT, from_uuid VARCHAR(36), to_uuid VARCHAR(36), from_balance_after DOUBLE, to_balance_after DOUBLE, INDEX idx_tx_uuid(uuid))");
             stmt.executeUpdate("CREATE TABLE IF NOT EXISTS pending_notifications (id BIGINT AUTO_INCREMENT PRIMARY KEY, uuid VARCHAR(36), message TEXT, created_at BIGINT, INDEX idx_pn_uuid(uuid))");
@@ -419,156 +413,6 @@ public class MySQLStorageProvider implements StorageProvider {
     }
 
     // --- Bank support ---
-
-    public boolean createBank(String name, UUID owner) {
-        try (Connection conn = getConn()) {
-            PreparedStatement ps = conn.prepareStatement("INSERT INTO banks (name, currency, balance) VALUES (?, ?, 0.0)");
-            ps.setString(1, name);
-            ps.setString(2, "dollar");
-            ps.executeUpdate();
-            ps = conn.prepareStatement("INSERT INTO bank_members (bank, uuid, owner) VALUES (?, ?, ?)");
-            ps.setString(1, name);
-            ps.setString(2, owner.toString());
-            ps.setBoolean(3, true);
-            ps.executeUpdate();
-            return true;
-        } catch (SQLException e) { return false; }
-    }
-
-    public boolean deleteBank(String name) {
-        try (Connection conn = getConn()) {
-            PreparedStatement ps = conn.prepareStatement("DELETE FROM banks WHERE name=?");
-            ps.setString(1, name);
-            int affected = ps.executeUpdate();
-            ps = conn.prepareStatement("DELETE FROM bank_members WHERE bank=?");
-            ps.setString(1, name);
-            ps.executeUpdate();
-            return affected > 0;
-        } catch (SQLException e) { return false; }
-    }
-
-    public boolean bankExists(String name) {
-        try (Connection conn = getConn()) {
-            PreparedStatement ps = conn.prepareStatement("SELECT name FROM banks WHERE name=?");
-            ps.setString(1, name);
-            return ps.executeQuery().next();
-        } catch (SQLException e) { return false; }
-    }
-
-    public double getBankBalance(String name, String currency) {
-        try (Connection conn = getConn()) {
-            PreparedStatement ps = conn.prepareStatement("SELECT balance FROM banks WHERE name=? AND currency=?");
-            ps.setString(1, name);
-            ps.setString(2, currency);
-            ResultSet rs = ps.executeQuery();
-            if (rs.next()) return rs.getDouble(1);
-        } catch (SQLException e) {}
-        return 0.0;
-    }
-
-    public void setBankBalance(String name, String currency, double amount) {
-        try (Connection conn = getConn()) {
-            PreparedStatement ps = conn.prepareStatement("REPLACE INTO banks (name, currency, balance) VALUES (?, ?, ?)");
-            ps.setString(1, name);
-            ps.setString(2, currency);
-            ps.setDouble(3, amount);
-            ps.executeUpdate();
-        } catch (SQLException e) {}
-    }
-
-    @Override
-    public boolean tryWithdrawBank(String name, String currency, double amount) {
-        try (Connection conn = getConn()) {
-            PreparedStatement ps = conn.prepareStatement(
-                "UPDATE banks SET balance = balance - ? WHERE name=? AND currency=? AND balance >= ?");
-            ps.setDouble(1, amount);
-            ps.setString(2, name);
-            ps.setString(3, currency);
-            ps.setDouble(4, amount);
-            return ps.executeUpdate() > 0;
-        } catch (SQLException e) {
-            plugin.getLogger().severe("[EzEconomy] MySQL tryWithdrawBank failed: " + e.getMessage());
-            return false;
-        }
-    }
-
-    @Override
-    public void depositBank(String name, String currency, double amount) {
-        try (Connection conn = getConn()) {
-            PreparedStatement ps = conn.prepareStatement(
-                "INSERT INTO banks (name, currency, balance) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE balance = balance + VALUES(balance)");
-            ps.setString(1, name);
-            ps.setString(2, currency);
-            ps.setDouble(3, amount);
-            ps.executeUpdate();
-        } catch (SQLException e) {
-            plugin.getLogger().severe("[EzEconomy] MySQL depositBank failed: " + e.getMessage());
-        }
-    }
-
-    public Set<String> getBanks() {
-        Set<String> set = ConcurrentHashMap.newKeySet();
-        try (Connection conn = getConn()) {
-            ResultSet rs = conn.prepareStatement("SELECT DISTINCT name FROM banks").executeQuery();
-            while (rs.next()) set.add(rs.getString(1));
-        } catch (SQLException e) {}
-        return set;
-    }
-
-    public boolean isBankOwner(String name, UUID uuid) {
-        try (Connection conn = getConn()) {
-            PreparedStatement ps = conn.prepareStatement("SELECT owner FROM bank_members WHERE bank=? AND uuid=?");
-            ps.setString(1, name);
-            ps.setString(2, uuid.toString());
-            ResultSet rs = ps.executeQuery();
-            if (rs.next()) return rs.getBoolean(1);
-        } catch (SQLException e) {}
-        return false;
-    }
-
-    public boolean isBankMember(String name, UUID uuid) {
-        try (Connection conn = getConn()) {
-            PreparedStatement ps = conn.prepareStatement("SELECT uuid FROM bank_members WHERE bank=? AND uuid=?");
-            ps.setString(1, name);
-            ps.setString(2, uuid.toString());
-            return ps.executeQuery().next();
-        } catch (SQLException e) {}
-        return false;
-    }
-
-    public boolean addBankMember(String name, UUID uuid) {
-        if (isBankMember(name, uuid)) return false;
-        try (Connection conn = getConn()) {
-            PreparedStatement ps = conn.prepareStatement("INSERT INTO bank_members (bank, uuid, owner) VALUES (?, ?, ?)");
-            ps.setString(1, name);
-            ps.setString(2, uuid.toString());
-            ps.setBoolean(3, false);
-            ps.executeUpdate();
-            return true;
-        } catch (SQLException e) { return false; }
-    }
-
-    public boolean removeBankMember(String name, UUID uuid) {
-        try (Connection conn = getConn()) {
-            PreparedStatement ps = conn.prepareStatement("DELETE FROM bank_members WHERE bank=? AND uuid=?");
-            ps.setString(1, name);
-            ps.setString(2, uuid.toString());
-            return ps.executeUpdate() > 0;
-        } catch (SQLException e) { return false; }
-    }
-
-    public Set<UUID> getBankMembers(String name) {
-        Set<UUID> set = ConcurrentHashMap.newKeySet();
-        try (Connection conn = getConn()) {
-            PreparedStatement ps = conn.prepareStatement("SELECT uuid FROM bank_members WHERE bank=?");
-            ps.setString(1, name);
-            ResultSet rs = ps.executeQuery();
-            while (rs.next()) {
-                try { set.add(UUID.fromString(rs.getString(1))); } catch (IllegalArgumentException ignored) {}
-            }
-        } catch (SQLException e) {}
-        return set;
-    }
 
     @Override
     public void logTransaction(com.skyblockexp.ezeconomy.api.storage.models.Transaction tx) {

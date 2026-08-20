@@ -3,4 +3,3 @@ mongodb:
   uri: mongodb://localhost:27017
   database: ezeconomy
   collection: balances
-  banksCollection: banks

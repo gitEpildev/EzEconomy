@@ -2,11 +2,9 @@ package com.skyblockexp.ezeconomy.core;
 
 import com.skyblockexp.ezeconomy.api.EzEconomyAPI;
 import com.skyblockexp.ezeconomy.api.storage.StorageProvider;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
-import java.nio.charset.StandardCharsets;
 import java.util.concurrent.locks.ReentrantLock;
 import com.skyblockexp.ezeconomy.storage.TransferLockManager;
 import net.milkbowl.vault.economy.Economy;
@@ -17,7 +15,6 @@ import org.bukkit.OfflinePlayer;
  * Vault Economy implementation for EzEconomy.
  */
 public class VaultEconomyImpl implements Economy {
-    private static final String BANK_DOES_NOT_EXIST = "Bank does not exist";
     private static final String INSUFFICIENT_FUNDS = "Insufficient funds";
     private final EzEconomyPlugin plugin;
     private final EzEconomyAPI api;
@@ -73,8 +70,7 @@ public class VaultEconomyImpl implements Economy {
 
     @Override
     public boolean hasBankSupport() {
-        boolean bankingEnabled = plugin.getConfig().getBoolean("banking.enabled", true);
-        return bankingEnabled && getStorageProvider() != null;
+        return false;
     }
 
     @Override
@@ -184,185 +180,69 @@ public class VaultEconomyImpl implements Economy {
                 : new EconomyResponse(0, balance, EconomyResponse.ResponseType.FAILURE, "Deposit failed");
     }
 
-    // --- Bank methods ---
+    // --- Bank methods (Vault interface stubs — banks are not supported) ---
     @Override
     public EconomyResponse createBank(String name, String player) {
-        OfflinePlayer owner = plugin.getServer().getOfflinePlayer(player);
-        return createBank(name, owner);
+        return notSupported();
     }
 
     @Override
     public EconomyResponse createBank(String name, OfflinePlayer player) {
-        boolean bankingEnabled = plugin.getConfig().getBoolean("banking.enabled", true);
-        if (!bankingEnabled) return notSupported();
-        StorageProvider storage = getStorageProvider();
-        if (storage == null) {
-            return notSupported();
-        }
-        if (storage.bankExists(name)) {
-            return new EconomyResponse(0, storage.getBankBalance(name), EconomyResponse.ResponseType.FAILURE, "Bank already exists");
-        }
-        boolean created = storage.createBank(name, player.getUniqueId());
-        if (!created) {
-            return new EconomyResponse(0, 0, EconomyResponse.ResponseType.FAILURE, "Unable to create bank");
-        }
-        return new EconomyResponse(0, 0, EconomyResponse.ResponseType.SUCCESS, null);
+        return notSupported();
     }
 
     @Override
     public EconomyResponse deleteBank(String name) {
-        boolean bankingEnabled = plugin.getConfig().getBoolean("banking.enabled", true);
-        if (!bankingEnabled) return notSupported();
-        StorageProvider storage = getStorageProvider();
-        if (storage == null) {
-            return notSupported();
-        }
-        if (!storage.bankExists(name)) {
-            return new EconomyResponse(0, 0, EconomyResponse.ResponseType.FAILURE, "Bank does not exist");
-        }
-        boolean deleted = storage.deleteBank(name);
-        if (!deleted) {
-            return new EconomyResponse(0, 0, EconomyResponse.ResponseType.FAILURE, "Unable to delete bank");
-        }
-        return new EconomyResponse(0, 0, EconomyResponse.ResponseType.SUCCESS, null);
+        return notSupported();
     }
 
     @Override
     public EconomyResponse bankBalance(String name) {
-        boolean bankingEnabled = plugin.getConfig().getBoolean("banking.enabled", true);
-        if (!bankingEnabled) return notSupported();
-        StorageProvider storage = getStorageProvider();
-        if (storage == null) {
-            return notSupported();
-        }
-        if (!storage.bankExists(name)) {
-            return new EconomyResponse(0, 0, EconomyResponse.ResponseType.FAILURE, BANK_DOES_NOT_EXIST);
-        }
-        double balance = storage.getBankBalance(name, plugin.getDefaultCurrency());
-        return new EconomyResponse(balance, balance, EconomyResponse.ResponseType.SUCCESS, null);
+        return notSupported();
     }
 
     @Override
     public EconomyResponse bankHas(String name, double amount) {
-        boolean bankingEnabled = plugin.getConfig().getBoolean("banking.enabled", true);
-        if (!bankingEnabled) return notSupported();
-        StorageProvider storage = getStorageProvider();
-        if (storage == null) {
-            return notSupported();
-        }
-        if (!storage.bankExists(name)) {
-            return new EconomyResponse(0, 0, EconomyResponse.ResponseType.FAILURE, BANK_DOES_NOT_EXIST);
-        }
-        String currency = plugin.getDefaultCurrency();
-        double balance = storage.getBankBalance(name, currency);
-        if (balance < amount) {
-            return new EconomyResponse(0, balance, EconomyResponse.ResponseType.FAILURE, INSUFFICIENT_FUNDS);
-        }
-        return new EconomyResponse(amount, balance, EconomyResponse.ResponseType.SUCCESS, null);
+        return notSupported();
     }
 
     @Override
     public EconomyResponse bankWithdraw(String name, double amount) {
-        boolean bankingEnabled = plugin.getConfig().getBoolean("banking.enabled", true);
-        if (!bankingEnabled) return notSupported();
-        StorageProvider storage = getStorageProvider();
-        if (storage == null) {
-            return notSupported();
-        }
-        if (!storage.bankExists(name)) {
-            return new EconomyResponse(0, 0, EconomyResponse.ResponseType.FAILURE, BANK_DOES_NOT_EXIST);
-        }
-        String currency = plugin.getDefaultCurrency();
-        UUID bankLockKey = UUID.nameUUIDFromBytes(("bank:" + name + ":" + currency).getBytes(StandardCharsets.UTF_8));
-        LockedOperation lock = lockFor(bankLockKey);
-        try {
-            boolean success = storage.tryWithdrawBank(name, currency, amount);
-            double balance = storage.getBankBalance(name, currency);
-            if (!success) {
-                return new EconomyResponse(0, balance, EconomyResponse.ResponseType.FAILURE, INSUFFICIENT_FUNDS);
-            }
-            return new EconomyResponse(amount, balance, EconomyResponse.ResponseType.SUCCESS, null);
-        } finally {
-            lock.close();
-        }
+        return notSupported();
     }
 
     @Override
     public EconomyResponse bankDeposit(String name, double amount) {
-        boolean bankingEnabled = plugin.getConfig().getBoolean("banking.enabled", true);
-        if (!bankingEnabled) return notSupported();
-        StorageProvider storage = getStorageProvider();
-        if (storage == null) {
-            return notSupported();
-        }
-        if (!storage.bankExists(name)) {
-            return new EconomyResponse(0, 0, EconomyResponse.ResponseType.FAILURE, BANK_DOES_NOT_EXIST);
-        }
-        String currency = plugin.getDefaultCurrency();
-        storage.depositBank(name, currency, amount);
-        double balance = storage.getBankBalance(name, currency);
-        return new EconomyResponse(amount, balance, EconomyResponse.ResponseType.SUCCESS, null);
+        return notSupported();
     }
 
     @Override
     public EconomyResponse isBankOwner(String name, String player) {
-        OfflinePlayer owner = plugin.getServer().getOfflinePlayer(player);
-        return isBankOwner(name, owner);
+        return notSupported();
     }
 
     @Override
     public EconomyResponse isBankOwner(String name, OfflinePlayer player) {
-        boolean bankingEnabled = plugin.getConfig().getBoolean("banking.enabled", true);
-        if (!bankingEnabled) return notSupported();
-        StorageProvider storage = getStorageProvider();
-        if (storage == null) {
-            return notSupported();
-        }
-        if (!storage.bankExists(name)) {
-            return new EconomyResponse(0, 0, EconomyResponse.ResponseType.FAILURE, BANK_DOES_NOT_EXIST);
-        }
-        double balance = storage.getBankBalance(name, plugin.getDefaultCurrency());
-        if (!storage.isBankOwner(name, player.getUniqueId())) {
-            return new EconomyResponse(0, balance, EconomyResponse.ResponseType.FAILURE, "Not a bank owner");
-        }
-        return new EconomyResponse(0, balance, EconomyResponse.ResponseType.SUCCESS, null);
+        return notSupported();
     }
 
     @Override
     public EconomyResponse isBankMember(String name, String player) {
-        OfflinePlayer member = plugin.getServer().getOfflinePlayer(player);
-        return isBankMember(name, member);
+        return notSupported();
     }
 
     @Override
     public EconomyResponse isBankMember(String name, OfflinePlayer player) {
-        boolean bankingEnabled = plugin.getConfig().getBoolean("banking.enabled", true);
-        if (!bankingEnabled) return notSupported();
-        StorageProvider storage = getStorageProvider();
-        if (storage == null) {
-            return notSupported();
-        }
-        if (!storage.bankExists(name)) {
-            return new EconomyResponse(0, 0, EconomyResponse.ResponseType.FAILURE, BANK_DOES_NOT_EXIST);
-        }
-        double balance = storage.getBankBalance(name, plugin.getDefaultCurrency());
-        if (!storage.isBankMember(name, player.getUniqueId())) {
-            return new EconomyResponse(0, balance, EconomyResponse.ResponseType.FAILURE, "Not a bank member");
-        }
-        return new EconomyResponse(0, balance, EconomyResponse.ResponseType.SUCCESS, null);
+        return notSupported();
     }
 
     @Override
     public List<String> getBanks() {
-        boolean bankingEnabled = plugin.getConfig().getBoolean("banking.enabled", true);
-        if (!bankingEnabled) return Collections.emptyList();
-        StorageProvider storage = getStorageProvider();
-        if (storage == null) return Collections.emptyList();
-        return new ArrayList<>(storage.getBanks());
+        return Collections.emptyList();
     }
 
     private EconomyResponse notSupported() {
-        return new EconomyResponse(0, 0, EconomyResponse.ResponseType.NOT_IMPLEMENTED, "Bank support not implemented");
+        return new EconomyResponse(0, 0, EconomyResponse.ResponseType.FAILURE, "Banks are not supported");
     }
 
     private StorageProvider getStorageProvider() {
@@ -390,51 +270,17 @@ public class VaultEconomyImpl implements Economy {
     @Override public EconomyResponse depositPlayer(String playerName, String worldName, double amount) { return depositPlayer(playerName, amount); }
     @Override public EconomyResponse depositPlayer(OfflinePlayer player, String worldName, double amount) { return depositPlayer(player, amount); }
 
-    // --- Multi-currency bank helpers exposed for commands ---
+    // --- Multi-currency bank helpers (stubs — banks are not supported) ---
     public EconomyResponse bankBalance(String name, String currency) {
-        StorageProvider storage = getStorageProvider();
-        if (storage == null) {
-            return notSupported();
-        }
-        if (!storage.bankExists(name)) {
-            return new EconomyResponse(0, 0, EconomyResponse.ResponseType.FAILURE, BANK_DOES_NOT_EXIST);
-        }
-        double balance = storage.getBankBalance(name, currency);
-        return new EconomyResponse(balance, balance, EconomyResponse.ResponseType.SUCCESS, null);
+        return notSupported();
     }
 
     public EconomyResponse bankDeposit(String name, String currency, double amount) {
-        StorageProvider storage = getStorageProvider();
-        if (storage == null) {
-            return notSupported();
-        }
-        if (!storage.bankExists(name)) {
-            return new EconomyResponse(0, 0, EconomyResponse.ResponseType.FAILURE, BANK_DOES_NOT_EXIST);
-        }
-        storage.depositBank(name, currency, amount);
-        double balance = storage.getBankBalance(name, currency);
-        return new EconomyResponse(amount, balance, EconomyResponse.ResponseType.SUCCESS, null);
+        return notSupported();
     }
 
     public EconomyResponse bankWithdraw(String name, String currency, double amount) {
-        StorageProvider storage = getStorageProvider();
-        if (storage == null) {
-            return notSupported();
-        }
-        if (!storage.bankExists(name)) {
-            return new EconomyResponse(0, 0, EconomyResponse.ResponseType.FAILURE, BANK_DOES_NOT_EXIST);
-        }
-        UUID bankLockKey = UUID.nameUUIDFromBytes(("bank:" + name + ":" + currency).getBytes(StandardCharsets.UTF_8));
-        LockedOperation lock = lockFor(bankLockKey);
-        try {
-            boolean success = storage.tryWithdrawBank(name, currency, amount);
-            double balance = storage.getBankBalance(name, currency);
-            return success
-                ? new EconomyResponse(amount, balance, EconomyResponse.ResponseType.SUCCESS, null)
-                : new EconomyResponse(0, balance, EconomyResponse.ResponseType.FAILURE, INSUFFICIENT_FUNDS);
-        } finally {
-            lock.close();
-        }
+        return notSupported();
     }
 
     private LockedOperation lockFor(UUID key) {

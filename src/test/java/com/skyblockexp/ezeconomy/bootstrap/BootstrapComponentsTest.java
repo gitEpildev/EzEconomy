@@ -44,7 +44,7 @@ public class BootstrapComponentsTest {
 
         assertNotNull(plugin.getVaultEconomy(), "Vault economy provider should be registered");
         assertNotNull(plugin.getMetrics(), "Metrics should be initialized");
-        assertNotNull(plugin.getPayFlowManager(), "PayFlowManager should be initialized");
+        assertNotNull(plugin.getCurrencyManager(), "CurrencyManager should be initialized");
     }
 
 }

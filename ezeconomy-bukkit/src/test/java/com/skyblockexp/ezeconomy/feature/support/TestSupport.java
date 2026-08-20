@@ -64,12 +64,6 @@ public final class TestSupport {
      */
     public static class MockStorage implements StorageProvider {
         private final Map<String, Double> balances = new HashMap<>();
-        // bankName -> (currency -> balance)
-        private final Map<String, java.util.Map<String, Double>> bankBalances = new HashMap<>();
-        // bankName -> owner UUID
-        private final Map<String, UUID> bankOwners = new HashMap<>();
-        // bankName -> members
-        private final Map<String, java.util.Set<UUID>> bankMembers = new HashMap<>();
 
         private String key(UUID uuid, String currency) {
             return uuid.toString() + ":" + currency;
@@ -144,86 +138,18 @@ public final class TestSupport {
         @Override
         public void shutdown() {}
 
-        // Bank methods - trivial implementations for tests
-        @Override public boolean createBank(String name, UUID owner) {
-            synchronized (this) {
-                if (bankBalances.containsKey(name)) return false;
-                bankBalances.put(name, new java.util.HashMap<>());
-                java.util.Map<String, Double> map = bankBalances.get(name);
-                map.put("dollar", 0.0);
-                bankOwners.put(name, owner);
-                bankMembers.put(name, new java.util.HashSet<>());
-                return true;
-            }
-        }
 
-        @Override public boolean deleteBank(String name) {
-            synchronized (this) {
-                boolean ex = bankBalances.containsKey(name);
-                bankBalances.remove(name);
-                bankOwners.remove(name);
-                bankMembers.remove(name);
-                return ex;
-            }
-        }
 
-        @Override public boolean bankExists(String name) {
-            return bankBalances.containsKey(name);
-        }
 
-        @Override public double getBankBalance(String name, String currency) {
-            java.util.Map<String, Double> map = bankBalances.get(name);
-            if (map == null) return 0.0;
-            return map.getOrDefault(currency, 0.0);
-        }
 
-        @Override public void setBankBalance(String name, String currency, double amount) {
-            bankBalances.computeIfAbsent(name, k -> new java.util.HashMap<>()).put(currency, amount);
-        }
 
-        @Override public boolean tryWithdrawBank(String name, String currency, double amount) {
-            synchronized (this) {
-                double bal = getBankBalance(name, currency);
-                if (bal < amount) return false;
-                setBankBalance(name, currency, bal - amount);
-                return true;
-            }
-        }
 
-        @Override public void depositBank(String name, String currency, double amount) {
-            synchronized (this) {
-                double bal = getBankBalance(name, currency);
-                setBankBalance(name, currency, bal + amount);
-            }
-        }
 
-        @Override public java.util.Set<String> getBanks() { return new java.util.HashSet<>(bankBalances.keySet()); }
 
-        @Override public boolean isBankOwner(String name, UUID uuid) {
-            UUID o = bankOwners.get(name);
-            return o != null && o.equals(uuid);
-        }
 
-        @Override public boolean isBankMember(String name, UUID uuid) {
-            java.util.Set<UUID> m = bankMembers.get(name);
-            return m != null && m.contains(uuid);
-        }
 
-        @Override public boolean addBankMember(String name, UUID uuid) {
-            bankMembers.computeIfAbsent(name, k -> new java.util.HashSet<>()).add(uuid);
-            return true;
-        }
 
-        @Override public boolean removeBankMember(String name, UUID uuid) {
-            java.util.Set<UUID> m = bankMembers.get(name);
-            if (m == null) return false;
-            return m.remove(uuid);
-        }
 
-        @Override public java.util.Set<UUID> getBankMembers(String name) {
-            java.util.Set<UUID> m = bankMembers.get(name);
-            return m == null ? java.util.Collections.emptySet() : new java.util.HashSet<>(m);
-        }
 
         @Override
         public com.skyblockexp.ezeconomy.dto.EconomyPlayer getPlayer(UUID uuid) {

@@ -47,8 +47,6 @@ public class EzEconomyPlaceholderExpansion extends PlaceholderExpansion {
         // Usage:
         // %ezeconomy_balance% (default currency)
         // %ezeconomy_balance_<currency>%
-        // %ezeconomy_bank_<bank>% (default currency)
-        // %ezeconomy_bank_<bank>_<currency>%
         // %ezeconomy_symbol_<currency>%
         // %ezeconomy_top_#% (top # player and balance, e.g. %ezeconomy_top_1%)
 
@@ -99,21 +97,6 @@ public class EzEconomyPlaceholderExpansion extends PlaceholderExpansion {
                     return "$";
                 }
                 return "?";
-            }
-            if (split.length >= 2 && split[0].equals("bank")) {
-                boolean bankingEnabled = config.getBoolean("banking.enabled", true);
-                if (!bankingEnabled) return null;
-                if (player == null || storage == null) {
-                    return null;
-                }
-                String bank = split[1];
-                String currency = (split.length == 3) ? split[2] : preferredCurrency;
-                if (storage.isBankMember(bank, player.getUniqueId())) {
-                    double bal = storage.getBankBalance(bank, currency);
-                    return eco.format(bal);
-                } else {
-                    return "-";
-                }
             }
 
             // Handle %ezeconomy_top_1%, %ezeconomy_top_2%, etc.

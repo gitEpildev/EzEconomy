@@ -35,19 +35,6 @@ public class LambdaFocusedTests extends TestBase {
         @Override public com.skyblockexp.ezeconomy.storage.TransferResult transfer(UUID fromUuid, UUID toUuid, String currency, double amount) { return com.skyblockexp.ezeconomy.storage.TransferResult.failure(0,0); }
         @Override public void shutdown() {}
         @Override public com.skyblockexp.ezeconomy.dto.EconomyPlayer getPlayer(UUID uuid) { return new com.skyblockexp.ezeconomy.dto.EconomyPlayer(uuid, "User", null); }
-        @Override public boolean createBank(String name, UUID owner) { return false; }
-        @Override public boolean deleteBank(String name) { return false; }
-        @Override public boolean bankExists(String name) { return false; }
-        @Override public double getBankBalance(String name, String currency) { return 0; }
-        @Override public void setBankBalance(String name, String currency, double amount) {}
-        @Override public boolean tryWithdrawBank(String name, String currency, double amount) { return false; }
-        @Override public void depositBank(String name, String currency, double amount) {}
-        @Override public java.util.Set<String> getBanks() { return java.util.Collections.emptySet(); }
-        @Override public java.util.Set<java.util.UUID> getBankMembers(String name) { return java.util.Collections.emptySet(); }
-        @Override public boolean isBankOwner(String name, UUID uuid) { return false; }
-        @Override public boolean isBankMember(String name, UUID uuid) { return false; }
-        @Override public boolean addBankMember(String name, UUID uuid) { return false; }
-        @Override public boolean removeBankMember(String name, UUID uuid) { return false; }
     }
 
     @Test

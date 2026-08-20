@@ -19,9 +19,6 @@ commands:
   baltop:
     description: Show top player balances
     usage: /baltop [amount]
-  bank:
-    description: Bank management commands
-    usage: /bank <create|delete|balance|deposit|withdraw|addmember|removemember|info> ...
   pay:
     description: Pay money to another player or all players
     usage: /pay <player|*> <amount> [currency]
@@ -35,7 +32,7 @@ commands:
     usage: /currency [currency]
   ezeconomy:
     description: EzEconomy admin utilities
-    usage: /ezeconomy <daily reset>
+    usage: /ezeconomy <cleanup|reload|database>
 
 permissions:
   ezeconomy.payall:

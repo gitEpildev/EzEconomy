@@ -2,7 +2,6 @@ package com.skyblockexp.ezeconomy.bootstrap;
 
 import com.skyblockexp.ezeconomy.bootstrap.component.CommandsComponent;
 import com.skyblockexp.ezeconomy.bootstrap.component.ConfigComponent;
-import com.skyblockexp.ezeconomy.bootstrap.component.GuiComponent;
 import com.skyblockexp.ezeconomy.bootstrap.component.ListenersComponent;
 import com.skyblockexp.ezeconomy.bootstrap.component.ManagersComponent;
 import com.skyblockexp.ezeconomy.bootstrap.component.MetricsComponent;
@@ -36,7 +35,6 @@ public class Bootstrap {
         components.add(new CommandsComponent(plugin));
         components.add(new ListenersComponent(plugin));
         components.add(new PlaceholderComponent(plugin));
-        components.add(new GuiComponent(plugin));
         components.add(new ShutdownComponent(plugin));
     }
 

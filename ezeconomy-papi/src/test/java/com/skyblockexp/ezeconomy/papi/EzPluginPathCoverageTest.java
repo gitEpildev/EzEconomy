@@ -39,19 +39,6 @@ public class EzPluginPathCoverageTest {
         @Override public com.skyblockexp.ezeconomy.storage.TransferResult transfer(UUID fromUuid, UUID toUuid, String currency, double amount) { return com.skyblockexp.ezeconomy.storage.TransferResult.failure(0,0); }
         @Override public void shutdown() {}
         @Override public EconomyPlayer getPlayer(UUID uuid) { return new EconomyPlayer(uuid, "Name", null); }
-        @Override public boolean createBank(String name, UUID owner) { return false; }
-        @Override public boolean deleteBank(String name) { return false; }
-        @Override public boolean bankExists(String name) { return false; }
-        @Override public double getBankBalance(String name, String currency) { return 0; }
-        @Override public void setBankBalance(String name, String currency, double amount) {}
-        @Override public boolean tryWithdrawBank(String name, String currency, double amount) { return false; }
-        @Override public void depositBank(String name, String currency, double amount) {}
-        @Override public java.util.Set<String> getBanks() { return Collections.emptySet(); }
-        @Override public boolean isBankOwner(String name, UUID uuid) { return false; }
-        @Override public boolean isBankMember(String name, UUID uuid) { return false; }
-        @Override public boolean addBankMember(String name, UUID uuid) { return false; }
-        @Override public boolean removeBankMember(String name, UUID uuid) { return false; }
-        @Override public java.util.Set<UUID> getBankMembers(String name) { return Collections.emptySet(); }
     }
 
     // Top-level static test plugin class so MockBukkit can create a proxy for it

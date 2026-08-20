@@ -23,8 +23,7 @@ public class ConfigComponent implements BootstrapComponent {
             "languages/nl.yml",
             "languages/es.yml",
             "languages/fr.yml",
-            "languages/zh.yml",
-            "user-gui.yml"
+            "languages/zh.yml"
     );
 
     public ConfigComponent(EzEconomyPlugin plugin) {

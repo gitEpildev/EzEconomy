@@ -30,12 +30,10 @@ public class MongoIntegrationTest {
 
         // Ensure clean state
         db.getCollection("balances").drop();
-        db.getCollection("banks").drop();
 
         YamlConfiguration cfg = new YamlConfiguration();
         cfg.set("mongodb.database", "ezeconomy_integration_test");
         cfg.set("mongodb.collection", "balances");
-        cfg.set("mongodb.banksCollection", "banks");
 
         MongoDBStorageProvider provider = new MongoDBStorageProvider(null, cfg);
         // package-private setter (same package) to inject the running DB

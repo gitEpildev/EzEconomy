@@ -269,28 +269,6 @@ public class EzEconomyPAPIExpansion extends PlaceholderExpansion {
 
                 return safe(previous);
             }
-
-            if (identifier.startsWith("bank_")) {
-                // format: bank_<name>_<currency>
-                String[] parts = identifier.split("_");
-                if (parts.length < 3) return "";
-                String bankName = parts[1];
-                String currency = parts[2];
-                boolean bankingEnabled = true;
-                if (testEz != null) {
-                    try {
-                        java.lang.reflect.Method m = testEz.getClass().getMethod("getStorageOrWarn");
-                        bankingEnabled = true; // tests typically control behavior; assume enabled unless overridden
-                    } catch (NoSuchMethodException ignored) {}
-                } else {
-                    bankingEnabled = ezPlugin.getConfig().getBoolean("banking.enabled", true);
-                }
-                if (!bankingEnabled) return "";
-                StorageProvider storage = testEz != null ? testEz.getStorageOrWarn() : ezPlugin.getStorageOrWarn();
-                if (storage == null) return "";
-                double bal = storage.getBankBalance(bankName, currency);
-                return safe(testEz != null ? testEz.format(bal, currency) : ezPlugin.getCurrencyFormatter().format(bal, currency));
-            }
         } catch (Throwable t) {
             if (plugin != null) {
                 plugin.getLogger().warning("Error handling placeholder '" + identifier + "': " + t.getMessage());
