@@ -1,6 +1,6 @@
 # PreTransactionEvent
 
-Class: `com.skyblockexp.ezeconomy.api.events.PreTransactionEvent`
+Class: `com.gitepildev.giteconomy.api.events.PreTransactionEvent`
 
 Overview:
 - Fired before an economy mutation is applied (transfer, deposit, withdraw).

@@ -1,11 +1,11 @@
 # Proxy Network (Bungeecord) Integration
 
-This page documents the proxy-backed features of EzEconomy: distributed locking and proxy-side caching via plugin messaging between servers and a proxy.
+This page documents the proxy-backed features of GitEconomy: distributed locking and proxy-side caching via plugin messaging between servers and a proxy.
 
 ## Summary
-- EzEconomy supports proxy-backed locking and caching using plugin messaging between servers and a proxy-side component.
+- GitEconomy supports proxy-backed locking and caching using plugin messaging between servers and a proxy-side component.
 - Use `locking-strategy: BUNGEECORD` and/or `caching-strategy: BUNGEECORD` in the server `config.yml` to enable proxy-backed behavior.
-- The proxy must run the optional `ezeconomy-bungeecord-proxy` component (or a compatible adapter) and have a matching `bungeecord.yml` configuration.
+- The proxy must run the optional `giteconomy-bungeecord-proxy` component (or a compatible adapter) and have a matching `bungeecord.yml` configuration.
 
 ## Why use the proxy-backed model
 - Centralizes lock and cache state on the proxy, reducing cross-server coordination complexity from servers' perspectives.
@@ -19,14 +19,14 @@ locking-strategy: BUNGEECORD
 caching-strategy: BUNGEECORD
 ```
 
-- Ensure you have the `ezeconomy-bungeecord` extension installed on the server (if required) or that the server classpath can provide the lock/cache provider implementations.
+- Ensure you have the `giteconomy-bungeecord` extension installed on the server (if required) or that the server classpath can provide the lock/cache provider implementations.
 - Edit `bungeecord.yml` in the server plugin data folder to match the proxy settings (example below).
 
 ## `bungeecord.yml` (server-side) example
 
 ```yaml
 enabled: true
-channel: ezeconomy:locks
+channel: giteconomy:locks
 ttl-ms: 60000          # default TTL for lock requests
 retry-ms: 150          # retry interval when awaiting responses
 max-attempts: 5        # how many times to retry acquiring a lock
@@ -35,11 +35,11 @@ shared-secret: "your-secret"   # optional: must match proxy config
 ```
 
 ## Proxy configuration (proxy component)
-- Deploy `ezeconomy-bungeecord-proxy` on your Bungee/Waterfall proxy and place a `bungeecord.yml` in the proxy plugin data folder. Important keys:
+- Deploy `giteconomy-bungeecord-proxy` on your Bungee/Waterfall proxy and place a `bungeecord.yml` in the proxy plugin data folder. Important keys:
 
 ```yaml
 enabled: true
-channel: ezeconomy:locks
+channel: giteconomy:locks
 shared-secret: "your-secret"   # must match servers when set
 cleanup-interval-ms: 5000       # how often the proxy evicts expired locks/cached entries
 
@@ -83,4 +83,4 @@ cache:
 - [Locking strategy](../feature/locking-strategy.md) — locking strategy guidance
 - Source:
   - [bungeecord.yml](../../src/main/resources/bungeecord.yml)
-  - [`ezeconomy-bungeecord` module](../../ezeconomy-bungeecord) and [`ezeconomy-bungeecord-proxy` module](../../ezeconomy-bungeecord-proxy) for implementation details
+  - [`giteconomy-bungeecord` module](../../giteconomy-bungeecord) and [`giteconomy-bungeecord-proxy` module](../../giteconomy-bungeecord-proxy) for implementation details

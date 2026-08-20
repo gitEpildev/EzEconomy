@@ -1,272 +1,78 @@
-# EzEconomy
+# GitEconomy
 
-![EzEconomy Icon](https://www.spigotmc.org/data/resource_icons/130/130975.jpg)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](LICENSE.md)
 
-[![Release](https://img.shields.io/github/v/release/ez-plugins/EzEconomy?label=release&style=flat-square)](https://github.com/ez-plugins/EzEconomy/releases)
-[![Publish CI](https://github.com/ez-plugins/EzEconomy/actions/workflows/maven-publish.yml/badge.svg)](https://github.com/ez-plugins/EzEconomy/actions)
-[![License](https://img.shields.io/github/license/ez-plugins/EzEconomy?style=flat-square)](https://github.com/ez-plugins/EzEconomy/blob/main/LICENSE.md)
-[![GitHub Stars](https://img.shields.io/github/stars/ez-plugins/EzEconomy?style=social)](https://github.com/ez-plugins/EzEconomy/stargazers)
+**GitEconomy** is a simple Vault-compatible Minecraft economy plugin by **GitEpildev** & **Epildevconnect Ltd**.
 
-**EzEconomy** is a professional-grade Vault economy provider for Minecraft servers. Choose from YML, MySQL, SQLite, MongoDB, or custom storage with multi-currency support, async caching, and thorough permission controls.
-
-> **Original plugin by [@ez-plugins](https://github.com/ez-plugins) — [ez-plugins/EzEconomy](https://github.com/ez-plugins/EzEconomy)**
-> This fork adds Velocity proxy support, HikariCP connection pooling, cross-server payments, and other improvements by [@GitEpildev](https://github.com/gitEpildev).
+Focused on core economy commands — no banking subsystem.
 
 ---
 
-## 📚 Documentation
+## Commands
 
-- [Overview](docs/overview.md): General introduction and architecture
-- [Commands](docs/commands.md): Command usage and permissions
-- [Configuration](docs/configuration.md): All configuration options
-- [Developer API](docs/developer-api.md): API usage for plugin developers
-- [Permissions](docs/permissions.md): Permission nodes and details
-- [Placeholders](docs/integration/placeholderapi.md): PlaceholderAPI integration
-- [Storage](docs/storage/storage.md): Storage backends and setup
-- [Features - Multi-currency](docs/feature/multi-currency.md): Configure multiple currencies
-- [Features - Banking](docs/feature/banking.md): In-plugin bank accounts and permissions
-- [Features - Money formatting](docs/feature/money-formatting.md): Presentation options, locales, compact formats, and placeholders
-- [Caching strategy](docs/feature/caching-strategy.md): `LOCAL`, `REDIS`, `BUNGEECORD`, `DATABASE` options
-- [Locking strategy and options](docs/feature/locking-strategy.md): How to choose `LOCAL` vs `REDIS` and what each means
-- [Proxy & Redis notes](docs/integration/redis.md): Redis and proxy operational notes
-
-> Do you get the message "Missing message: ..."? Please check the latest available translations: https://github.com/ez-plugins/EzEconomy/tree/main/src/main/resources/languages
+| Command | Description |
+|---|---|
+| `/balance` (`/bal`) | View your balance (or another player's) |
+| `/pay <player> <amount>` | Send money to another player |
+| `/baltop` (`/top`) | Show top balances |
+| `/eco <give\|take\|set> <player> <amount>` | Admin balance controls |
+| `/currency [currency]` | View or set preferred currency (optional multi-currency) |
+| `/giteconomy <reload\|cleanup\|database>` | Admin utilities |
 
 ---
 
-## ★ Key Features
+## Features
 
-EzEconomy is designed for performance, reliability, and operational clarity. Highlights include:
-
-- **Vault API compatible**: Works with any Vault-based plugin
-- **YML, MySQL, SQLite, MongoDB, or custom storage**: Flexible, production-ready storage options
-- **Thread-safe**: Robust error handling and concurrency controls
-- **Multi-currency support**: Optional, per-player, fully configurable
-- **Async caching**: Optimized for large servers
-- **Comprehensive commands**: `/balance`, `/eco`, `/baltop`, `/bank`, `/pay`, `/currency`
-- **Granular permissions**: Per-command and per-bank action
-- **Velocity proxy support**: Cross-server payments, network-wide player list, and offline notification queuing
+- Vault API compatible
+- Storage: YML, MySQL, SQLite, MongoDB
+- Optional multi-currency
+- PlaceholderAPI support (`GitEconomy-PAPI`)
+- Optional Redis / BungeeCord / Velocity networking modules
 
 ---
 
-## ⚡ Commands
+## Quick start
 
-- **/balance**: View your balance
-- **/balance <player>**: View another player's balance (`ezeconomy.balance.others`)
-- **/eco <give|take|set> <player> <amount>**: Administrative balance controls (`ezeconomy.eco`)
-- **/baltop [amount]**: Show top balances
-- **/bank <create|delete|balance|deposit|withdraw|addmember|removemember|info> ...**: Bank management (`ezeconomy.bank`)
-- **/pay <player> <amount>**: Send funds to another player (`ezeconomy.pay`)
-- **/pay * <amount>**: Send funds to all online players (requires `ezeconomy.payall`; configurable via `pay.pay_all` in `config.yml`). See [Commands](docs/commands.md) for details.
-- **/currency [currency]**: Set or view your preferred currency
+1. Install [Vault](https://www.spigotmc.org/resources/vault.34315/)
+2. Drop `giteconomy-bukkit-*.jar` into `plugins/`
+3. Restart and edit `plugins/GitEconomy/config.yml`
 
 ---
 
-## 🛡️ Permissions
+## Permissions
 
-- `ezeconomy.balance.others`: View other players' balances
-- `ezeconomy.eco`: Use /eco admin command
-- `ezeconomy.pay`: Use /pay command
-- `ezeconomy.payall`: Use /pay * to pay all players
-- `ezeconomy.payall.bypasswithdraw`: Pay all without deducting from sender balance
-- `ezeconomy.currency`: Use /currency command
-- **Bank Permissions**:
-  - `ezeconomy.bank.create`: Create a new bank
-  - `ezeconomy.bank.delete`: Delete a bank
-  - `ezeconomy.bank.balance`: View bank balance
-  - `ezeconomy.bank.deposit`: Deposit to a bank
-  - `ezeconomy.bank.withdraw`: Withdraw from a bank
-  - `ezeconomy.bank.addmember`: Add a member to a bank
-  - `ezeconomy.bank.removemember`: Remove a member from a bank
-  - `ezeconomy.bank.info`: View bank info
-  - `ezeconomy.bank.admin`: All bank admin actions
+- `giteconomy.pay` — `/pay`
+- `giteconomy.balance.others` — check others' balances
+- `giteconomy.eco` — admin `/eco`
+- `giteconomy.baltop` — `/baltop` / `/top`
+- `giteconomy.admin` — `/giteconomy` utilities
+- `giteconomy.payall` — `/pay *`
+
+See [docs/permissions.md](docs/permissions.md) for the full list.
 
 ---
 
-## 🔒 Security Notes for Server Owners
+## Documentation
 
-- **Limit admin permissions**: Only grant `ezeconomy.eco` and `ezeconomy.bank.admin` to trusted staff.
-- **Use a permissions plugin**: Manage access with groups/roles so players cannot self-assign economy powers.
-- **Lock down database access**: Use a dedicated database user with minimal privileges and keep credentials private.
-- **Back up economy data**: Schedule regular backups of your storage files or database to recover from mistakes or exploits.
-- **Review bank permissions**: Consider limiting bank creation/withdraw permissions to prevent abuse on public servers.
-
----
-
-## 🛡️ Dupe Prevention Safeguards
-
-- **Thread-safe balance updates**: Economy operations are designed to avoid race conditions during concurrent deposits, withdrawals, and transfers.
-- **Server-side validation**: Commands and transactions validate amounts to prevent invalid or malformed requests.
-- **Storage integrity**: Backends use consistent write patterns to reduce the risk of partial or conflicting balance writes.
+- [Overview](docs/overview.md)
+- [Commands](docs/commands.md)
+- [Configuration](docs/configuration.md)
+- [Developer API](docs/developer-api.md)
+- [Storage](docs/storage/storage.md)
+- [PlaceholderAPI](docs/integration/placeholderapi.md)
 
 ---
 
-## ⚙️ Configuration Example
+## Build
 
-### `config.yml` (Only global settings):
-```yaml
-storage: yml
-multi-currency:
-  enabled: false
-  default: "dollar"
-  currencies:
-    dollar:
-      display: "Dollar"
-      symbol: "$"
-      decimals: 2
-    euro:
-      display: "Euro"
-      symbol: "€"
-      decimals: 2
-    gem:
-      display: "Gem"
-      symbol: "♦"
-      decimals: 0
-  conversion:
-    dollar:
-      euro: 0.95
-      gem: 0.01
-    euro:
-      dollar: 1.05
-      gem: 0.012
-    gem:
-      dollar: 100
-      euro: 80
-```
-
-### `config-yml.yml` (YML storage settings):
-```yaml
-yml:
-  file: balances.yml
-  per-player-file-naming: uuid
-  data-folder: data
-```
-
-### `config-mysql.yml` (MySQL storage settings):
-```yaml
-mysql:
-  host: localhost
-  port: 3306
-  database: ezeconomy
-  username: root
-  password: password
-  table: balances
-```
-
-### `config-sqlite.yml` (SQLite storage settings):
-```yaml
-sqlite:
-  file: ezeconomy.db
-  table: balances
-  banksTable: banks
-```
-
-### `config-mongodb.yml` (MongoDB storage settings):
-```yaml
-mongodb:
-  uri: mongodb://localhost:27017
-  database: ezeconomy
-  collection: balances
-  banksCollection: banks
+```bash
+mvn -pl giteconomy-bukkit -am clean package
 ```
 
 ---
 
-## ⬇️ Installation
+## License
 
-1. Place `ezeconomy-bukkit-*.jar` in your Paper/Spigot server's `plugins/` folder
-2. Configure `config.yml` and the appropriate `config-*.yml` file for your storage type
-3. Restart your server
+MIT © GitEpildev & Epildevconnect Ltd
 
----
-
-## Velocity / Proxy Support
-
-This fork includes a dedicated `ezeconomy-velocity` module that enables full cross-server economy on Velocity networks. Both the Velocity proxy plugin and the Bukkit plugin work together over a shared plugin messaging channel (`ezeconomy:notify`).
-
-### What it does
-
-| Feature | How it works |
-|---------|-------------|
-| **Cross-server `/pay`** | A player on Server A can `/pay PlayerB 100` even if PlayerB is on Server B. The Velocity plugin forwards the "You received ..." notification to the correct backend. |
-| **Cross-server `/bal`** | `/bal PlayerB` resolves players across all servers using the shared MySQL `players` table and the Velocity network player list. |
-| **`/pay *` (pay all)** | Pays every online player on every backend server, not just the local one. Remote recipients get notifications forwarded through Velocity. |
-| **Network player list** | The Velocity plugin broadcasts a UUID + name list of all connected players to every backend every 3 seconds. This powers tab-completion and cross-server player resolution. |
-| **Offline notification queue** | If a recipient is offline when payment arrives, the notification is queued. MySQL storage: persisted to a `pending_notifications` table. Other storage: held in-memory until the player next logs in. |
-
-### Prerequisites
-
-- **Velocity proxy** (not BungeeCord — the velocity module uses the Velocity API)
-- **MySQL storage** (`storage: mysql`) configured identically on every backend server, pointing to the **same database**. This is required so all servers share balances and player records.
-- **`store-on-join: true`** recommended on every backend so player UUID/name records are persisted to MySQL when they join any server. Without this, cross-server lookups may fail for players who have never been seen by the database.
-
-### Setup
-
-1. **Velocity proxy** — place `ezeconomy-velocity-*.jar` in the proxy's `plugins/` folder.
-2. **Each Paper backend** — place `ezeconomy-bukkit-*.jar` in the server's `plugins/` folder.
-3. **Each backend `config.yml`** — set:
-
-```yaml
-storage: mysql
-
-store-on-join:
-  enabled: true
-
-cross-server:
-  enabled: true
-  verbose-logging: false   # set true temporarily for debugging
-```
-
-4. **Each backend `config-mysql.yml`** — point to the **same** MySQL database:
-
-```yaml
-mysql:
-  host: your-shared-db-host
-  port: 3306
-  database: ezeconomy
-  username: ezeconomy
-  password: your-password
-  table: balances
-```
-
-5. **Restart** the Velocity proxy first, then all backend servers.
-
-### Troubleshooting
-
-- **"Player not found" on cross-server `/pay` or `/bal`**: make sure `cross-server.enabled: true` and `store-on-join.enabled: true` are set on the backend where the command is run. The target player must have joined at least once since `store-on-join` was enabled.
-- **Enable verbose logging**: set `cross-server.verbose-logging: true` temporarily to see `PLAYER_LIST` and `NOTIFY` messages in the console.
-- **Command conflicts**: if another plugin intercepts `/pay` or `/payall`, use the built-in aliases `/ezpay` and `/ezpayall` instead.
-- **Vault required**: each Paper backend needs `Vault` (or `Vault-Updated`) installed so EzEconomy can register as the economy provider.
-
----
-
-## 🔗 Integration
-
-- EzEconomy automatically registers as a Vault provider
-- No extra setup required for Vault-compatible plugins
-- **PlaceholderAPI support**:
-  - Use placeholders in chat, scoreboard, and other plugins:
-    - `%ezeconomy_balance%` – Your balance
-    - `%ezeconomy_balance_<currency>%` – Your balance in a specific currency (e.g., `%ezeconomy_balance_euro%`)
-    - `%ezeconomy_bank_<bank>%` – Balance of a specific bank
-    - `%ezeconomy_top_1%` – Top 1 player balance (replace 1 with rank)
-    - `%ezeconomy_currency%` – Your preferred currency
-  - Works with all PlaceholderAPI-compatible plugins
-
----
-
-## 🛠️ Developer: Custom Storage Providers
-
-EzEconomy supports custom storage backends (YML, MySQL, SQLite, MongoDB, or your own). You can implement your own provider for any database or storage system.
-
-**How to add a custom provider:**
-
-1. Implement the `StorageProvider` interface in your plugin or module.
-2. Register your provider before EzEconomy loads:
-   ```java
-   EzEconomy.registerStorageProvider(new YourProvider(...));
-   ```
-3. Only one provider can be registered. If set, EzEconomy will use it instead of YML/MySQL.
-4. See the JavaDoc in `StorageProvider.java` for required methods.
-
-This allows you to use SQLite, MongoDB, Redis, or any other system for player balances and banks.
+Based on the original EzEconomy project by ez-plugins; rewritten and rebranded as GitEconomy.

@@ -1,6 +1,6 @@
 # Storage & Data Safety
 
-EzEconomy supports multiple backends. Choose the one that aligns with your infrastructure and scale.
+GitEconomy supports multiple backends. Choose the one that aligns with your infrastructure and scale.
 
 ## Storage Providers
 
@@ -21,10 +21,6 @@ EzEconomy supports multiple backends. Choose the one that aligns with your infra
 ## Multi-Currency Storage
 
 When multi-currency is enabled, each player can store balances per currency. Ensure you define conversion rates for all supported currency pairs.
-
-## Banks
-
-Banks are stored in a dedicated collection/table (depending on backend). Make sure to include the bank table/collection in your backups.
 
 ## Backups
 

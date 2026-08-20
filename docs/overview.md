@@ -1,6 +1,6 @@
-# EzEconomy
+# GitEconomy
 
-EzEconomy is a Vault-compatible economy provider built for reliability, clarity, and scalability. It supports multiple storage backends, optional multi-currency systems, and bank accounts while keeping operations safe under high concurrency.
+GitEconomy is a Vault-compatible economy provider by **GitEpildev** & **Epildevconnect Ltd**. It supports multiple storage backends and optional multi-currency while keeping operations safe under high concurrency. There is no banking subsystem.
 
 ## Highlights
 
@@ -8,17 +8,16 @@ EzEconomy is a Vault-compatible economy provider built for reliability, clarity,
 - **Flexible storage**: YML, MySQL, SQLite, MongoDB, or a custom provider.
 - **Multi-currency**: Optional per-player currency selection with conversion rates.
 - **Async caching**: Keeps balance lookups fast on busy servers.
-- **Banking system**: Shared accounts with member management and permissions.
-- **Optional banking toggle**: Disable built-in banking via `banking.enabled: false` in `config.yml` if you run an external bank plugin.
+- **Core commands**: `/balance`, `/pay`, `/baltop`, `/eco`, `/currency`, `/giteconomy`.
 
 ## Supported Versions
 
-EzEconomy targets modern Paper/Spigot servers that support Vault. For best results, use the latest versions of Paper, Vault, and EzEconomy.
+GitEconomy targets modern Paper/Spigot servers that support Vault. For best results, use the latest versions of Paper, Vault, and GitEconomy.
 
 ## Quick Start
 
-1. Install **Vault** and **EzEconomy**.
-2. Place `EzEconomy.jar` in your plugins folder.
+1. Install **Vault** and **GitEconomy**.
+2. Place `giteconomy-bukkit-*.jar` in your plugins folder.
 3. Configure `config.yml` and your selected storage config file.
 4. Restart the server to generate data files.
 
@@ -26,14 +25,14 @@ EzEconomy targets modern Paper/Spigot servers that support Vault. For best resul
 
 - Replace legacy economies without changing other plugins.
 - Provide multiple currencies for different game modes.
-- Offer shared bank accounts for guilds or factions.
+- Run a simple player-balance economy with Vault shops and PlaceholderAPI displays.
 
 ## Where to Go Next
 
 - **Configuration**: See storage-specific settings and multi-currency setup.
 - **Commands & Permissions**: Confirm staff and player access rules.
 - **Storage details**: Understand backend behavior and data safety.
-- **Events**: EzEconomy exposes transaction events for integrations and moderation.
+- **Events**: GitEconomy exposes transaction events for integrations and moderation.
   See:
   - `docs/api/event/PreTransactionEvent.md`
   - `docs/api/event/PostTransactionEvent.md`

@@ -1,12 +1,12 @@
-# Custom Storage Providers for EzEconomy
+# Custom Storage Providers for GitEconomy
 
-EzEconomy supports pluggable storage backends for all economy, bank, and currency operations. You can implement your own provider to use a custom database, cloud service, or any data source.
+GitEconomy supports pluggable storage backends for player balances, currencies, and optional transaction history. You can implement your own provider to use a custom database, cloud service, or any data source.
 
 ## Overview
 
-A storage provider is any class that implements the `StorageProvider` interface from the EzEconomy API. This interface defines all required methods for player balances, banks, currencies, and (optionally) transactions.
+A storage provider is any class that implements the `StorageProvider` interface from the GitEconomy API.
 
-- **Location:** `com.skyblockexp.ezeconomy.api.storage.StorageProvider`
+- **Location:** `com.gitepildev.giteconomy.api.storage.StorageProvider`
 - **Purpose:** Abstracts all persistent data operations for the plugin
 - **Use Cases:**
   - Integrate with a custom SQL/NoSQL database
@@ -25,15 +25,15 @@ A storage provider is any class that implements the `StorageProvider` interface 
 
 2. **Register Your Provider**
 
-   Register your provider in your plugin's `onLoad` method, before EzEconomy finishes loading:
+   Register your provider in your plugin's `onLoad` method, before GitEconomy finishes loading:
 
    ```java
-   import com.skyblockexp.ezeconomy.api.storage.StorageProvider;
-   import com.skyblockexp.ezeconomy.EzEconomy;
+   import com.gitepildev.giteconomy.api.storage.StorageProvider;
+   import com.gitepildev.giteconomy.GitEconomy;
 
    public void onLoad() {
        StorageProvider customProvider = new MyProvider(...);
-       EzEconomy.registerStorageProvider(customProvider);
+       GitEconomy.registerStorageProvider(customProvider);
    }
    ```
 
@@ -41,15 +41,16 @@ A storage provider is any class that implements the `StorageProvider` interface 
 
    Your provider must implement all methods for:
    - Player balances (get, set, deposit, withdraw)
-   - Bank operations (create, delete, balance, members)
-   - Currency management
+   - Currency-aware balance maps
    - (Optional) Transaction history
+   - Lifecycle (`init`, `load`, `save`, `shutdown`)
+   - Player metadata (`getPlayer`, and optionally `resolvePlayerByName` / `persistPlayerInfo`)
 
    See the Javadoc for `StorageProvider` for method signatures and expected behaviors.
 
 4. **Legacy Compatibility**
 
-   For single-currency servers, legacy overloads are provided. You must implement these for full compatibility with older plugins.
+   For single-currency servers, legacy overloads are provided. You must implement the multi-currency methods; legacy defaults delegate to currency `"dollar"`.
 
 ## Guidelines
 
@@ -70,14 +71,14 @@ public class ExampleProvider implements StorageProvider {
 ## Notes
 
 - Only one custom provider can be registered at a time.
-- Register your provider before EzEconomy finishes loading.
-- See the EzEconomy source for built-in provider examples (YML, SQLite, MySQL, MongoDB).
+- Register your provider before GitEconomy finishes loading.
+- See the GitEconomy source for built-in provider examples (YML, SQLite, MySQL, MongoDB).
 
 ---
 
 # `StorageProvider` Interface Reference
 
-This section documents all methods of the `StorageProvider` interface. Implement all required methods for a fully functional provider.
+This section documents the methods of the `StorageProvider` interface. Implement all required methods for a fully functional provider.
 
 ## Initialization & Lifecycle
 
@@ -102,8 +103,19 @@ This section documents all methods of the `StorageProvider` interface. Implement
   Deposit to a player's balance.
 - `Map<UUID, Double> getAllBalances(String currency)`  
   Get all player balances for a currency.
+- `boolean playerExists(UUID uuid)`  
+  Return true if a record exists for the player (default falls back to non-zero balance).
 - `Set<String> cleanupOrphanedPlayers()`  
   Remove balances for unknown players. Default: no-op.
+
+## Player Metadata
+
+- `EconomyPlayer getPlayer(UUID uuid)`  
+  Return last-known name/displayName when available, or null.
+- `UUID resolvePlayerByName(String name)`  
+  Resolve a UUID by name (default: null).
+- `void persistPlayerInfo(UUID uuid, String name, String displayName)`  
+  Persist player metadata (default: no-op).
 
 ## Transactions
 
@@ -119,35 +131,6 @@ This section documents all methods of the `StorageProvider` interface. Implement
 - `TransferResult transfer(UUID fromUuid, UUID toUuid, String currency, double debitAmount, double creditAmount)`  
   Transfer custom debit/credit amounts between players.
 
-## Bank Operations
-
-- `boolean createBank(String name, UUID owner)`  
-  Create a new bank.
-- `boolean deleteBank(String name)`  
-  Delete a bank.
-- `boolean bankExists(String name)`  
-  Check if a bank exists.
-- `double getBankBalance(String name, String currency)`  
-  Get a bank's balance for a currency.
-- `void setBankBalance(String name, String currency, double amount)`  
-  Set a bank's balance for a currency.
-- `boolean tryWithdrawBank(String name, String currency, double amount)`  
-  Attempt to withdraw from a bank.
-- `void depositBank(String name, String currency, double amount)`  
-  Deposit to a bank.
-- `Set<String> getBanks()`  
-  Get all bank names.
-- `boolean isBankOwner(String name, UUID uuid)`  
-  Check if a UUID is the owner of a bank.
-- `boolean isBankMember(String name, UUID uuid)`  
-  Check if a UUID is a member of a bank.
-- `boolean addBankMember(String name, UUID uuid)`  
-  Add a member to a bank.
-- `boolean removeBankMember(String name, UUID uuid)`  
-  Remove a member from a bank.
-- `Set<UUID> getBankMembers(String name)`  
-  Get all member UUIDs of a bank.
-
 ## Connection & Status
 
 - `boolean isConnected()`  
@@ -155,16 +138,12 @@ This section documents all methods of the `StorageProvider` interface. Implement
 
 ## Legacy Overloads (Single-Currency)
 
-All legacy methods use the default currency "dollar". Implement for compatibility with older plugins:
+All legacy methods use the default currency `"dollar"`. Prefer the currency-aware overloads:
 - `double getBalance(UUID uuid)`
 - `void setBalance(UUID uuid, double amount)`
 - `boolean tryWithdraw(UUID uuid, double amount)`
 - `void deposit(UUID uuid, double amount)`
 - `Map<UUID, Double> getAllBalances()`
-- `double getBankBalance(String name)`
-- `void setBankBalance(String name, double amount)`
-- `boolean tryWithdrawBank(String name, double amount)`
-- `void depositBank(String name, double amount)`
 
 ## Thread Safety & Atomicity
 
@@ -179,6 +158,6 @@ All legacy methods use the default currency "dollar". Implement for compatibilit
 ---
 
 **See Also:**
-- [API Reference: StorageProvider](../../src/main/java/com/skyblockexp/ezeconomy/api/storage/StorageProvider.java)
+- [API Reference: StorageProvider](../../src/main/java/com/gitepildev/giteconomy/api/storage/StorageProvider.java)
 - [developer-api.md](../developer-api.md)
-- [storage.md](../storage.md)
+- [storage.md](../storage/storage.md)

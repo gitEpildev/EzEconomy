@@ -1,0 +1,93 @@
+package com.gitepildev.giteconomy.service;
+
+import com.gitepildev.giteconomy.core.GitEconomyPlugin;
+import com.gitepildev.giteconomy.api.storage.StorageProvider;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockbukkit.mockbukkit.MockBukkit;
+import org.mockbukkit.mockbukkit.entity.PlayerMock;
+
+import java.math.BigDecimal;
+import java.util.UUID;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+class PaymentExecutorDistributedLockTest {
+
+    private Object server;
+
+    @BeforeEach
+    void setup() throws Exception {
+        try { server = MockBukkit.mock(); } catch (IllegalStateException e) { MockBukkit.unmock(); server = MockBukkit.mock(); }
+    }
+
+    @AfterEach
+    void teardown() { try { MockBukkit.unmock(); } catch (Exception ignored) {} }
+
+    @Test
+    void distributedLock_acquired_depositsConvertedAmount_and_releases() throws Exception {
+        Object pFrom = server.getClass().getMethod("addPlayer", String.class).invoke(server, "alice");
+        Object pTo = server.getClass().getMethod("addPlayer", String.class).invoke(server, "bob");
+        PlayerMock from = (PlayerMock) pFrom;
+        PlayerMock to = (PlayerMock) pTo;
+
+        GitEconomyPlugin plugin = (GitEconomyPlugin) MockBukkit.load(com.gitepildev.giteconomy.core.GitEconomyPlugin.class);
+        try {
+            plugin.getConfig().set("multi-currency.conversion.dollar.euro", "2.0");
+            plugin.getConfig().set("multi-currency.currencies.dollar.decimals", 2);
+            plugin.getConfig().set("multi-currency.currencies.euro.decimals", 2);
+
+            final java.util.concurrent.atomic.AtomicReference<java.util.Map.Entry<UUID, java.util.Map.Entry<String, Double>>> lastDeposit = new java.util.concurrent.atomic.AtomicReference<>();
+            StorageProvider storage = new StorageProvider() {
+                @Override public void init() {}
+                @Override public void load() {}
+                @Override public void save() {}
+                @Override public boolean isConnected() { return true; }
+                @Override public double getBalance(UUID uuid, String currency) { return uuid.equals(from.getUniqueId()) ? 100.0 : 0.0; }
+                @Override public com.gitepildev.giteconomy.dto.EconomyPlayer getPlayer(UUID uuid) { return new com.gitepildev.giteconomy.dto.EconomyPlayer(uuid, uuid.toString(), uuid.toString()); }
+                @Override public boolean playerExists(UUID uuid) { return true; }
+                @Override public void setBalance(UUID uuid, String currency, double amount) {}
+                @Override public void logTransaction(com.gitepildev.giteconomy.api.storage.models.Transaction transaction) {}
+                @Override public boolean tryWithdraw(UUID uuid, String currency, double amount) { return uuid.equals(from.getUniqueId()) && amount <= 100.0; }
+                @Override public void deposit(UUID uuid, String currency, double amount) { lastDeposit.set(new java.util.AbstractMap.SimpleEntry<>(uuid, new java.util.AbstractMap.SimpleEntry<>(currency, amount))); }
+                @Override public java.util.Map<UUID, Double> getAllBalances(String currency) { return java.util.Collections.emptyMap(); }
+                @Override public java.util.List<com.gitepildev.giteconomy.api.storage.models.Transaction> getTransactions(UUID uuid, String currency) { return java.util.Collections.emptyList(); }
+                @Override public com.gitepildev.giteconomy.storage.TransferResult transfer(UUID fromUuid, UUID toUuid, String currency, double debitAmount, double creditAmount) { return com.gitepildev.giteconomy.storage.TransferResult.success(0,0); }
+                @Override public void shutdown() {}
+            };
+
+            plugin.setStorage(storage);
+
+            // ensure bob prefers euro
+            com.gitepildev.giteconomy.manager.CurrencyPreferenceManager pref = new com.gitepildev.giteconomy.manager.CurrencyPreferenceManager(plugin) {
+                @Override public String getPreferredCurrency(UUID uuid) { return uuid.equals(to.getUniqueId()) ? "euro" : super.getPreferredCurrency(uuid); }
+            };
+            plugin.setCurrencyPreferenceManager(pref);
+
+            // install a basic MessageProvider to avoid NPEs
+            plugin.setMessageProvider(new com.gitepildev.giteconomy.core.MessageProvider(new org.bukkit.configuration.file.YamlConfiguration(), new org.bukkit.configuration.file.YamlConfiguration(), "en"));
+
+            // install a fake distributed LockManager that records release calls
+            final java.util.concurrent.atomic.AtomicBoolean released = new java.util.concurrent.atomic.AtomicBoolean(false);
+            com.gitepildev.giteconomy.lock.LockManager lm = new com.gitepildev.giteconomy.lock.LockManager() {
+                @Override public String acquire(UUID uuid, long ttlMs, long retryMs, int maxAttempts) { return "tkn-" + uuid.toString(); }
+                @Override public boolean release(UUID uuid, String token) { released.set(true); return true; }
+            };
+            plugin.setLockManager(lm);
+
+            // run payment
+            boolean res = PaymentExecutor.execute(plugin, from, "bob", BigDecimal.valueOf(10.0), "dollar");
+            assertTrue(res);
+
+            java.util.Map.Entry<UUID, java.util.Map.Entry<String, Double>> d = lastDeposit.get();
+            assertNotNull(d, "Expected a deposit to have occurred");
+            assertEquals(to.getUniqueId(), d.getKey());
+            assertEquals("euro", d.getValue().getKey());
+            assertEquals(20.0, d.getValue().getValue(), 0.0001);
+            assertTrue(released.get(), "Expected distributed lock to be released");
+        } finally {
+            try { plugin.getServer().getPluginManager().disablePlugin(plugin); } catch (Exception ignored) {}
+        }
+    }
+}

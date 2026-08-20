@@ -1,4 +1,4 @@
-# Testing Guidelines for EzEconomy
+# Testing Guidelines for GitEconomy
 
 Purpose
 - Provide clear, readable, and useful tests that document expected behavior and prevent regressions.

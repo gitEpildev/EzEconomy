@@ -1,7 +1,7 @@
 # Default bungeecord locking configuration
-# Enable only if you have the ezeconomy-bungeecord extension and proxy deployed
+# Enable only if you have the giteconomy-bungeecord extension and proxy deployed
 enabled: false
-channel: ezeconomy:locks
+channel: giteconomy:locks
 ttl-ms: 60000
 retry-ms: 150
 max-attempts: 5

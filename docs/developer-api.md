@@ -13,7 +13,5 @@ The full developer API documentation now lives under the `docs/api/` folder.
 - [PostTransactionEvent](api/event/PostTransactionEvent.md)
 - [PlayerPayPlayerEvent](api/event/PlayerPayPlayerEvent.md)
 - [TransactionType](api/event/TransactionType.md)
-- [BankPreTransactionEvent](api/event/BankPreTransactionEvent.md)
-- [BankPostTransactionEvent](api/event/BankPostTransactionEvent.md)
 
 These pages include method summaries, usage notes, and examples for integrations.
