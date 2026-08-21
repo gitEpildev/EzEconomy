@@ -406,7 +406,7 @@ public class MongoDBStorageProvider implements StorageProvider {
         Map<UUID, Double> map = new HashMap<>();
         com.gitepildev.giteconomy.lock.LockManager lm = plugin.getLockManager();
         if (lm != null) {
-            // global read; acquire is per-UUID so we won't lock all UUIDs — fall back to synchronized for full scan
+            // global read; acquire is per-UUID so we won't lock all UUIDs - fall back to synchronized for full scan
         }
         synchronized (lock) {
             for (Document doc : balances.find(new Document("currency", currency))) {

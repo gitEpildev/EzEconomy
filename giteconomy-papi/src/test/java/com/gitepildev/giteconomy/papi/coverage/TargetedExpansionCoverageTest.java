@@ -90,7 +90,7 @@ public class TargetedExpansionCoverageTest {
         String shortFmt = expansion.onPlaceholderRequest(fake, "balance_short");
         assertNotNull(shortFmt);
 
-        // Banking removed from GitEconomy — bank placeholders are unsupported
+        // Banking removed from GitEconomy - bank placeholders are unsupported
     }
 
     @Test

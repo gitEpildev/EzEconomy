@@ -126,7 +126,7 @@ public class PayCommand implements CommandExecutor {
         // Prefer online exact match to avoid blocking lookups.
         Player online = Bukkit.getPlayerExact(operands[0]);
         OfflinePlayer to = (online != null) ? online : null;
-        // Determine currency (optional 3rd arg) — use before parsing so parseMoney can know currency context
+        // Determine currency (optional 3rd arg) - use before parsing so parseMoney can know currency context
         final String currency;
         if (operands.length == 3) {
             String tmpCurrency = operands[2].toLowerCase();

@@ -180,7 +180,7 @@ public class VaultEconomyImpl implements Economy {
                 : new EconomyResponse(0, balance, EconomyResponse.ResponseType.FAILURE, "Deposit failed");
     }
 
-    // --- Bank methods (Vault interface stubs — banks are not supported) ---
+    // --- Bank methods (Vault interface stubs - banks are not supported) ---
     @Override
     public EconomyResponse createBank(String name, String player) {
         return notSupported();
@@ -270,7 +270,7 @@ public class VaultEconomyImpl implements Economy {
     @Override public EconomyResponse depositPlayer(String playerName, String worldName, double amount) { return depositPlayer(playerName, amount); }
     @Override public EconomyResponse depositPlayer(OfflinePlayer player, String worldName, double amount) { return depositPlayer(player, amount); }
 
-    // --- Multi-currency bank helpers (stubs — banks are not supported) ---
+    // --- Multi-currency bank helpers (stubs - banks are not supported) ---
     public EconomyResponse bankBalance(String name, String currency) {
         return notSupported();
     }
