@@ -1,4 +1,5 @@
-# EzEconomy configuration
+# GitEconomy configuration
+# by GitEpildev & Epildevconnect Ltd
 # storage: 'yml', 'mysql', 'sqlite', or 'mongodb'
 storage: yml
 
@@ -6,16 +7,6 @@ storage: yml
 # The plugin loads `languages/<language>.yml` and falls back to `languages/en.yml`.
 language: en
 
-# Daily login reward (optional)
-daily-reward:
-  enabled: false
-  amount: 100
-  currency: default
-  cooldown-hours: 24
-  permission: ezeconomy.daily
-  message: "&aYou received &e%amount% %currency% &afor your daily login!"
-  sound: ENTITY_EXPERIENCE_ORB_PICKUP
-  debug: false
 
 # When enabled, the storage provider will create/store a record (UUID + name)
 # for each player when they join. Required for Velocity networks so that
@@ -24,8 +15,8 @@ daily-reward:
 store-on-join:
   enabled: false
 
-# Cross-server messaging via the ezeconomy-velocity proxy plugin.
-# Requires: ezeconomy-velocity-*.jar on the Velocity proxy, storage: mysql
+# Cross-server messaging via the giteconomy-velocity proxy plugin.
+# Requires: giteconomy-velocity-*.jar on the Velocity proxy, storage: mysql
 # with all backends sharing the same database, and store-on-join.enabled: true.
 # Leave disabled (false) for single-server setups.
 cross-server:
@@ -36,13 +27,6 @@ cross-server:
 # Timeout used when async contexts must execute a sync payment event.
 payment:
   sync-event-timeout-ms: 5000
-
-# Banking feature toggle: set to `false` to disable built-in bank subsystem
-# (commands, GUIs, Vault bank methods, and bank PAPI placeholders).
-banking:
-  enabled: true
-
-bank-interest-interval-ticks: 72000 # How often (in ticks) to pay bank interest (default: 1 hour)
 
 # Multi-currency support (optional)
 multi-currency:
@@ -74,7 +58,7 @@ multi-currency:
 
 # Locking strategy used for balance updates. Options: LOCAL, REDIS, BUNGEECORD
 # LOCAL: plugin uses in-process locks only.
-# REDIS: uses a distributed Redis lock (requires ezeconomy-redis extension and redis.yml).
+# REDIS: uses a distributed Redis lock (requires giteconomy-redis extension and redis.yml).
 # BUNGEECORD: use a proxy-backed lock transport via plugin messaging (requires bungeecord proxy component and bungeecord.yml).
 locking-strategy: LOCAL
 locking:
@@ -128,7 +112,7 @@ pay:
   pay_all:
     # Enabled by default. Set to false to disable /pay * entirely.
     enabled: true
-    # Require extra permission to use /pay * (default: true). If false, any player with ezeconomy.pay may use it.
+    # Require extra permission to use /pay * (default: true). If false, any player with giteconomy.pay may use it.
     require_permission: true
     # When true, /pay * will include offline players (based on stored balances).
     # Default: false (only online players are targeted).

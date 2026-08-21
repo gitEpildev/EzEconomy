@@ -1,0 +1,12 @@
+name: GitEconomy-PAPI
+main: com.gitepildev.giteconomy.papi.GitEconomyPapiPlugin
+version: 1.0.0
+api-version: 1.21
+depend:
+  - PlaceholderAPI
+softdepend:
+  - GitEconomy
+authors:
+  - GitEpildev
+  - Epildevconnect Ltd
+description: "PlaceholderAPI expansion for GitEconomy (exposes multi-currency placeholders)."

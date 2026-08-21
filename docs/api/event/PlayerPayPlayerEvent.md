@@ -1,6 +1,6 @@
 # PlayerPayPlayerEvent
 
-Class: `com.skyblockexp.ezeconomy.api.events.PlayerPayPlayerEvent`
+Class: `com.gitepildev.giteconomy.api.events.PlayerPayPlayerEvent`
 
 Overview:
 - Specialized event that extends `PreTransactionEvent` for player-to-player payments.

@@ -3,13 +3,13 @@
 ## Quick summary
 - Redis is optional. The plugin defaults to local (in-JVM) locking for single-server setups.
 - Use Redis only for multi-server deployments that need cross-instance locking.
-- The Redis implementation is shipped as an optional extension jar (`ezeconomy-redis.jar`).
+- The Redis implementation is shipped as an optional extension jar (`giteconomy-redis.jar`).
 - Redis is optional. The plugin defaults to local (in-JVM) locking for single-server setups.
 - Use Redis only for multi-server deployments that need cross-instance locking.
-- The Redis implementation is shipped as an optional extension jar (`ezeconomy-redis.jar`).
+- The Redis implementation is shipped as an optional extension jar (`giteconomy-redis.jar`).
 
 ## Enable Redis (high level)
-1. Install the optional extension: put `ezeconomy-redis.jar` into `plugins/EzEconomy/libs/` and restart your server.
+1. Install the optional extension: put `giteconomy-redis.jar` into `plugins/GitEconomy/libs/` and restart your server.
 2. In the main `config.yml` set `locking-strategy: REDIS` and restart.
 3. Configure `redis.yml` (example below) and ensure the Redis server is reachable.
 
@@ -25,7 +25,7 @@ database: 0
 ttl-ms: 10000
 retry-ms: 50
 max-attempts: 20
-prefix: "ezeconomy:lock:"
+prefix: "giteconomy:lock:"
 
 # If Redis initialization fails, the plugin can fall back to local locking
 fallback-to-local: true
@@ -37,8 +37,8 @@ fallback-to-local: true
 - `fallback-to-local: true` means a Redis connection error will not break the server — it will switch to local locking. Set to `false` only if you want startup to fail on Redis errors.
 
 ## Installation checklist
-- Build or download `ezeconomy-redis.jar` (this includes the Redis client and is optional).
-- Place it at `plugins/EzEconomy/libs/ezeconomy-redis.jar`.
+- Build or download `giteconomy-redis.jar` (this includes the Redis client and is optional).
+- Place it at `plugins/GitEconomy/libs/giteconomy-redis.jar`.
 - Edit `config.yml` and set `locking-strategy: REDIS`.
 - Edit `redis.yml` with your Redis host/credentials.
 - Restart the server and check logs for a message like: "Using RedisLockManager" or "Falling back to LocalLockManager".

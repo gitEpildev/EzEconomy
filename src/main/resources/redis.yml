@@ -18,7 +18,7 @@ retry-ms: 50
 max-attempts: 100
 
 # Prefix for lock keys to avoid collisions
-lock-prefix: "ezeconomy:lock:"
+lock-prefix: "giteconomy:lock:"
 
 # Optional client settings
 client-read-timeout-ms: 2000

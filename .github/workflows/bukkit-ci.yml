@@ -3,13 +3,13 @@ name: Bukkit module CI
 on:
   pull_request:
     paths:
-      - 'ezeconomy-bukkit/**'
+      - 'giteconomy-bukkit/**'
   push:
     branches:
       - main
       - master
     paths:
-      - 'ezeconomy-bukkit/**'
+      - 'giteconomy-bukkit/**'
 
 jobs:
   build:
@@ -32,4 +32,4 @@ jobs:
             ${{ runner.os }}-m2-
 
       - name: Build and test Bukkit module
-        run: mvn -B -DskipTests=false -pl ezeconomy-bukkit -am clean test package
+        run: mvn -B -DskipTests=false -pl giteconomy-bukkit -am clean test package

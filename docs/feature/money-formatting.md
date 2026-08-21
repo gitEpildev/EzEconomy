@@ -1,6 +1,6 @@
 # Money Formatting
 
-This page summarizes recommended options for formatting money amounts in EzEconomy: numeric precision, separators, currency symbols, localization, rounding, compact formats (K/M/B), and Minecraft-specific color codes.
+This page summarizes recommended options for formatting money amounts in GitEconomy: numeric precision, separators, currency symbols, localization, rounding, compact formats (K/M/B), and Minecraft-specific color codes.
 
 ## Overview
 
@@ -33,7 +33,7 @@ Recommendation: Use `long` for typical Minecraft economy (scaled by 100) and `Bi
 ## Minecraft-specific presentation
 
 - **Color codes:** Support legacy ampersand `&` formatting for older versions and hex (`&#RRGGBB`) for newer ones. Allow separate color for positive/negative values.
-- **Placeholders & GUI:** Provide both full and compact placeholders (e.g., `%ezeconomy_balance_formatted%` and `%ezeconomy_balance_short%`).
+- **Placeholders:** Provide both full and compact placeholders (e.g., `%giteconomy_balance_formatted%` and `%giteconomy_balance_short%`).
 
 ## Config examples
 
@@ -100,11 +100,11 @@ String out = df.format(amount);
 ## PlaceholderAPI / plugin placeholders
 
 - Provide placeholders for common needs:
-  - `%ezeconomy_balance%` — raw numeric value
-  - `%ezeconomy_balance_formatted%` — formatted per `money-format` settings
-  - `%ezeconomy_balance_short%` — compact K/M form
+  - `%giteconomy_balance%` — raw numeric value
+  - `%giteconomy_balance_formatted%` — formatted per `money-format` settings
+  - `%giteconomy_balance_short%` — compact K/M form
 
-Document the difference and recommended use cases in GUI vs chat vs logs.
+Document the difference and recommended use cases in scoreboards vs chat vs logs.
 
 ## Recommendations & best practices
 
@@ -112,7 +112,7 @@ Document the difference and recommended use cases in GUI vs chat vs logs.
 - **Make presentation configurable:** Many regions prefer different separators, symbol placement, or compact notation.
 - **Avoid floating-point for storage:** Use `long` cents or `BigDecimal` to prevent precision loss.
 - **Explicit rounding:** Always document the rounding mode used for displayed and persisted values.
-- **Provide both full and compact placeholders:** Give server owners flexibility for GUIs, chat, and action bar displays.
+- **Provide both full and compact placeholders:** Give server owners flexibility for scoreboards, chat, and action bar displays.
 
 ## Next steps for integrators
 

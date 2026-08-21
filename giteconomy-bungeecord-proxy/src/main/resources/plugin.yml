@@ -1,0 +1,4 @@
+name: GitEconomy-Bungeecord-Proxy
+main: com.gitepildev.giteconomy.bungeecord.proxy.GitBungeeProxy
+version: 0.1.0
+authors: [GitEpildev, Epildevconnect Ltd]

@@ -2,19 +2,31 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <groupId>com.github.ez-plugins</groupId>
-    <artifactId>ezeconomy-parent</artifactId>
-    <version>2.5.1</version>
+    <groupId>com.gitepildev</groupId>
+    <artifactId>giteconomy-parent</artifactId>
+    <version>2.6.0</version>
     <packaging>pom</packaging>
-    <name>EzEconomy</name>
+    <name>GitEconomy</name>
     <description>Vault-compatible economy provider with YML and MySQL support</description>
+
+    <organization>
+        <name>Epildevconnect Ltd</name>
+        <url>https://github.com/gitEpildev</url>
+    </organization>
+    <developers>
+        <developer>
+            <id>gitepildev</id>
+            <name>GitEpildev</name>
+            <organization>Epildevconnect Ltd</organization>
+        </developer>
+    </developers>
     <modules>
-        <module>ezeconomy-bukkit</module>
-        <module>ezeconomy-redis</module>
-        <module>ezeconomy-papi</module>
-        <module>ezeconomy-bungeecord</module>
-        <module>ezeconomy-bungeecord-proxy</module>
-        <module>ezeconomy-velocity</module>
+        <module>giteconomy-bukkit</module>
+        <module>giteconomy-redis</module>
+        <module>giteconomy-papi</module>
+        <module>giteconomy-bungeecord</module>
+        <module>giteconomy-bungeecord-proxy</module>
+        <module>giteconomy-velocity</module>
     </modules>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -29,8 +41,8 @@
         <mockbukkit.artifactId>mockbukkit-v1.21</mockbukkit.artifactId>
         <mockbukkit.version>4.108.0</mockbukkit.version>
         
-        <github.owner>ez-plugins</github.owner>
-        <github.repository>ezeconomy</github.repository>
+        <github.owner>gitEpildev</github.owner>
+        <github.repository>GitEconomy</github.repository>
     </properties>
     <build>
         <resources>
@@ -79,11 +91,11 @@
                             <relocations>
                                 <relocation>
                                     <pattern>org.bstats</pattern>
-                                    <shadedPattern>com.skyblockexp.ezeconomy.shaded.bstats</shadedPattern>
+                                    <shadedPattern>com.gitepildev.giteconomy.shaded.bstats</shadedPattern>
                                 </relocation>
                                 <relocation>
                                     <pattern>net.kyori</pattern>
-                                    <shadedPattern>com.skyblockexp.ezeconomy.shaded.net.kyori</shadedPattern>
+                                    <shadedPattern>com.gitepildev.giteconomy.shaded.net.kyori</shadedPattern>
                                 </relocation>
                             </relocations>
                         </configuration>

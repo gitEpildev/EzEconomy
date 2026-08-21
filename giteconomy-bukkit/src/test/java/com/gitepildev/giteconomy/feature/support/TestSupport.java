@@ -1,0 +1,199 @@
+package com.gitepildev.giteconomy.feature.support;
+
+import org.mockbukkit.mockbukkit.MockBukkit;
+import com.gitepildev.giteconomy.core.GitEconomyPlugin;
+
+import java.lang.reflect.Field;
+import com.gitepildev.giteconomy.api.storage.StorageProvider;
+import com.gitepildev.giteconomy.api.storage.models.Transaction;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+
+/**
+ * Test utilities shared between feature tests.
+ */
+
+public final class TestSupport {
+    private TestSupport() {}
+
+    public static Object setupMockServer() {
+        try {
+            return MockBukkit.mock();
+        } catch (IllegalStateException e) {
+            try { MockBukkit.unmock(); } catch (Exception ignored) {}
+            return MockBukkit.mock();
+        }
+    }
+
+    public static GitEconomyPlugin loadPlugin(Object server) {
+        GitEconomyPlugin plugin = (GitEconomyPlugin) MockBukkit.load(GitEconomyPlugin.class);
+        try {
+            plugin.registerEconomy();
+        } catch (Exception ignored) {}
+        return plugin;
+    }
+
+    public static void tearDown() {
+        try {
+            MockBukkit.unmock();
+        } catch (Exception ignored) {}
+    }
+
+    public static void injectField(Object target, String fieldName, Object value) {
+        try {
+            Class<?> cls = target.getClass();
+            while (cls != null) {
+                try {
+                    Field f = cls.getDeclaredField(fieldName);
+                    f.setAccessible(true);
+                    f.set(target, value);
+                    return;
+                } catch (NoSuchFieldException e) {
+                    cls = cls.getSuperclass();
+                }
+            }
+            throw new NoSuchFieldException(fieldName);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Lightweight in-memory StorageProvider for feature tests.
+     */
+    public static class MockStorage implements StorageProvider {
+        private final Map<String, Double> balances = new HashMap<>();
+
+        private String key(UUID uuid, String currency) {
+            return uuid.toString() + ":" + currency;
+        }
+
+        @Override
+        public void init() {}
+
+        @Override
+        public void load() {}
+
+        @Override
+        public void save() {}
+
+        @Override
+        public double getBalance(UUID uuid, String currency) {
+            return balances.getOrDefault(key(uuid, currency), 0.0);
+        }
+
+        @Override
+        public void setBalance(UUID uuid, String currency, double amount) {
+            balances.put(key(uuid, currency), amount);
+        }
+
+        @Override
+        public void logTransaction(Transaction transaction) {}
+
+        @Override
+        public java.util.List<Transaction> getTransactions(UUID uuid, String currency) { return java.util.Collections.emptyList(); }
+
+        @Override
+        public boolean tryWithdraw(UUID uuid, String currency, double amount) {
+            double bal = getBalance(uuid, currency);
+            if (bal < amount) return false;
+            setBalance(uuid, currency, bal - amount);
+            return true;
+        }
+
+        @Override
+        public void deposit(UUID uuid, String currency, double amount) {
+            double bal = getBalance(uuid, currency);
+            setBalance(uuid, currency, bal + amount);
+        }
+
+        @Override
+        public java.util.Map<UUID, Double> getAllBalances(String currency) {
+            java.util.Map<UUID, Double> out = new java.util.HashMap<>();
+            for (java.util.Map.Entry<String, Double> e : balances.entrySet()) {
+                String k = e.getKey();
+                int idx = k.lastIndexOf(":");
+                if (idx <= 0) continue;
+                String uuidStr = k.substring(0, idx);
+                String cur = k.substring(idx + 1);
+                if (!currency.equals(cur)) continue;
+                try {
+                    UUID id = UUID.fromString(uuidStr);
+                    out.put(id, e.getValue());
+                } catch (IllegalArgumentException ignore) {}
+            }
+            return out;
+        }
+
+        @Override
+        public boolean playerExists(UUID uuid) {
+            String prefix = uuid.toString() + ":";
+            for (String k : balances.keySet()) {
+                if (k.startsWith(prefix)) return true;
+            }
+            return false;
+        }
+
+        @Override
+        public void shutdown() {}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        @Override
+        public com.gitepildev.giteconomy.dto.EconomyPlayer getPlayer(UUID uuid) {
+            org.bukkit.OfflinePlayer of = org.bukkit.Bukkit.getOfflinePlayer(uuid);
+            String name = of != null && of.getName() != null ? of.getName() : uuid.toString();
+            String display = (of instanceof org.bukkit.entity.Player) ? ((org.bukkit.entity.Player) of).getDisplayName() : name;
+            return new com.gitepildev.giteconomy.dto.EconomyPlayer(uuid, name, display);
+        }
+    }
+
+    public static java.io.File createTestDataFolder(GitEconomyPlugin plugin, String folderName) {
+        java.io.File df = new java.io.File(plugin.getDataFolder(), folderName);
+        if (!df.exists()) df.mkdirs();
+        return df;
+    }
+
+    public static void cleanupTestDataFolder(GitEconomyPlugin plugin, String folderName) {
+        java.io.File df = new java.io.File(plugin.getDataFolder(), folderName);
+        if (df.exists()) {
+            java.io.File[] files = df.listFiles();
+            if (files != null) {
+                for (java.io.File f : files) {
+                    try { f.delete(); } catch (Exception ignored) {}
+                }
+            }
+            try { df.delete(); } catch (Exception ignored) {}
+        }
+    }
+
+    public static Object getField(Object target, String fieldName) {
+        try {
+            Class<?> cls = target.getClass();
+            while (cls != null) {
+                try {
+                    Field f = cls.getDeclaredField(fieldName);
+                    f.setAccessible(true);
+                    return f.get(target);
+                } catch (NoSuchFieldException e) {
+                    cls = cls.getSuperclass();
+                }
+            }
+            throw new NoSuchFieldException(fieldName);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+}

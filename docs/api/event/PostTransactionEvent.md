@@ -1,6 +1,6 @@
 # PostTransactionEvent
 
-Class: `com.skyblockexp.ezeconomy.api.events.PostTransactionEvent`
+Class: `com.gitepildev.giteconomy.api.events.PostTransactionEvent`
 
 Overview:
 - Fired after an attempted transaction completes (successfully or not).
