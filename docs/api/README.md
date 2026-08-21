@@ -1,33 +1,37 @@
 # Developer API (v2)
 
-> EzEconomy is a Vault-compatible, standalone economy API with multi-currency and bank support. It is designed for plugin developers who need robust, extensible economic features.
+> GitEconomy is a Vault-compatible, standalone economy API with optional multi-currency support. It is designed for plugin developers who need robust player-balance economy features. Banking is not part of this API.
 
 ---
 
 ## Vault Integration
 
-EzEconomy automatically registers as a Vault economy provider at startup. Any plugin using `net.milkbowl.vault.economy.Economy` will interact with EzEconomy without extra configuration.
+GitEconomy automatically registers as a Vault economy provider at startup. Any plugin using `net.milkbowl.vault.economy.Economy` will interact with GitEconomy without extra configuration.
 
 **Steps:**
-1. Install Vault and EzEconomy.
-2. Start your server. EzEconomy will register itself as the economy provider.
-3. Plugins using Vault will now use EzEconomy for all economy operations.
+1. Install Vault and GitEconomy.
+2. Start your server. GitEconomy will register itself as the economy provider.
+3. Plugins using Vault will now use GitEconomy for all economy operations.
+
+Vault bank methods are not supported (`hasBankSupport()` returns `false`).
 
 ---
 
-## EzEconomyAPI Usage
+## GitEconomyAPI Usage
 
-The main entry point for custom integrations is the `EzEconomyAPI` class. This API is versioned and independent of Bukkit/Spigot.
+The main entry point for custom integrations is the `GitEconomyAPI` class. This API is versioned and independent of Bukkit/Spigot.
+
+Package: `com.gitepildev.giteconomy.api`
 
 ### Example: Basic Usage
 
 ```java
-import com.skyblockexp.ezeconomy.api.EzEconomyAPI;
-import com.skyblockexp.ezeconomy.api.storage.StorageProvider;
+import com.gitepildev.giteconomy.api.GitEconomyAPI;
+import com.gitepildev.giteconomy.api.storage.StorageProvider;
 import java.util.UUID;
 
 StorageProvider storage = ...; // Your storage provider or the default
-EzEconomyAPI api = new EzEconomyAPI(storage);
+GitEconomyAPI api = new GitEconomyAPI(storage);
 
 // Get a player's balance in a specific currency
 PlayerBalanceDTO balance = api.getBalance(playerUuid, "dollar");
@@ -58,30 +62,19 @@ api.transfer(fromUuid, toUuid, "dollar", 25.0);
 - Transfer funds: `api.transfer(fromUuid, toUuid, currency, amount)`
 - Custom debit/credit transfer: `api.transfer(fromUuid, toUuid, currency, debitAmount, creditAmount)`
 
-### Bank Support
-
-- Create a bank: `api.createBank(name, ownerUuid)`
-- Delete a bank: `api.deleteBank(name)`
-- Check if a bank exists: `api.bankExists(name)`
-- Get/set bank balance: `api.getBankBalance(name, currency)`, `api.setBankBalance(name, currency, amount)`
-- Withdraw/deposit: `api.tryWithdrawBank(name, currency, amount)`, `api.depositBank(name, currency, amount)`
-- List all banks: `api.getBanks()`
-- Manage bank members: `api.addBankMember(name, uuid)`, `api.removeBankMember(name, uuid)`, `api.getBankMembers(name)`
-- Check ownership/membership: `api.isBankOwner(name, uuid)`, `api.isBankMember(name, uuid)`
-
 ---
 
 ## Custom Storage Providers
 
-You can supply your own storage backend by implementing the `StorageProvider` interface. This allows you to use custom databases or data sources for all economy, bank, and currency operations.
+You can supply your own storage backend by implementing the `StorageProvider` interface. This allows you to use custom databases or data sources for player balances and currencies.
 
-See [api/storage-provider.md](api/storage-provider.md) for a full implementation guide, best practices, and example code.
+See [api/storage-provider.md](storage-provider.md) for a full implementation guide, best practices, and example code.
 
 ---
 
 ## PlaceholderAPI
 
-If PlaceholderAPI is installed, EzEconomy automatically registers placeholders for player balances, bank balances, and more. See the Placeholders documentation for available keys.
+If PlaceholderAPI is installed, GitEconomy registers placeholders for player balances and top lists. See the Placeholders documentation for available keys.
 
 ---
 
@@ -90,18 +83,17 @@ If PlaceholderAPI is installed, EzEconomy automatically registers placeholders f
 You can check the API version at runtime:
 
 ```java
-String version = EzEconomyAPI.VERSION; // e.g., "2.0.0"
+String version = GitEconomyAPI.VERSION; // e.g., "2.0.0"
 ```
 
 ---
 
-## /ezeconomy Command
+## `/giteconomy` Command
 
-The `/ezeconomy` admin command provides advanced server management utilities. It supports professional tab completion for all subcommands and database actions.
+The `/giteconomy` admin command provides server management utilities. It supports tab completion for all subcommands and database actions.
 
 **Subcommands:**
 - `cleanup`: Remove orphaned player data from all storage types
-- `daily reset`: Reset all daily rewards for all players
 - `reload`: Reload the plugin configuration
 - `reload messages`: Reload only the message file
 - `database info`: Show current database connection info
@@ -120,7 +112,7 @@ See [commands.md](../commands.md) for usage details.
 
 - [commands.md](../commands.md): Command usage and permissions
 - [configuration.md](../configuration.md): Configuration options
-- [storage.md](../storage.md): Storage backends and setup
+- [storage.md](../storage/storage.md): Storage backends and setup
 - [placeholders.md](../placeholders.md): PlaceholderAPI integration
 
 - **Events:**
@@ -128,5 +120,3 @@ See [commands.md](../commands.md) for usage details.
 	- [PostTransactionEvent](event/PostTransactionEvent.md)
 	- [PlayerPayPlayerEvent](event/PlayerPayPlayerEvent.md)
 	- [TransactionType (enum)](event/TransactionType.md)
-	- [BankPreTransactionEvent](event/BankPreTransactionEvent.md)
-	- [BankPostTransactionEvent](event/BankPostTransactionEvent.md)

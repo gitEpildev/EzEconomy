@@ -1,22 +1,23 @@
 # Placeholders
 
-EzEconomy integrates with PlaceholderAPI for use in chat, scoreboards, and other plugins.
+GitEconomy integrates with PlaceholderAPI for use in chat, scoreboards, and other plugins.
 
 ## Balance Placeholders
 
 | Placeholder | Description |
 | --- | --- |
-| `%ezeconomy_balance%` | Player balance in their preferred currency. |
-| `%ezeconomy_balance_<currency>%` | Player balance in the specified currency. |
-| `%ezeconomy_balance_formatted%` | Player balance formatted according to `money-format` settings and `price_message_format`. |
-| `%ezeconomy_balance_short%` | Compact/short form of the balance (e.g., `1.2K`, `3.4M`) when `useCompact` is enabled in config. |
-| `%ezeconomy_currency%` | Player's preferred currency key. |
+| `%giteconomy_balance%` | Player balance in their preferred currency. |
+| `%giteconomy_balance_<currency>%` | Player balance in the specified currency. |
+| `%giteconomy_balance_formatted%` | Player balance formatted according to `money-format` settings and `price_message_format`. |
+| `%giteconomy_balance_short%` | Compact/short form of the balance (e.g., `1.2K`, `3.4M`) when `useCompact` is enabled in config. |
+| `%giteconomy_currency%` | Player's preferred currency key. |
+| `%giteconomy_symbol_<currency>%` | Currency symbol for the given currency. |
 
 ## Price formatting
 
-EzEconomy provides a language-level template to control how currency amounts are rendered in messages.
+GitEconomy provides a language-level template to control how currency amounts are rendered in messages.
 
-Add the `price_message_format` key to your language file under `EzEconomy/languages/` (or in your data folder language file). The template supports two placeholders:
+Add the `price_message_format` key to your language file under `GitEconomy/languages/` (or in your data folder language file). The template supports two placeholders:
 
 - `{amount}`: the localized numeric amount (respecting decimals and locale settings)
 - `{symbol}`: the raw currency symbol from the multi-currency config
@@ -43,17 +44,12 @@ Notes:
 
 | Placeholder | Description |
 | --- | --- |
-| `%ezeconomy_top_1%` | Top player balance (replace `1` with rank). |
-| `%ezeconomy_top_2%` | Second place player balance. |
-
-## Bank Placeholders
-
-| Placeholder | Description |
-| --- | --- |
-| `%ezeconomy_bank_<bank>%` | Balance for a specific bank. |
+| `%giteconomy_top_1%` | Top player balance (replace `1` with rank). |
+| `%giteconomy_top_2%` | Second place player balance. |
+| `%giteconomy_top_<n>_<currency>%` | Top `n` balance for a specific currency. |
 
 ### Usage Examples
 
-- `Balance: %ezeconomy_balance%`
-- `Euro Balance: %ezeconomy_balance_euro%`
-- `Top Player: %ezeconomy_top_1%`
+- `Balance: %giteconomy_balance%`
+- `Euro Balance: %giteconomy_balance_euro%`
+- `Top Player: %giteconomy_top_1%`

@@ -3,7 +3,7 @@
 Example structure and style for readable unit tests.
 
 ```java
-package com.example.ezeconomy;
+package com.example.giteconomy;
 
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;

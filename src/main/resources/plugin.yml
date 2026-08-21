@@ -1,10 +1,10 @@
-name: EzEconomy
-main: com.skyblockexp.ezeconomy.core.EzEconomyPlugin
+name: GitEconomy
+main: com.gitepildev.giteconomy.core.GitEconomyPlugin
 version: ${project.version}
-website: https://modrinth.com/plugin/ezeconomy
-author: Shadow48402
+website: https://github.com/gitEpildev/GitEconomy
+authors: [GitEpildev, Epildevconnect Ltd]
 api-version: 1.21
-description: Vault-compatible economy provider with YML and MySQL support
+description: Simple Vault-compatible economy by GitEpildev & Epildevconnect Ltd
 depend: [Vault]
 softdepend: [PlaceholderAPI]
 
@@ -19,28 +19,44 @@ commands:
   baltop:
     description: Show top player balances
     usage: /baltop [amount]
-  bank:
-    description: Bank management commands
-    usage: /bank <create|delete|balance|deposit|withdraw|addmember|removemember|info> ...
+    aliases: [top]
   pay:
     description: Pay money to another player or all players
     usage: /pay <player|*> <amount> [currency]
-    aliases: [ezpay]
+    aliases: [gitpay]
   payall:
     description: Pay money to all players (alias for /pay *)
     usage: /payall <amount> [currency]
-    aliases: [ezpayall]
+    aliases: [gitpayall]
   currency:
     description: View or set your preferred currency
     usage: /currency [currency]
-  ezeconomy:
-    description: EzEconomy admin utilities
-    usage: /ezeconomy <daily reset>
+  giteconomy:
+    description: GitEconomy admin utilities
+    usage: /giteconomy <cleanup|reload|database>
 
 permissions:
-  ezeconomy.payall:
+  giteconomy.balance.others:
+    description: Allows checking other players' balances
+    default: true
+  giteconomy.pay:
+    description: Allows paying other players
+    default: true
+  giteconomy.eco:
+    description: Allows admin economy commands
+    default: op
+  giteconomy.baltop:
+    description: Allows viewing the balance top list
+    default: true
+  giteconomy.currency:
+    description: Allows viewing or setting preferred currency
+    default: true
+  giteconomy.payall:
     description: Allows using /pay * to pay all players
     default: op
-  ezeconomy.payall.bypasswithdraw:
+  giteconomy.payall.bypasswithdraw:
     description: Allows paying all without withdrawing from sender balance
+    default: op
+  giteconomy.admin:
+    description: Allows GitEconomy admin utilities
     default: op

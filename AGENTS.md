@@ -1,6 +1,6 @@
-# Agent Development Guidelines: EzEconomy
+# Agent Development Guidelines: GitEconomy
 
-This document defines the professional standards and architectural constraints for EzEconomy. All development must ensure full functionality across Minecraft versions **1.7.10 through 1.21.1**.
+This document defines the professional standards and architectural constraints for GitEconomy. All development must ensure full functionality across Minecraft versions **1.7.10 through 1.21.1**.
 
 ---
 
@@ -24,9 +24,9 @@ The plugin must survive the "Great Flattening" and Java evolution.
 
 * **Language Level:** Compile with **Java 8**. This is mandatory for 1.7.10/1.8.8 support.
 * **Material Handling:** Do not use `Material.valueOf()`. Use a wrapper in `util` that maps Legacy IDs (e.g., `35:14`) to Modern NamespacedKeys (e.g., `RED_WOOL`).
-* **Visuals & Chat:** * **1.7 - 1.15:** Use legacy ampersand (`&`) formatting.
-    * **1.16 - 1.21.1:** Support Hex colors (`&#RRGGBB`) via reflection or a custom parser.
-* **GUIs:** Use a version-independent `Inventory` handler that accounts for the removal of certain methods in the 1.21 API.
+* **Visuals & Chat:**
+  * **1.7 - 1.15:** Use legacy ampersand (`&`) formatting.
+  * **1.16 - 1.21.1:** Support Hex colors (`&#RRGGBB`) via reflection or a custom parser.
 
 ---
 
@@ -44,9 +44,9 @@ Economy is the most sensitive part of a server. "Zero Loss" is the requirement.
 ---
 
 ## 4. UI/UX & Integration
-* **Vault Hook:** The plugin must register as a `Service` in the Bukkit `ServicesManager` to allow other plugins to use EzEconomy via the Vault API.
-* **PlaceholderAPI:** Provide a standard expansion in the `placeholder` package for balance formatting (e.g., `%ezeconomy_balance_formatted%`).
-* **GUI System:** Menus must be built using the `gui` package, ensuring clicks are cancelled correctly across all versions.
+* **Vault Hook:** The plugin must register as a `Service` in the Bukkit `ServicesManager` to allow other plugins to use GitEconomy via the Vault API. Vault bank support is not provided.
+* **PlaceholderAPI:** Provide a standard expansion in the `placeholder` package for balance formatting (e.g., `%giteconomy_balance_formatted%`).
+* **Core commands only:** Keep `/balance`, `/pay`, `/baltop`, `/eco`, `/currency`, and `/giteconomy` admin utilities. Do not reintroduce banking, GUI menus, or daily rewards.
 
 ---
 
@@ -63,7 +63,7 @@ Economy is the most sensitive part of a server. "Zero Loss" is the requirement.
 This project must include clear, readable tests and maintain measurable coverage so agents can rely on test signals when suggesting or making changes.
 
 - **Purpose:** Ensure behavior correctness, prevent regressions, and provide examples of good code patterns for agents and contributors.
-- **Where tests live:** module-specific test folders (for example, `ezeconomy-papi/src/test/java`, `ezeconomy-bukkit/src/test/java`). Follow existing module layouts.
+- **Where tests live:** module-specific test folders (for example, `giteconomy-papi/src/test/java`, `giteconomy-bukkit/src/test/java`). Follow existing module layouts.
 - **Coverage tooling:** Use JaCoCo for coverage reports and thresholds. Run with `mvn test jacoco:report` (or module-scoped `-pl <module>`).
 - **Coverage targets:** Aim for sensible targets per module (default 80% line coverage). Highly-critical modules (storage, core) should target >=90% on key classes.
 - **Readable tests guidelines:**

@@ -4,26 +4,26 @@ This document describes the optional `BUNGEECORD` locking strategy which provide
 
 Overview
 - `BUNGEECORD` uses a small proxy plugin on the Bungee instance to act as the authoritative lock manager.
-- Servers run the `ezeconomy-bungeecord` extension (placed in `plugins/EzEconomy/libs/`) which communicates with the proxy via the plugin messaging channel.
+- Servers run the `giteconomy-bungeecord` extension (placed in `plugins/GitEconomy/libs/`) which communicates with the proxy via the plugin messaging channel.
 - This is an alternative to `REDIS` when you prefer not to run Redis but still want cross-server synchronization.
 
 Components
-- `ezeconomy-bungeecord` (server-side extension): implements `com.skyblockexp.ezeconomy.lock.LockManager` and communicates with the proxy.
-- `ezeconomy-bungeecord-proxy` (proxy plugin): runs on the Bungee/Waterfall proxy and mediates lock acquire/release requests.
+- `giteconomy-bungeecord` (server-side extension): implements `com.gitepildev.giteconomy.lock.LockManager` and communicates with the proxy.
+- `giteconomy-bungeecord-proxy` (proxy plugin): runs on the Bungee/Waterfall proxy and mediates lock acquire/release requests.
 
 Quick setup
-1. Deploy `ezeconomy-bungeecord.jar` into `plugins/EzEconomy/libs/` on each backend server.
-2. Deploy `ezeconomy-bungeecord-proxy.jar` to your Bungee/Waterfall proxy `plugins/` folder.
+1. Deploy `giteconomy-bungeecord.jar` into `plugins/GitEconomy/libs/` on each backend server.
+2. Deploy `giteconomy-bungeecord-proxy.jar` to your Bungee/Waterfall proxy `plugins/` folder.
 3. In the core `config.yml` set:
 
 ```yaml
 locking-strategy: BUNGEECORD
 ```
 
-4. Optionally edit `bungeecord.yml` in the EzEconomy data folder to tune `channel`, `ttl-ms`, `retry-ms`, and `fallback-to-local`.
+4. Optionally edit `bungeecord.yml` in the GitEconomy data folder to tune `channel`, `ttl-ms`, `retry-ms`, and `fallback-to-local`.
 	- `shared-secret`: optional string to authenticate messages between servers and the proxy. Set identical value on proxy and servers.
 	- `cleanup-interval-ms`: interval in milliseconds for the proxy to run TTL cleanup on expired locks (default 5000).
-	- `channel`: plugin messaging channel (default `ezeconomy:locks`).
+	- `channel`: plugin messaging channel (default `giteconomy:locks`).
 	- `ttl-ms`: default TTL for acquired locks (server-side setting used when sending requests).
 5. Restart the proxy and backend servers.
 
@@ -36,18 +36,18 @@ Proxy configuration
 ```yaml
 shared-secret: "your-secret"
 cleanup-interval-ms: 5000
-channel: ezeconomy:locks
+channel: giteconomy:locks
 ```
 
 - The proxy will validate incoming requests' `shared-secret` (if configured) and include the secret in `ACQUIRE_RESPONSE` payloads. The proxy periodically evicts expired locks using `cleanup-interval-ms`.
 
 Deployment notes
 - The server-side transport uses the Bukkit plugin messaging channel and requires at least one online player to send messages to the proxy. In production, ensure that at least one player or a lightweight connection helper is present on each backend server.
-- For high-availability or multi-proxy setups, coordinate lock ownership carefully — the simple proxy is single-authority and not clustered. Consider `REDIS` strategy for clustered environments.
+- For high-availability or multi-proxy setups, coordinate lock ownership carefully - the simple proxy is single-authority and not clustered. Consider `REDIS` strategy for clustered environments.
 
 Notes
-- The current implementation in this repository provides a testable transport and an in-memory mock proxy; the production-ready transport uses plugin messaging and must be enabled/packaged in `ezeconomy-bungeecord`.
-- If the proxy is unavailable and `fallback-to-local` is enabled, EzEconomy will fall back to local locking.
+- The current implementation in this repository provides a testable transport and an in-memory mock proxy; the production-ready transport uses plugin messaging and must be enabled/packaged in `giteconomy-bungeecord`.
+- If the proxy is unavailable and `fallback-to-local` is enabled, GitEconomy will fall back to local locking.
 
 See also
 - [docs/locking-strategy.md](docs/locking-strategy.md)

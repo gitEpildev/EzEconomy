@@ -8,19 +8,19 @@ on:
   pull_request:
     branches: [ main, master ]
     paths-ignore:
-      - 'ezeconomy-bungeecord/**'
-      - 'ezeconomy-bungeecord-proxy/**'
-      - 'ezeconomy-papi/**'
-      - 'ezeconomy-bukkit/**'
-      - 'ezeconomy-redis/**'
+      - 'giteconomy-bungeecord/**'
+      - 'giteconomy-bungeecord-proxy/**'
+      - 'giteconomy-papi/**'
+      - 'giteconomy-bukkit/**'
+      - 'giteconomy-redis/**'
   push:
     branches: [ main, master ]
     paths-ignore:
-      - 'ezeconomy-bungeecord/**'
-      - 'ezeconomy-bungeecord-proxy/**'
-      - 'ezeconomy-papi/**'
-      - 'ezeconomy-bukkit/**'
-      - 'ezeconomy-redis/**'
+      - 'giteconomy-bungeecord/**'
+      - 'giteconomy-bungeecord-proxy/**'
+      - 'giteconomy-papi/**'
+      - 'giteconomy-bukkit/**'
+      - 'giteconomy-redis/**'
 
 jobs:
   unit-tests:

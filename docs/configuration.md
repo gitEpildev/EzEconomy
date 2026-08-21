@@ -1,6 +1,6 @@
 # Configuration
 
-EzEconomy uses a main `config.yml` plus a storage-specific configuration file. Only enable the storage provider you plan to use.
+GitEconomy uses a main `config.yml` plus a storage-specific configuration file. Only enable the storage provider you plan to use.
 
 ## `config.yml`
 
@@ -34,17 +34,6 @@ multi-currency:
       euro: 80
 ```
 
-### Banking toggle
-
-Enable or disable the built-in bank subsystem (commands, GUIs, Vault bank methods, and bank placeholders).
-
-```yaml
-banking:
-  enabled: true
-```
-
-Set `banking.enabled` to `false` if you prefer using a different bank plugin or want to disable shared bank accounts.
-
 ### Store on join
 
 Control whether player metadata (UUID + name) is written to storage when a player joins.
@@ -54,11 +43,11 @@ store-on-join:
   enabled: false
 ```
 
-When disabled, EzEconomy skips the join-time write. **On Velocity networks this should be `true`** so that every backend server populates the shared MySQL `players` table. Without it, cross-server commands like `/bal <player>` and `/pay <player>` cannot resolve players who have only joined a different backend.
+When disabled, GitEconomy skips the join-time write. **On Velocity networks this should be `true`** so that every backend server populates the shared MySQL `players` table. Without it, cross-server commands like `/bal <player>` and `/pay <player>` cannot resolve players who have only joined a different backend.
 
 ### Cross-server messaging (Velocity)
 
-These settings control the plugin messaging channel used by the `ezeconomy-velocity` proxy module.
+These settings control the plugin messaging channel used by the `giteconomy-velocity` proxy module.
 
 ```yaml
 cross-server:
@@ -66,10 +55,10 @@ cross-server:
   verbose-logging: false
 ```
 
-- `enabled` — set to `true` on every Paper backend that participates in the Velocity network. When `false` (the default for single-server setups), the plugin does not register the messaging channel and all cross-server features are disabled.
-- `verbose-logging` — set to `true` temporarily to see `PLAYER_LIST`, `NOTIFY`, and `RECIPIENT_OFFLINE` messages in the console. Useful for verifying that the Velocity plugin is broadcasting the player list and forwarding payment notifications.
+- `enabled` - set to `true` on every Paper backend that participates in the Velocity network. When `false` (the default for single-server setups), the plugin does not register the messaging channel and all cross-server features are disabled.
+- `verbose-logging` - set to `true` temporarily to see `PLAYER_LIST`, `NOTIFY`, and `RECIPIENT_OFFLINE` messages in the console. Useful for verifying that the Velocity plugin is broadcasting the player list and forwarding payment notifications.
 
-> **Requires**: the `ezeconomy-velocity-*.jar` plugin running on the Velocity proxy, `storage: mysql` with all backends pointing to the same database, and `store-on-join.enabled: true`.
+> **Requires**: the `giteconomy-velocity-*.jar` plugin running on the Velocity proxy, `storage: mysql` with all backends pointing to the same database, and `store-on-join.enabled: true`.
 
 ### Payment sync timeout
 
@@ -82,7 +71,7 @@ This controls how long async payment execution waits for sync event dispatch bef
 
 ### Caching strategy
 
-Configure how EzEconomy caches frequently-read values (placeholders, top lists, GUI data).
+Configure how GitEconomy caches frequently-read values (placeholders, top lists).
 
 ```yaml
 # Available options: LOCAL, REDIS, BUNGEECORD, DATABASE
@@ -92,7 +81,7 @@ caching-strategy: LOCAL
 - `LOCAL`: in-process memory cache only (default)
 - `REDIS`: use the Redis extension for a central cache shared across servers
 - `BUNGEECORD`: proxy-backed cache using plugin messaging to a proxy-side store
-- `DATABASE`: use the configured database as a cache backend (uses `ezeconomy_cache` table)
+- `DATABASE`: use the configured database as a cache backend (uses `giteconomy_cache` table)
 
 If `caching-strategy` is not present, the plugin will fallback to the older `locking-strategy` value for backward compatibility.
 
@@ -116,7 +105,7 @@ locking:
 ### Notes
 
 - `storage` must match one of the supported providers: `yml`, `mysql`, `sqlite`, `mongodb`, or `custom`.
-- When `multi-currency.enabled` is `false`, EzEconomy uses only the `default` currency.
+- When `multi-currency.enabled` is `false`, GitEconomy uses only the `default` currency.
 - Conversion rates are directional. Define both directions if you need round trips.
 
 ## YML Storage
@@ -140,7 +129,7 @@ yml:
 mysql:
   host: localhost
   port: 3306
-  database: ezeconomy
+  database: giteconomy
   username: root
   password: password
   table: balances
@@ -154,9 +143,8 @@ mysql:
 
 ```yaml
 sqlite:
-  file: ezeconomy.db
+  file: giteconomy.db
   table: balances
-  banksTable: banks
 ```
 
 **Recommended for**: single-server environments that want a lightweight database.
@@ -168,9 +156,8 @@ sqlite:
 ```yaml
 mongodb:
   uri: mongodb://localhost:27017
-  database: ezeconomy
+  database: giteconomy
   collection: balances
-  banksCollection: banks
 ```
 
 **Recommended for**: teams already using MongoDB in their infrastructure.
@@ -180,7 +167,7 @@ mongodb:
 Set `storage: custom` and register a provider from another plugin.
 
 ```java
-EzEconomy.registerStorageProvider(new YourProvider(...));
+GitEconomy.registerStorageProvider(new YourProvider(...));
 ```
 
 See the Developer API page for details.

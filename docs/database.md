@@ -1,10 +1,10 @@
 # Database Documentation
 
-This document describes the database structures and setup procedures for the different storage providers supported by EzEconomy.
+This document describes the database structures and setup procedures for the different storage providers supported by GitEconomy.
 
 ## Overview
 
-EzEconomy supports multiple storage backends to store player balances, bank data, and transactions:
+GitEconomy supports multiple storage backends to store player balances and transactions:
 
 - **YML**: File-based storage using YAML files (no database required)
 - **SQLite**: Local SQLite database file
@@ -24,7 +24,7 @@ Each provider has its own configuration file (for example, `config-sqlite.yml`) 
 ## YML Storage Provider
 
 ### Description
-Stores data in YAML files on the filesystem. Each player has their own file, and bank data is stored in the owner's file.
+Stores data in YAML files on the filesystem. Each player has their own file.
 
 ### Setup
 1. Set `storage: yml` in `config.yml`.
@@ -43,15 +43,6 @@ Stores data in YAML files on the filesystem. Each player has their own file, and
   balances:
     dollar: 100.0
     euro: 50.0
-  banks:
-    mybank:
-      balances:
-        dollar: 500.0
-      owners:
-        - "owner-uuid"
-      members:
-        - "member-uuid-1"
-        - "member-uuid-2"
   transactions:
     - amount: 10.0
       currency: "dollar"
@@ -68,9 +59,8 @@ Uses a local SQLite database file for all data storage.
 2. Configure in `config-sqlite.yml`:
    ```yaml
    sqlite:
-     file: "ezeconomy.db"  # Database file name
+     file: "giteconomy.db"  # Database file name
      table: "balances"     # Player balances table
-     banksTable: "banks"   # Bank data table
    ```
 3. No additional setup required - database and tables are created automatically.
 
@@ -86,16 +76,6 @@ CREATE TABLE balances (
 );
 ```
 
-#### banks
-```sql
-CREATE TABLE banks (
-    name TEXT PRIMARY KEY,
-    owner TEXT,
-    members TEXT,  -- Comma-separated UUIDs
-    balances TEXT  -- JSON-like string: {"dollar":100.0,"euro":50.0}
-);
-```
-
 #### transactions (optional)
 ```sql
 CREATE TABLE transactions (
@@ -103,16 +83,6 @@ CREATE TABLE transactions (
     currency TEXT,
     amount DOUBLE,
     timestamp INTEGER
-);
-```
-
-#### bank_members (optional, for advanced member management)
-```sql
-CREATE TABLE bank_members (
-    bank TEXT,
-    uuid TEXT,
-    owner BOOLEAN,
-    PRIMARY KEY (bank, uuid)
 );
 ```
 
@@ -128,15 +98,15 @@ Uses a remote MySQL database for scalable storage.
    mysql:
      host: "localhost"
      port: 3306
-     database: "ezeconomy"
+     database: "giteconomy"
      username: "your_username"
      password: "your_password"
      table: "balances"
    ```
 3. Create the MySQL database:
    ```sql
-   CREATE DATABASE ezeconomy;
-   GRANT ALL PRIVILEGES ON ezeconomy.* TO 'your_username'@'localhost' IDENTIFIED BY 'your_password';
+   CREATE DATABASE giteconomy;
+   GRANT ALL PRIVILEGES ON giteconomy.* TO 'your_username'@'localhost' IDENTIFIED BY 'your_password';
    ```
 4. Tables are created automatically on first run.
 
@@ -149,26 +119,6 @@ CREATE TABLE balances (
     currency VARCHAR(32),
     balance DOUBLE,
     PRIMARY KEY (uuid, currency)
-);
-```
-
-#### banks
-```sql
-CREATE TABLE banks (
-    name VARCHAR(64),
-    currency VARCHAR(32),
-    balance DOUBLE,
-    PRIMARY KEY (name, currency)
-);
-```
-
-#### bank_members
-```sql
-CREATE TABLE bank_members (
-    bank VARCHAR(64),
-    uuid VARCHAR(36),
-    owner BOOLEAN,
-    PRIMARY KEY (bank, uuid)
 );
 ```
 
@@ -193,9 +143,8 @@ Uses MongoDB for NoSQL document-based storage.
    ```yaml
    mongodb:
      uri: "mongodb://localhost:27017"
-     database: "ezeconomy"
+     database: "giteconomy"
      collection: "balances"
-     banksCollection: "banks"
    ```
 3. Ensure MongoDB is running and accessible.
 4. Collections and indexes are created automatically.
@@ -215,23 +164,6 @@ Uses MongoDB for NoSQL document-based storage.
 // { uuid: 1, currency: 1 } (compound index for fast lookups)
 ```
 
-#### banks
-```javascript
-{
-  "_id": ObjectId("..."),
-  "name": "bank-name",
-  "owner": "owner-uuid",
-  "members": ["owner-uuid", "member-uuid-1"],
-  "balances": {
-    "dollar": 500.0,
-    "euro": 250.0
-  }
-}
-
-// Indexes:
-// { name: 1 } (unique index)
-```
-
 #### transactions (optional)
 ```javascript
 {
@@ -249,7 +181,7 @@ Currently, there is no automatic migration tool. To switch providers:
 
 1. Stop the server
 2. Export data from the current provider (if needed)
-3. Change `storage.type` in `config.yml`
+3. Change `storage` in `config.yml`
 4. Update the provider-specific config
 5. Start the server (new tables/collections will be created)
 6. Manually migrate data if necessary

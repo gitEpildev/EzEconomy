@@ -2,7 +2,7 @@
 mysql:
   host: localhost
   port: 3306
-  database: ezeconomy
+  database: giteconomy
   username: root
   password: password
   table: balances

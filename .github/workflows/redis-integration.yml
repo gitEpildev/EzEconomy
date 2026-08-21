@@ -33,10 +33,10 @@ jobs:
       - name: Build project and extension
         run: mvn -B -V package
 
-      - name: Install ezeconomy-redis into test plugins folder
+      - name: Install giteconomy-redis into test plugins folder
         run: |
-          mkdir -p test-plugins/plugins/EzEconomy/libs
-          cp ezeconomy-redis/target/*ezeconomy-redis*.jar test-plugins/plugins/EzEconomy/libs/ || true
+          mkdir -p test-plugins/plugins/GitEconomy/libs
+          cp giteconomy-redis/target/*giteconomy-redis*.jar test-plugins/plugins/GitEconomy/libs/ || true
 
       - name: Run Redis integration tests
         env:
