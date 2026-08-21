@@ -1,6 +1,6 @@
 # GitEconomy
 
-**GitEconomy** – Modern, fast, and flexible Vault economy provider for Minecraft servers by **GitEpildev** & **Epildevconnect Ltd**. Supports YML, MySQL, SQLite, MongoDB, and custom storage. Optional multi-currency, async caching, and core economy commands — no banking subsystem.
+**GitEconomy** - Modern, fast, and flexible Vault economy provider for Minecraft servers by **GitEpildev** & **Epildevconnect Ltd**. Supports YML, MySQL, SQLite, MongoDB, and custom storage. Optional multi-currency, async caching, and core economy commands - no banking subsystem.
 
 **Available languages**: English, Español, Nederlands, 中国人, Français
 
@@ -131,10 +131,10 @@ mongodb:
 - Vault bank APIs are not supported
 - **PlaceholderAPI support** (via `giteconomy-papi`):
   - Use placeholders in chat, scoreboard, and other plugins:
-    - `%giteconomy_balance%` – Your balance
-    - `%giteconomy_balance_<currency>%` – Your balance in a specific currency (e.g., `%giteconomy_balance_euro%`)
-    - `%giteconomy_top_1%` – Top 1 player balance (replace 1 with rank)
-    - `%giteconomy_currency%` – Your preferred currency
+    - `%giteconomy_balance%` - Your balance
+    - `%giteconomy_balance_<currency>%` - Your balance in a specific currency (e.g., `%giteconomy_balance_euro%`)
+    - `%giteconomy_top_1%` - Top 1 player balance (replace 1 with rank)
+    - `%giteconomy_currency%` - Your preferred currency
   - Works with all PlaceholderAPI-compatible plugins
 
 ---

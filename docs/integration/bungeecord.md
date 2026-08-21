@@ -43,7 +43,7 @@ channel: giteconomy:locks
 
 Deployment notes
 - The server-side transport uses the Bukkit plugin messaging channel and requires at least one online player to send messages to the proxy. In production, ensure that at least one player or a lightweight connection helper is present on each backend server.
-- For high-availability or multi-proxy setups, coordinate lock ownership carefully — the simple proxy is single-authority and not clustered. Consider `REDIS` strategy for clustered environments.
+- For high-availability or multi-proxy setups, coordinate lock ownership carefully - the simple proxy is single-authority and not clustered. Consider `REDIS` strategy for clustered environments.
 
 Notes
 - The current implementation in this repository provides a testable transport and an in-memory mock proxy; the production-ready transport uses plugin messaging and must be enabled/packaged in `giteconomy-bungeecord`.

@@ -8,12 +8,12 @@ Overview:
 - Fired synchronously on the server main thread (storage implementations ensure sync dispatch).
 
 Fields / Accessors:
-- `UUID getSource()` — the account initiating the transaction (may be `null` for system operations).
-- `UUID getTarget()` — the target account (may be `null` for single-account ops).
-- `BigDecimal getAmount()` — the requested amount.
-- `TransactionType getType()` — the kind of operation (see `TransactionType`).
-- `boolean isCancelled()` / `void setCancelled(boolean)` — cancellation state.
-- `String getCancelReason()` / `void setCancelReason(String)` — optional reason to display to callers.
+- `UUID getSource()` - the account initiating the transaction (may be `null` for system operations).
+- `UUID getTarget()` - the target account (may be `null` for single-account ops).
+- `BigDecimal getAmount()` - the requested amount.
+- `TransactionType getType()` - the kind of operation (see `TransactionType`).
+- `boolean isCancelled()` / `void setCancelled(boolean)` - cancellation state.
+- `String getCancelReason()` / `void setCancelReason(String)` - optional reason to display to callers.
 
 Behavior and Guidance:
 - If a listener cancels the event, storage methods and higher-level callers treat the operation as failed.

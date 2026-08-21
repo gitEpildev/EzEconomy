@@ -13,12 +13,12 @@ Installation
 3. Restart the server; PAPI should detect the expansion automatically.
 
 Available placeholders
-- `%giteconomy_balance%` — player's balance using preferred currency and default formatting.
-- `%giteconomy_balance_formatted%` — formatted balance with currency symbol.
-- `%giteconomy_balance_<currency>%` — balance in specific currency (e.g., `%giteconomy_balance_dollar%`).
-- `%giteconomy_symbol_<currency>%` — currency symbol (e.g., `%giteconomy_symbol_dollar%`).
-- `%giteconomy_top_<n>_<currency>%` — top `n` players for given currency (e.g., `%giteconomy_top_10_dollar%`).
-- `%giteconomy_currency%` — player's preferred currency key.
+- `%giteconomy_balance%` - player's balance using preferred currency and default formatting.
+- `%giteconomy_balance_formatted%` - formatted balance with currency symbol.
+- `%giteconomy_balance_<currency>%` - balance in specific currency (e.g., `%giteconomy_balance_dollar%`).
+- `%giteconomy_symbol_<currency>%` - currency symbol (e.g., `%giteconomy_symbol_dollar%`).
+- `%giteconomy_top_<n>_<currency>%` - top `n` players for given currency (e.g., `%giteconomy_top_10_dollar%`).
+- `%giteconomy_currency%` - player's preferred currency key.
 
 Caching and performance
 - The PAPI expansion uses the global `CacheProvider` selected by `caching-strategy` (default `LOCAL`).

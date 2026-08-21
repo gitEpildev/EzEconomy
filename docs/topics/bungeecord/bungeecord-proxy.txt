@@ -1,5 +1,5 @@
 
-[center][size=6][b]GitEconomy — BungeeCord Proxy[/b][/size]
+[center][size=6][b]GitEconomy - BungeeCord Proxy[/b][/size]
 
 [img]https://i.imgur.com/placeholder.png[/img]
 
@@ -19,7 +19,7 @@ GitEconomy - BungeeCord Proxy is the proxy connector for GitEconomy that synchro
 [*]PlaceholderAPI expansion for easy placeholders
 [*]Asynchronous storage operations and caching for performance
 [*]Simple configuration and minimal permissions surface
-[*]Works with Minecraft versions 1.7.10 — 1.21.x (server compatibility depends on backend modules)
+[*]Works with Minecraft versions 1.7.10 - 1.21.x (server compatibility depends on backend modules)
 [/list]
 
 [b]Requirements[/b]
@@ -49,20 +49,20 @@ proxy:
 
 [b]Commands[/b]
 [list]
-[*][b]/giteconomy help[/b] — Show proxy-related help (if provided by your build)
-[*][b]/balance <player>[/b] — Query a player's balance (requires permission)
+[*][b]/giteconomy help[/b] - Show proxy-related help (if provided by your build)
+[*][b]/balance <player>[/b] - Query a player's balance (requires permission)
 [/list]
 
 [b]Permissions[/b]
 [list]
-[*][b]giteconomy.proxy.balance[/b] — Query other players' balance
-[*][b]giteconomy.proxy.admin[/b] — Admin proxy commands and troubleshooting
+[*][b]giteconomy.proxy.balance[/b] - Query other players' balance
+[*][b]giteconomy.proxy.admin[/b] - Admin proxy commands and troubleshooting
 [/list]
 
 [b]Placeholders[/b]
 [list]
-[*][b]%giteconomy_balance%[/b] — Player's balance (via PlaceholderAPI)
-[*][b]%giteconomy_balance_formatted%[/b] — Formatted balance
+[*][b]%giteconomy_balance%[/b] - Player's balance (via PlaceholderAPI)
+[*][b]%giteconomy_balance_formatted%[/b] - Formatted balance
 [/list]
 
 [spoiler=Configuration Example]

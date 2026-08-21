@@ -4,8 +4,8 @@ Permissions shown in parentheses are required to run the command. Commands witho
 
 | Command | Description | Permission |
 | --- | --- | --- |
-| `/balance` (`/bal`) | View your balance. | — |
-| `/balance <currency>` | View your balance in the specified currency (player only). | — |
+| `/balance` (`/bal`) | View your balance. | - |
+| `/balance <currency>` | View your balance in the specified currency (player only). | - |
 | `/balance <player>` | View another player's balance. | `giteconomy.balance.others` |
 | `/balance <player> <currency>` | View another player's balance in the specified currency. | `giteconomy.balance.others` |
 | `/baltop` (`/top`) `[amount]` | View the top balances. | `giteconomy.baltop` |
@@ -43,13 +43,13 @@ Using `/pay * <amount>` sends the specified amount to multiple recipients at onc
 
 - **Default behavior:** Targets online players only.
 - **Config keys:**
-	- `pay.pay_all.enabled` (boolean, default: `true`) — enable/disable the pay-all feature.
-	- `pay.pay_all.require_permission` (boolean, default: `true`) — require `giteconomy.payall` to use `/pay *`.
-	- `pay.pay_all.include_offline` (boolean, default: `false`) — when `true`, include stored offline players (server storage) in the recipient list; when `false` only currently online players are paid.
+	- `pay.pay_all.enabled` (boolean, default: `true`) - enable/disable the pay-all feature.
+	- `pay.pay_all.require_permission` (boolean, default: `true`) - require `giteconomy.payall` to use `/pay *`.
+	- `pay.pay_all.include_offline` (boolean, default: `false`) - when `true`, include stored offline players (server storage) in the recipient list; when `false` only currently online players are paid.
 - **Permissions:**
-	- `giteconomy.pay` — standard pay permission for `/pay <player>`.
-	- `giteconomy.payall` — (optional) grant access to `/pay *` when `pay.pay_all.require_permission` is `true`.
-	- `giteconomy.payall.bypasswithdraw` — optional permission that lets the command credit recipients without withdrawing the total from the sender (useful for admin/gift operations).
+	- `giteconomy.pay` - standard pay permission for `/pay <player>`.
+	- `giteconomy.payall` - (optional) grant access to `/pay *` when `pay.pay_all.require_permission` is `true`.
+	- `giteconomy.payall.bypasswithdraw` - optional permission that lets the command credit recipients without withdrawing the total from the sender (useful for admin/gift operations).
 - **Behavior notes:**
 	- Unless `bypasswithdraw` is granted, the sender is charged the total amount (amount × recipients) before recipients are credited; failure to withdraw aborts the operation.
 	- Recipients are credited in their preferred currency (conversion applied where needed).

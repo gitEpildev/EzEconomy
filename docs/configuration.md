@@ -55,8 +55,8 @@ cross-server:
   verbose-logging: false
 ```
 
-- `enabled` — set to `true` on every Paper backend that participates in the Velocity network. When `false` (the default for single-server setups), the plugin does not register the messaging channel and all cross-server features are disabled.
-- `verbose-logging` — set to `true` temporarily to see `PLAYER_LIST`, `NOTIFY`, and `RECIPIENT_OFFLINE` messages in the console. Useful for verifying that the Velocity plugin is broadcasting the player list and forwarding payment notifications.
+- `enabled` - set to `true` on every Paper backend that participates in the Velocity network. When `false` (the default for single-server setups), the plugin does not register the messaging channel and all cross-server features are disabled.
+- `verbose-logging` - set to `true` temporarily to see `PLAYER_LIST`, `NOTIFY`, and `RECIPIENT_OFFLINE` messages in the console. Useful for verifying that the Velocity plugin is broadcasting the player list and forwarding payment notifications.
 
 > **Requires**: the `giteconomy-velocity-*.jar` plugin running on the Velocity proxy, `storage: mysql` with all backends pointing to the same database, and `store-on-join.enabled: true`.
 

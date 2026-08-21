@@ -20,7 +20,7 @@ If `caching-strategy` is not present the plugin will fall back to `locking-strat
 
 ## Behavior & safety
 - TTL model: entries are stored with an expiry timestamp; expired entries may be returned briefly while an asynchronous refresh is scheduled ("stale-while-revalidate" behavior) to avoid blocking reads.
-- Local provider: unbounded by default — monitor memory usage on high-load servers and consider eviction strategies if needed.
+- Local provider: unbounded by default - monitor memory usage on high-load servers and consider eviction strategies if needed.
 - Redis provider: relies on `redis.yml` for host/port/auth and honors `fallback-to-local` if Redis is unavailable.
 - Bungee provider: plugin-messaging packets carry values and expiry; ensure the proxy's shared-secret (if configured) matches between proxy and servers.
 - Database provider: uses SQL `REPLACE/INSERT` semantics and a simple `expires_at` column; keep in mind higher IO and possible contention under heavy load.
@@ -52,7 +52,7 @@ No action required. Set `caching-strategy: LOCAL` in `config.yml` (or omit the k
 - Monitor hit/miss rates and cache size for the `LOCAL` provider to avoid OOM issues on busy servers.
 
 ## See also
-- `docs/configuration.md` — global configuration reference
-- `docs/redis.md` — Redis extension setup and notes
-- `docs/locking-strategy.md` — related locking configuration and guidance
+- `docs/configuration.md` - global configuration reference
+- `docs/redis.md` - Redis extension setup and notes
+- `docs/locking-strategy.md` - related locking configuration and guidance
 - Source: `src/main/java/com/gitepildev/giteconomy/cache/CacheManager.java` and `src/main/java/com/gitepildev/giteconomy/bootstrap/component/CacheComponent.java`

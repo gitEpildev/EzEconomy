@@ -62,10 +62,10 @@ cache:
 ## How it works
 - Servers send plugin messaging packets to the proxy on the configured `channel`.
 - Supported packet actions:
-  - `ACQUIRE` / `ACQUIRE_RESPONSE` — lock management (returns a token on success)
-  - `RELEASE` — release a lock
-  - `CACHE_GET` / `CACHE_GET_RESPONSE` — fetch a cached value and its expiry
-  - `CACHE_SET` — set a cached value with TTL on the proxy
+  - `ACQUIRE` / `ACQUIRE_RESPONSE` - lock management (returns a token on success)
+  - `RELEASE` - release a lock
+  - `CACHE_GET` / `CACHE_GET_RESPONSE` - fetch a cached value and its expiry
+  - `CACHE_SET` - set a cached value with TTL on the proxy
 - Messages include an optional `shared-secret` for basic authentication between servers and the proxy.
 
 ## Behavior and safety notes
@@ -74,13 +74,13 @@ cache:
 - Plugin messaging requires at least one online player to send messages from a server to the proxy; the transport implementation chooses an arbitrary online player to send messages. Ensure servers have at least one dummy or real online player for critical operations, or prefer Redis for fully headless reliability.
 
 ## Troubleshooting
-- Mismatch in `shared-secret` will result in silently ignored messages — check proxy and server logs for authentication failures.
+- Mismatch in `shared-secret` will result in silently ignored messages - check proxy and server logs for authentication failures.
 - If messages appear to time out, verify `channel` matches on servers and proxy and that the proxy plugin is enabled and connected.
 - Use `fallback-to-local: true` during testing to avoid hard failures while verifying configuration.
 
 ## See also
-- [Caching strategy](../feature/caching-strategy.md) — caching strategy overview and provider options
-- [Locking strategy](../feature/locking-strategy.md) — locking strategy guidance
+- [Caching strategy](../feature/caching-strategy.md) - caching strategy overview and provider options
+- [Locking strategy](../feature/locking-strategy.md) - locking strategy guidance
 - Source:
   - [bungeecord.yml](../../src/main/resources/bungeecord.yml)
   - [`giteconomy-bungeecord` module](../../giteconomy-bungeecord) and [`giteconomy-bungeecord-proxy` module](../../giteconomy-bungeecord-proxy) for implementation details

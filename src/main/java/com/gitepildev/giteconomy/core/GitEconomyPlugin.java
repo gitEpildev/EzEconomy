@@ -3,7 +3,6 @@ package com.gitepildev.giteconomy.core;
 import com.gitepildev.giteconomy.api.storage.StorageProvider;
 import com.gitepildev.giteconomy.manager.CurrencyManager;
 import com.gitepildev.giteconomy.manager.CurrencyPreferenceManager;
-import com.gitepildev.giteconomy.update.SpigotUpdateChecker;
 import java.io.File;
 import java.util.List;
 import org.bukkit.Bukkit;
@@ -14,7 +13,6 @@ import net.milkbowl.vault.economy.Economy;
 import java.util.Locale;
 
 public class GitEconomyPlugin extends JavaPlugin {
-    private static final int SPIGOT_RESOURCE_ID = 130975;
         private static final List<String> DEFAULT_CONFIGS = List.of(
             "config-yml.yml",
             "config-mysql.yml",
@@ -68,7 +66,7 @@ public class GitEconomyPlugin extends JavaPlugin {
             this.storageConfigLoader = new com.gitepildev.giteconomy.service.storage.StorageConfigLoader(this);
             this.currencyFormatter = new com.gitepildev.giteconomy.service.format.CurrencyFormatter(this);
             this.transactionMetricsService = new com.gitepildev.giteconomy.service.metrics.TransactionMetricsService(this);
-            new SpigotUpdateChecker(this, SPIGOT_RESOURCE_ID).checkForUpdates();
+            // Spigot update check disabled until a GitEconomy resource id is published.
             getLogger().info("GitEconomy enabled and registered as Vault provider.");
         } catch (RuntimeException ex) {
             getLogger().severe("Bootstrap failed: " + ex.getMessage());

@@ -11,7 +11,7 @@ Installation & setup
 Behavior
 - When enabled, GitEconomy implements the standard Vault `Economy` interface and supports balance lookups, deposits, withdrawals, and formatting.
 - Bank support is not provided (`hasBankSupport()` returns `false`). Vault bank APIs are unsupported.
-- No extra configuration is needed by default; multi-currency mapping may require platform-specific settings — see `config.yml`.
+- No extra configuration is needed by default; multi-currency mapping may require platform-specific settings - see `config.yml`.
 
 Troubleshooting
 - Vault not listing GitEconomy: confirm GitEconomy loaded after Vault and check server logs for the `ServicesManager` registration entry.

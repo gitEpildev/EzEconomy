@@ -1,10 +1,10 @@
 # GitEconomy
 
-[![License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](LICENSE.md)
+[![Licence](https://img.shields.io/badge/licence-MIT%20(Additional%20Terms)-blue.svg?style=flat-square)](LICENSE)
 
-**GitEconomy** is a simple Vault-compatible Minecraft economy plugin by **GitEpildev** & **Epildevconnect Ltd**.
+**GitEconomy** is a Vault-compatible Minecraft economy plugin by **GitEpildev** and **Epildevconnect Ltd**.
 
-Focused on core economy commands — no banking subsystem.
+Focused on core economy commands. No banking subsystem.
 
 ---
 
@@ -41,12 +41,12 @@ Focused on core economy commands — no banking subsystem.
 
 ## Permissions
 
-- `giteconomy.pay` — `/pay`
-- `giteconomy.balance.others` — check others' balances
-- `giteconomy.eco` — admin `/eco`
-- `giteconomy.baltop` — `/baltop` / `/top`
-- `giteconomy.admin` — `/giteconomy` utilities
-- `giteconomy.payall` — `/pay *`
+- `giteconomy.pay` - `/pay`
+- `giteconomy.balance.others` - check others' balances
+- `giteconomy.eco` - admin `/eco`
+- `giteconomy.baltop` - `/baltop` / `/top`
+- `giteconomy.admin` - `/giteconomy` utilities
+- `giteconomy.payall` - `/pay *`
 
 See [docs/permissions.md](docs/permissions.md) for the full list.
 
@@ -71,8 +71,8 @@ mvn -pl giteconomy-bukkit -am clean package
 
 ---
 
-## License
+## Licence
 
-MIT © GitEpildev & Epildevconnect Ltd
+MIT Licence with Additional Terms. Copyright (c) 2026 Epildevconnect Ltd (GitEpildev).
 
-Based on the original EzEconomy project by ez-plugins; rewritten and rebranded as GitEconomy.
+See [LICENSE](LICENSE) for full terms (England and Wales).

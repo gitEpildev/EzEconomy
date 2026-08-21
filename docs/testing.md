@@ -32,7 +32,7 @@ Unit vs Integration
 
 Readability best practices
 - Use clear variable names (given/when/then style helps).
-- Avoid complex loops or logic inside tests—extract helpers where necessary.
+- Avoid complex loops or logic inside tests-extract helpers where necessary.
 - Use expressive assertion libraries (AssertJ) when available.
 
 CI recommendations

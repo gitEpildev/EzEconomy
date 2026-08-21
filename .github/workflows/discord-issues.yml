@@ -44,7 +44,7 @@ jobs:
               '{
                 content: ($role + " ⚠️ **New Issue Opened**"),
                 embeds: [{
-                  title: "🐛 #\($number) – \($title)",
+                  title: "🐛 #\($number) - \($title)",
                   url: $url,
                   color: 15158332,
                   fields: [

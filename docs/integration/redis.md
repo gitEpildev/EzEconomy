@@ -1,4 +1,4 @@
-- # redis.yml — Redis lock configuration (short guide)
+- # redis.yml - Redis lock configuration (short guide)
 
 ## Quick summary
 - Redis is optional. The plugin defaults to local (in-JVM) locking for single-server setups.
@@ -34,7 +34,7 @@ fallback-to-local: true
 ## Notes for server owners
 - Default behavior: If you do nothing, the plugin uses `LocalLockManager` (no Redis required).
 - `enabled: false` in `redis.yml` forces local locking even if `locking-strategy` is set to `REDIS`.
-- `fallback-to-local: true` means a Redis connection error will not break the server — it will switch to local locking. Set to `false` only if you want startup to fail on Redis errors.
+- `fallback-to-local: true` means a Redis connection error will not break the server - it will switch to local locking. Set to `false` only if you want startup to fail on Redis errors.
 
 ## Installation checklist
 - Build or download `giteconomy-redis.jar` (this includes the Redis client and is optional).
@@ -50,11 +50,11 @@ fallback-to-local: true
 
 ## Security & production tips
 - Prefer using a private Redis instance or VPC; avoid exposing Redis to the public internet.
-- Monitor latency — Redis timeouts will affect lock acquisition and operation latency.
+- Monitor latency - Redis timeouts will affect lock acquisition and operation latency.
 
 ## Testing
 - The repository includes unit tests that mock Redis for local CI. For full integration, run the Testcontainers-based CI job or test against a local Redis instance.
 
 ## See also
-- `docs/locking-strategy.md` — how to choose LOCAL vs REDIS.
+- `docs/locking-strategy.md` - how to choose LOCAL vs REDIS.
 - Source: `RedisLockManager` implementation (extension module).

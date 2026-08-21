@@ -22,7 +22,7 @@ Recommendation: Use `long` for typical Minecraft economy (scaled by 100) and `Bi
 - **Grouping separators:** Use thousands separators (`,`) or space / none depending on locale.
 - **Decimal places:** Typically 2 decimal places for cents; configurable `scale` for other currency models.
 - **Rounding:** Support `HALF_UP`, `HALF_EVEN`, `DOWN`, etc. Rounding should be explicit in docs and configuration.
-- **Negative formatting:** `-1,234.56` or `(1,234.56)` — allow config choice.
+- **Negative formatting:** `-1,234.56` or `(1,234.56)` - allow config choice.
 - **Show trailing zeros:** Option to display `1.50` vs `1.5`.
 
 ## Compact / Short formats
@@ -100,9 +100,9 @@ String out = df.format(amount);
 ## PlaceholderAPI / plugin placeholders
 
 - Provide placeholders for common needs:
-  - `%giteconomy_balance%` — raw numeric value
-  - `%giteconomy_balance_formatted%` — formatted per `money-format` settings
-  - `%giteconomy_balance_short%` — compact K/M form
+  - `%giteconomy_balance%` - raw numeric value
+  - `%giteconomy_balance_formatted%` - formatted per `money-format` settings
+  - `%giteconomy_balance_short%` - compact K/M form
 
 Document the difference and recommended use cases in scoreboards vs chat vs logs.
 

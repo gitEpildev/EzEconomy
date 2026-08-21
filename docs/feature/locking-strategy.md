@@ -25,4 +25,4 @@
 3. Configure `redis.yml` (see `docs/redis.md`) and restart the server.
 
 ## See also
-- [docs/redis.md](docs/redis.md) — short guide for `redis.yml`, installation, and troubleshooting.
+- [docs/redis.md](docs/redis.md) - short guide for `redis.yml`, installation, and troubleshooting.
